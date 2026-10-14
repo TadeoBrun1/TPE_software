@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: Itinerary API (EJEMPLO DE FORMATO)
+  version: 0.0.1
+  description: >
+    Ejemplo de formato. Reemplazar por el contrato real definido en la iteración 3.
+    Iteración: 3. ADRs relacionadas: ver docs/03-adr/.
+paths:
+  /trips:
+    get:
+      summary: Lista los viajes activos del usuario autenticado
+      operationId: listTrips
+      responses:
+        "200":
+          description: Lista de viajes con sus reservas agrupadas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trip"
+        "401":
+          description: No autenticado
+components:
+  schemas:
+    Trip:
+      type: object
+      required: [id, name, status]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, archived]

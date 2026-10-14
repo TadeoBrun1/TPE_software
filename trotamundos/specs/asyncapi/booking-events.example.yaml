@@ -1,0 +1,31 @@
+asyncapi: 2.6.0
+info:
+  title: Booking events (EJEMPLO DE FORMATO)
+  version: 0.0.1
+  description: >
+    Ejemplo de formato. Reemplazar por el contrato real definido en la iteración 2.
+    Iteración: 2. ADRs relacionadas: ver docs/03-adr/.
+channels:
+  booking.updated:
+    description: Se publica cuando una reserva se crea, cambia o cancela
+    subscribe:
+      operationId: onBookingUpdated
+      message:
+        $ref: "#/components/messages/BookingUpdated"
+components:
+  messages:
+    BookingUpdated:
+      payload:
+        type: object
+        required: [bookingId, tripId, status, occurredAt]
+        properties:
+          bookingId:
+            type: string
+          tripId:
+            type: string
+          status:
+            type: string
+            enum: [created, changed, cancelled]
+          occurredAt:
+            type: string
+            format: date-time
