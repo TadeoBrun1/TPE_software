@@ -1,8 +1,5 @@
 # Escenarios de atributos de calidad (SEI, 6 partes)
 
-**Qué es:** QAs del enunciado refinados como escenarios de 6 partes.
-**Mantiene:** ambos. **Estado:** BORRADOR. Auditar cada escenario con `/test-qas` antes de usarlo como driver.
-
 Regla de este documento: los valores que vienen **del enunciado** se usan tal cual. Los que se inventaron para poder
 medir están marcados como **Suposición** y se explican abajo. Una suposición es un punto de partida (straw man).
 
@@ -38,8 +35,8 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 |---|---|
 | Fuente del estímulo | Viajero desde la aplicación móvil |
 | Estímulo | Abre la aplicación para ver su próximo viaje |
-| Artefacto | Aplicación móvil y su API de consulta |
-| Ambiente | Operación normal, conexión móvil estándar |
+| Artefacto | Cliente móvil |
+| Ambiente | Operación normal, con red 4G y sesión ya iniciada |
 | Respuesta | La aplicación muestra el primer contenido útil del itinerario |
 | Medida de respuesta | El primer despliegue de contenido ocurre en menos de 1,4 s en el 95 % de las aperturas |
 
@@ -47,22 +44,22 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 
 | Parte | Contenido |
 |---|---|
-| Fuente del estímulo | Falla de infraestructura (nodo, zona o región) |
+| Fuente del estímulo | Infraestructura de ejecucion (nodo, zona o región) |
 | Estímulo | Una instancia o zona del servicio de consulta deja de responder |
 | Artefacto | Servicio de consulta de itinerarios y su almacenamiento |
 | Ambiente | Operación normal, con tráfico global |
 | Respuesta | El sistema detecta la falla, redirige el tráfico a réplicas sanas y sigue atendiendo |
-| Medida de respuesta | Máximo 5 minutos de inactividad no planificada por mes (aproximadamente 99,988 %) |
+| Medida de respuesta | Máximo 5 minutos de inactividad no planificada por mes |
 
 ## QA-5 Escalabilidad
 
 | Parte | Contenido |
 |---|---|
-| Fuente del estímulo | Viajeros afectados por una disrupción masiva (por ejemplo, clima) |
-| Estímulo | El tráfico se multiplica respecto del promedio |
-| Artefacto | Plataforma completa: consulta e ingesta |
+| Fuente del estímulo | Viajeros usuarios de la aplicacion |
+| Estímulo | Consultan sus itinerarios y se reciben actualizaciones de reservas |
+| Artefacto |Servicios de consulta e ingesta de itinerarios |
 | Ambiente | Operación con pico de carga |
-| Respuesta | El sistema agrega capacidad automáticamente y sigue procesando consultas y actualizaciones |
+| Respuesta | El sistema procesa las consultas y actualizaciones, y agrega capacidad automáticamente a medida que crece la carga |
 | Medida de respuesta | Soporta 2 millones de usuarios activos semanales sobre 15 millones de cuentas y un pico de **5 veces** el promedio, cumpliendo QA-1 y QA-2 |
 
 ## QA-6 Interoperabilidad con terceros
@@ -106,19 +103,19 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 | Estímulo | Debe agregar un nuevo medio de transporte (por ejemplo, trenes) |
 | Artefacto | Modelo de reservas y módulo de integraciones |
 | Ambiente | Etapa de desarrollo, sistema en producción |
-| Respuesta | El equipo incorpora el proveedor sin modificar el código de los medios existentes |
-| Medida de respuesta | Se completa en 10 días-persona o menos y la suite de pruebas existente sigue en verde |
+| Respuesta | El equipo agrega el nuevo tipo de reserva y su conector, y lo despliega con el sistema en producción |
+| Medida de respuesta | Se completa en 10 días-persona o menos, sin modificar el código de los medios existentes |
 
 ## QA-10 Usabilidad e internacionalización
 
 | Parte | Contenido |
 |---|---|
-| Fuente del estímulo | Viajero ubicado en otro país |
+| Fuente del estímulo | Viajero usuario de la aplicación |
 | Estímulo | Usa la aplicación desde una región distinta con su idioma y formato locales |
 | Artefacto | Aplicación y backend multirregión |
 | Ambiente | Operación normal |
-| Respuesta | El sistema muestra el contenido en el idioma y formato del usuario y lo sirve desde la región más cercana |
-| Medida de respuesta | Se agrega un nuevo idioma sin cambios de código y se mantienen las medidas de QA-2 y QA-3 |
+| Respuesta | El sistema muestra el contenido en el idioma y formato del usuario y atiende la solicitud desde la región más cercana |
+| Medida de respuesta | El 100% de los textos y formatos de los idiomas soportados se muestra en la configuración del usuario, y se cumplen QA-2 (800 ms) y QA-3 (1,4 s) |
 
 ## Suposiciones a validar
 
@@ -126,15 +123,9 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 |---|---|---|
 | Percentil 99 de las actualizaciones | QA-1 | El enunciado da 5 minutos pero no el porcentaje de cumplimiento |
 | Percentil 95 | QA-2, QA-3 | Es el estándar habitual para SLAs de latencia |
-| 99,988 % | QA-4 | Cálculo directo: 5 minutos sobre 43.200 minutos de un mes de 30 días |
 | Pico de 5 veces el promedio | QA-5 | Estimación por analogía con plataformas de viajes en disrupciones; el enunciado solo dice "dramáticos" |
 | 99,9 % sin pérdida ni duplicación | QA-6 | Analogía con SLAs de integraciones entre sistemas |
-| 100 % de rechazos | QA-7, QA-8 | Control de seguridad: el objetivo razonable es sin excepciones |
 | 10 días-persona | QA-9 | Estimación por analogía con una integración nueva de complejidad media |
 
-## Pendientes
 
-- [ ] Auditar cada escenario con `/test-qas`.
-- [ ] Decidir si QA-3 se mantiene aparte de QA-2 o se fusionan.
-- [ ] Agregar un escenario de privacidad (borrado de datos del usuario) si el equipo lo considera driver.
-- [ ] Revisar si la opción avanzada elegida (A o B) agrega QAs propios.
+## === Escenarios de atributos de calidad para parte 2 ===
