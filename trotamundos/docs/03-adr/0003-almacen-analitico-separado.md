@@ -15,8 +15,8 @@ base que atiende a los viajeros degradaría la consulta de itinerarios. Hay que 
 
 ## Decision Drivers
 
-* QA-2 Latencia web y QA-4 Disponibilidad: las consultas pesadas no deben afectar a los viajeros.
-* RF-07 Analítica de datos.
+* QA-4 Disponibilidad y QA-5 Escalabilidad: las consultas pesadas no deben afectar a los viajeros.
+* RF-07 Analítica de datos (se detalla en la iteración 4).
 * Los datos analíticos deben incluir los cambios manuales del usuario, no solo los de la ingesta.
 * CON-3: los datos personales dependen de la región.
 
@@ -45,7 +45,7 @@ conservación y el tratamiento de datos personales se refinan en la iteración 4
 
 ### Confirmation
 
-En el prototipo, una consulta analítica pesada no cambia la latencia de la consulta de itinerarios. Cada cambio
+En el prototipo, una consulta analítica pesada no cambia la disponibilidad ni la latencia de la consulta de itinerarios. Cada cambio
 confirmado, incluidos los manuales, aparece en el almacén analítico.
 
 ## Pros and Cons of the Options
@@ -78,7 +78,7 @@ confirmado, incluidos los manuales, aparece en el almacén analítico.
 | Elemento | Enlace |
 |---|---|
 | Iteración ADD | 1, [iteration-1-structure](../01-add/iteration-1-structure.md) |
-| Drivers | RF-07, QA-2, QA-4, CON-3 |
+| Drivers | QA-4, QA-5, RF-07, CON-3 |
 | Vistas afectadas | [cc-view](../02-views/cc-view.md), [deployment-view](../02-views/deployment-view.md) |
 | Specs | `specs/asyncapi/` |
 | ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md) |

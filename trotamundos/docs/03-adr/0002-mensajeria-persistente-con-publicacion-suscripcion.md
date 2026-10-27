@@ -17,9 +17,9 @@ que decidir cómo se comunican estos elementos sin acoplar su disponibilidad ni 
 ## Decision Drivers
 
 * QA-1 Frescura: el recorrido completo debe respetar los 5 minutos.
-* QA-6 Interoperabilidad: 99,9 % de los mensajes válidos sin pérdida ni duplicación.
+* QA-6 Interoperabilidad (se detalla en la iteración 2): 99,9 % de los mensajes válidos sin pérdida ni duplicación.
 * QA-4 Disponibilidad: la caída de un elemento no debe arrastrar a los demás.
-* QA-8 Seguridad: los mensajes no deben exponer credenciales ni correos completos.
+* QA-8 Seguridad (se detalla en la iteración 2): los mensajes no deben exponer credenciales ni correos completos.
 * QA-9 Evolucionabilidad: el formato debe poder cambiar sin romper consumidores.
 
 ## Considered Options

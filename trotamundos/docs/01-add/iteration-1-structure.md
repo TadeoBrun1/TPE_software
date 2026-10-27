@@ -23,20 +23,34 @@ separado. Los QA se atacan **a nivel de estructura**: el detalle de cada uno que
 | RF-01 | Procesamiento de correo | Alta (primaria) | Existe un elemento de ingesta separado | It. 2 |
 | RF-03 | Integración con terceros por APIs estándar | Alta (primaria) | La ingesta incluye un adaptador por proveedor | It. 2 |
 | RF-05 | Ciclo de vida del viaje | Alta (primaria) | El núcleo es dueño del estado de viajes y reservas | It. 3 |
-| RF-07 | Analítica de datos | Media | Límite entre el almacenamiento operativo y el analítico | It. 4 |
 | QA-1 | Frescura de actualizaciones (5 min) | H, H | Camino ingesta → núcleo desacoplado y escalable por separado | It. 2 |
 | QA-4 | Disponibilidad (5 min/mes) | H, H | Redundancia por zonas y regiones; la lectura sigue aunque la ingesta falle | It. 3 |
 | QA-5 | Escalabilidad y picos | H, H | Núcleo sin estado, partición de datos, escala por separado de cada carga | It. 3 |
-| QA-2 | Latencia web (800 ms) | H, M | Perfil de consulta separado de las escrituras; datos cerca del usuario | It. 3 |
 | QA-9 | Evolucionabilidad | M, M | Adaptador por proveedor, modelo canónico y mensajes versionados | It. 2 y 4 |
-| QA-10 | Usabilidad e i18n (multirregión) | M, H | Solo el principio de región de origen; la atención regional completa queda para después | It. 4 |
 | CRN-1 | Estructura inicial del sistema | — | Todo este documento | — |
-| CON-1 | Integración con terceros solo por APIs estándar | Restricción | Obliga a adaptadores por proveedor | — |
-| CON-2 | Sistemas externos que no se pueden modificar | Restricción | La ingesta tolera sus fallas y límites | — |
-| CON-3 | Datos personales según la normativa de cada región | Restricción | Condiciona dónde se almacenan los datos (ADR-0004) | — |
 
-No se seleccionan acá QA-3, QA-6, QA-7 y QA-8: su dueño es otra iteración (ver [plan](iteration-plan.md)). Las
-reglas de esta iteración que los protegen están en el Paso 5.
+### Restricciones que aplican
+
+No se tratan como drivers a resolver: limitan las decisiones de todas las iteraciones.
+
+| ID | Restricción | Efecto en esta iteración |
+|---|---|---|
+| CON-1 | Integración con terceros solo por APIs estándar | Obliga a un adaptador por proveedor |
+| CON-2 | Sistemas externos que no se pueden modificar | La ingesta tolera sus fallas y límites |
+| CON-3 | Datos personales según la normativa de cada región | Condiciona dónde se almacenan los datos (ADR-0004) |
+
+### Drivers que no se seleccionan acá
+
+El objetivo de esta iteración es la estructura, y cada iteración atiende un subconjunto de los drivers (Bass, cap. 20,
+paso 2). Estos se atienden en la iteración que indica el [plan](iteration-plan.md):
+
+| Driver | Iteración |
+|---|---|
+| QA-2 Latencia web, QA-3 Primer despliegue móvil | 3 |
+| QA-6 Interoperabilidad, QA-8 Seguridad de correos | 2 |
+| QA-7 Seguridad de compartición, QA-10 Usabilidad e i18n, RF-07 Analítica | 4 |
+
+Las decisiones de esta iteración dejan preparado el terreno para ellos (ver Paso 5 y el análisis del Paso 7).
 
 ## Paso 3 — Elementos a refinar
 
@@ -51,9 +65,9 @@ reglas de esta iteración que los protegen están en el Paso 5.
 | Concepto elegido | Justificación | Alternativas descartadas | ADR |
 |---|---|---|---|
 | Núcleo modular, con ingesta y analítica como procesos separados. El núcleo tiene un perfil de consulta y otro de gestión, desplegables por separado desde el mismo código | Cargas muy distintas (consultas, importación, análisis) que deben escalar y fallar por separado (QA-5, QA-4, QA-1). Un equipo de 2 puede operar un núcleo modular, no una docena de servicios | Monolito modular en un único despliegue; microservicios por capacidad; funciones por evento (serverless) | [ADR-0001](../03-adr/0001-nucleo-modular-con-procesos-separados.md) |
-| Mensajería persistente con publicación y suscripción, con dos flujos: novedades de ingesta → núcleo, y eventos de dominio del núcleo → consumidores. Entrega al menos una vez, consumidores idempotentes y patrón *outbox* | Desacopla ritmos y fallas (QA-1, QA-4). Garantiza no perder mensajes (QA-6) y permite alimentar la analítica con todos los cambios, también los manuales | Llamada síncrona a una API del núcleo; cola punto a punto solo para ingesta; escritura directa de la ingesta en la base del núcleo | [ADR-0002](../03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) |
-| Almacenamiento y procesamiento analíticos separados, alimentados con los eventos de dominio | Las consultas pesadas no deben degradar la base que atiende a los viajeros (QA-2, QA-4, RF-07) | Réplica de lectura de la misma base; captura de cambios (CDC) sobre la base del núcleo; carga por lotes | [ADR-0003](../03-adr/0003-almacen-analitico-separado.md) |
-| Despliegue por regiones: cada usuario tiene una región de origen que atiende su tráfico y guarda sus datos, con varias zonas de fallo por región y recuperación en otra región | Cumple CON-3 y es la única opción que lleva QA-2, QA-3, QA-4 y QA-10 a escala global sin conflictos de escritura | Una sola región; región primaria con otra pasiva; región primaria con réplicas de lectura en todas las regiones | [ADR-0004](../03-adr/0004-despliegue-por-regiones-con-region-de-origen.md) |
+| Mensajería persistente con publicación y suscripción, con dos flujos: novedades de ingesta → núcleo, y eventos de dominio del núcleo → consumidores. Entrega al menos una vez, consumidores idempotentes y patrón *outbox* | Desacopla ritmos y fallas (QA-1, QA-4). Es la base para no perder ni duplicar mensajes (QA-6, iteración 2) y permite alimentar la analítica con todos los cambios, también los manuales | Llamada síncrona a una API del núcleo; cola punto a punto solo para ingesta; escritura directa de la ingesta en la base del núcleo | [ADR-0002](../03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) |
+| Almacenamiento y procesamiento analíticos separados, alimentados con los eventos de dominio | Las consultas pesadas no deben degradar la base que atiende a los viajeros (QA-4, QA-5; RF-07 se detalla en la iteración 4) | Réplica de lectura de la misma base; captura de cambios (CDC) sobre la base del núcleo; carga por lotes | [ADR-0003](../03-adr/0003-almacen-analitico-separado.md) |
+| Despliegue por regiones: cada usuario tiene una región de origen que atiende su tráfico y guarda sus datos, con varias zonas de fallo por región y recuperación en otra región | Cumple CON-3, acota las fallas a una región (QA-4) y reparte los datos por usuario (QA-5) sin conflictos de escritura. Deja preparada la atención regional (QA-10, iteración 4) | Una sola región; región primaria con otra pasiva; región primaria con réplicas de lectura en todas las regiones | [ADR-0004](../03-adr/0004-despliegue-por-regiones-con-region-de-origen.md) |
 
 ### Matriz de decisión: estilo (ADR-0001)
 
@@ -68,11 +82,11 @@ Escala: ++ Promueve fuerte · + Promueve · 0 Neutral · − Inhibe · −− In
 
 ### Matriz de decisión: despliegue (ADR-0004)
 
-| Opción | QA-4 | QA-2 y QA-3 (latencia global) | QA-10 | CON-3 | Viabilidad |
+| Opción | QA-4 | QA-5 | CON-3 | Latencia global y QA-10 (no son drivers acá) | Viabilidad |
 |---|---|---|---|---|---|
-| A. Una región con varias zonas | − | −− | −− | − | ++ |
-| B. Varias zonas + región pasiva de recuperación | + | − | − | 0 | + |
-| C. Región primaria + réplicas de lectura en todas las regiones | + | + | 0 | − | 0 |
+| A. Una región con varias zonas | − | − | − | −− | ++ |
+| B. Varias zonas + región pasiva de recuperación | + | 0 | 0 | − | + |
+| C. Región primaria + réplicas de lectura en todas las regiones | + | 0 | − | + | 0 |
 | **D. Región de origen por usuario** | ++ | ++ | ++ | ++ | − |
 
 D es la opción más cara: hay que resolver usuarios que viajan e itinerarios compartidos con personas de otra región.
@@ -82,11 +96,11 @@ Por eso el prototipo solo demuestra la partición, no la disponibilidad global (
 
 | Decisión de instanciación | Justificación |
 |---|---|
-| El núcleo es el único que modifica el estado oficial de viajes y reservas. La ingesta no escribe en las tablas del núcleo | Evita duplicar reglas de negocio y protege la consistencia (QA-6) |
+| El núcleo es el único que modifica el estado oficial de viajes y reservas. La ingesta no escribe en las tablas del núcleo | Evita duplicar reglas de negocio y protege la consistencia (QA-6, iteración 2) |
 | La ingesta normaliza los datos externos a un modelo canónico de reserva; el núcleo valida, decide a qué viaje pertenece y aplica el cambio | Un adaptador por proveedor y un único modelo interno permiten agregar un medio de transporte sin tocar lo existente (QA-9, CON-1) |
 | Si faltan datos para identificar o asociar una reserva, queda en estado pendiente de resolución | La ingesta no puede bloquearse por datos incompletos |
-| Los mensajes no llevan contraseñas, tokens ni cuerpos completos de correo | Reduce la superficie de ataque (QA-8) |
-| Clave de idempotencia de cada mensaje: proveedor + código de reserva + versión. Los mensajes de una misma reserva se procesan en orden | Repetir un mensaje no crea dos reservas; una cancelación que llega antes que la alta no se pierde (QA-6) |
+| Los mensajes no llevan contraseñas, tokens ni cuerpos completos de correo | Reduce la superficie de ataque (QA-8, iteración 2) |
+| Clave de idempotencia de cada mensaje: proveedor + código de reserva + versión. Los mensajes de una misma reserva se procesan en orden | Repetir un mensaje no crea dos reservas; una cancelación que llega antes que la alta no se pierde (QA-6, iteración 2) |
 | El núcleo guarda el cambio y el evento de dominio en la misma transacción (*outbox*) y un proceso aparte lo publica | Evita que un cambio confirmado no llegue a la analítica |
 | Los mensajes llevan versión de esquema | Permite evolucionar el formato sin romper consumidores (QA-9) |
 | El núcleo no guarda estado de sesión en memoria | Permite agregar instancias automáticamente (QA-5) |
@@ -127,14 +141,11 @@ El estado refleja lo que se espera de las decisiones propuestas. Se revisa cuand
 | CRN-1 | Cumplido | Falta actualizar las vistas |
 | RF-01, RF-03 | Parcial | El detalle de sondeo y adaptadores es de la iteración 2 |
 | RF-05 | Parcial | La estructura de consulta y gestión es de la iteración 3 |
-| RF-07 | Parcial | Falta fijar el retraso aceptable de la analítica; permisos y conservación son de la iteración 4 |
 | QA-1 | Parcial | El sondeo de correos a esta escala es el mayor riesgo; falta repartir los 5 minutos entre sondeo, cola y aplicación |
 | QA-4 | Parcial | 5 min/mes exige conmutación automática en bastante menos de 5 minutos; la entrada de tráfico debe ser redundante |
 | QA-5 | Parcial | Falta definir la partición física de la base y el uso de caché para el panel |
-| QA-2 | Parcial | Se valida en la iteración 3 |
 | QA-9 | Parcial | Se valida en la iteración 2 con un caso real (agregar trenes) |
-| QA-10 | Parcial | Solo el principio de región de origen; idiomas y formatos quedan para la iteración 4 |
-| CON-1, CON-2, CON-3 | Cumplido | CON-3 depende de qué regiones se elijan; hay que validar la normativa con un criterio concreto |
+| Restricciones CON-1, CON-2, CON-3 | Respetadas | CON-3 depende de qué regiones se elijan; hay que validar la normativa con un criterio concreto |
 
 ### Impacto en otras iteraciones
 
@@ -150,7 +161,7 @@ Esta iteración define los **elementos compartidos** que las siguientes no deben
 
 ### ¿Se sigue iterando?
 
-Sí: iteraciones 2 y 3 en paralelo. Queda para la 4 la atención regional completa (QA-10), el retraso aceptable de la
+Sí: iteraciones 2 y 3 en paralelo. Quedan para las iteraciones 3 y 4 QA-2, QA-10 y RF-07: la latencia, la atención regional completa, el retraso aceptable de la
 analítica y los permisos de los datos analíticos.
 
 ### Prototipo

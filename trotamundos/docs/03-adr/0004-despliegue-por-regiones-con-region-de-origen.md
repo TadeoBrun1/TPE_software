@@ -17,10 +17,9 @@ despliegue y cómo se reparten los datos entre regiones.
 ## Decision Drivers
 
 * QA-4 Disponibilidad: una sola instancia, zona o región no puede ser un punto único de falla.
-* QA-2 y QA-3: la latencia depende de la distancia entre usuario y datos.
-* QA-10: el escenario pide atender desde la región más cercana.
+* QA-5 Escalabilidad: escalar el almacenamiento para 15 millones de cuentas.
 * CON-3: los datos personales dependen de la región del usuario.
-* QA-5: escalar el almacenamiento para 15 millones de cuentas.
+* Considerados, pero no drivers de esta iteración: la latencia global (QA-2 y QA-3, iteración 3) y la atención desde la región más cercana (QA-10, iteración 4).
 
 ## Considered Options
 
@@ -31,8 +30,9 @@ despliegue y cómo se reparten los datos entre regiones.
 
 ## Decision Outcome
 
-Chosen option: "D. Región de origen por usuario", because es la única que lleva latencia, disponibilidad y CON-3 a
-escala global sin conflictos de escritura: cada usuario escribe siempre en una sola región.
+Chosen option: "D. Región de origen por usuario", because acota las fallas a una región (QA-4), reparte los datos
+por usuario (QA-5) y cumple CON-3 sin conflictos de escritura: cada usuario escribe siempre en una sola región.
+Además deja preparada la latencia global y QA-10.
 
 Reglas:
 
@@ -93,7 +93,7 @@ región de origen y la caída de una instancia sin interrumpir la consulta.
 | Elemento | Enlace |
 |---|---|
 | Iteración ADD | 1, [iteration-1-structure](../01-add/iteration-1-structure.md) |
-| Drivers | QA-4, QA-2, QA-3, QA-5, QA-10, CON-3 |
+| Drivers | QA-4, QA-5, CON-3 (considerados: QA-2, QA-3, QA-10) |
 | Vistas afectadas | [deployment-view](../02-views/deployment-view.md) |
 | Specs | `specs/openapi/` |
 | ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0003](0003-almacen-analitico-separado.md) |
