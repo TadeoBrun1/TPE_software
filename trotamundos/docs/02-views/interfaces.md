@@ -34,3 +34,9 @@ La API de consulta y el evento confirmado de analítica siguen pendientes; los e
 | [Publicación confirmada](../../specs/core-publication.md) | Núcleo y su outbox | Consumidores de eventos de dominio |
 
 La autenticación de la aplicación no es la autorización OAuth de un buzón. Sus mecanismos no se confunden.
+
+## Transporte fijado
+
+RabbitMQ/AMQP sobre TLS: [políticas](../../specs/ingestion-operations.md). Novedades llevan routing key con shard
+pero conservan tipo lógico. Evento confirmado: [booking-confirmed.v1.yaml](../../specs/asyncapi/booking-confirmed.v1.yaml).
+[Protocolo de autorización](../../specs/ingestion-authorization.md) completa la vigencia interna sin elegir login del viajero.

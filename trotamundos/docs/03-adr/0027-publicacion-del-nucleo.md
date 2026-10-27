@@ -53,4 +53,4 @@ Favorece el límite/fiabilidad buscado; introduce coordinación y operación adi
 ## More Information
 
 [Iteración 2](../01-add/iteration-2-ingestion.md) · [Impactos](../01-add/impact-log.md) ·
-[Contrato](../../specs/core-publication.md). El broker concreto y la validación del paso 7 permanecen pendientes.
+[Contrato](../../specs/core-publication.md). El broker se elige en [ADR-0028](0028-rabbitmq-y-politicas.md) y el paso 7 se analiza en la iteración; la ejecución del prototipo sigue pendiente.

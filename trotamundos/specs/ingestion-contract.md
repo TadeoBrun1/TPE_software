@@ -106,3 +106,11 @@ para concurrencia, frecuencia, tamaño, retención o reintentos; se elige y prue
 [Asistencia con agencias](agency-assistance.md), [publicación del núcleo](core-publication.md) y
 [enrutamiento/configuración](notification-routing.md). La autenticación de usuarios de la aplicación, pendiente
 para la iteración 4, es distinta de OAuth para autorizar correo, propuesto en ADR-0021.
+
+## Transporte y cierre de diseño
+
+RabbitMQ y límites iniciales: [ingestion-operations.md](ingestion-operations.md), ADR-0028. `booking.change.detected.v1`
+es el tipo lógico; routing keys terminan en `.s0` a `.s7` según shard de usuario. El algoritmo no exige
+sourceVersion y no inventa orden temporal. El payload del evento se conserva; cambia su descripción de transporte.
+[Revocación coordinada](ingestion-authorization.md) completa la autoridad de configuración. El paso 7 ya está
+analizado; las pruebas de implementación siguen en [el plan](../prototype/ingestion-validation.md).

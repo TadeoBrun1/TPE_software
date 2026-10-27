@@ -84,3 +84,7 @@ aprobaciones inexistentes.
 2026-10-27: ChatGPT/Codex prepara correcciones de integración solicitadas por Tomas tras revisar las correcciones
 de la primera iteración. Script local con respaldo; no se registran aprobación conjunta, pruebas de sistema ni
 publicación en GitHub. Revisar el diff y documentar los aportes humanos reales antes de integrar.
+
+## Preparación asistida del cierre de diseño
+
+2026-10-27: solicitud de completar iteración 2; ChatGPT/Codex consulta documentación oficial de RabbitMQ/Kafka, redacta decisiones/políticas y evalúa escenarios sin ejecutar sistema. No atribuye aprobación o pruebas a los integrantes.

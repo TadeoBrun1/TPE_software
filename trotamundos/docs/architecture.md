@@ -17,7 +17,7 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 | Iteración | Estado | Aporte |
 |---|---|---|
 | [1 — Estructura general](01-add/iteration-1-structure.md) | En revisión; ADRs propuestas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
-| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Pasos 2 a 6 propuestos; alineación y evaluación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
+| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Diseño 2–7 completo; revisión cruzada y prototipo pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
 | [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pendiente | Consulta, gestión, rendimiento, disponibilidad y escalabilidad. |
 | [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pendiente | Compartición, autenticación, internacionalización, analítica y evolución. |
 
@@ -165,8 +165,8 @@ Son componentes lógicos de la ingesta, no microservicios obligatoriamente indep
 ### Alineación documental de ingesta
 
 Se actualizaron receptor por Gateway, referencias ADR-0003/0004, versión externa opcional, propiedad de
-vinculaciones, asistencia de agencia y publicación confirmada. Ver ADR-0020 a 0027 y contratos de ingesta.
-Son decisiones propuestas; la selección del broker, parámetros operativos y evaluación del paso 7 siguen pendientes.
+vinculaciones, asistencia de agencia y publicación confirmada. Ver ADR-0020 a 0028 y contratos de ingesta.
+Son decisiones propuestas; broker y parámetros se definen en ADR-0028 y el paso 7 está analizado; ejecución del prototipo pendiente.
 
 
 ## 9. Interfaces y secuencias
@@ -269,7 +269,7 @@ El plazo del trabajo práctico y los recursos del grupo acotan el prototipo; no 
 
 Los impactos se registran en [impact-log.md](01-add/impact-log.md).
 
-Antes de cerrar la segunda iteración deben revisarse conjuntamente:
+Para aceptar el diseño completado de la segunda iteración, deben revisarse conjuntamente:
 
 - Su alineación con la primera iteración actualizada.
 - El contrato ingesta-núcleo.
@@ -284,5 +284,11 @@ Los aportes y revisiones reales se registran en [TEAM-LOG.md](../TEAM-LOG.md). L
 
 La revisión incorpora los acuerdos de la primera iteración sin decidir perfiles de lectura/escritura, almacén
 analítico ni recuperación regional. El contrato de correo ya no exige versión externa para toda incorporación.
-Agencia, enrutamiento y outbox del núcleo tienen contratos semánticos propuestos. La tecnología de mensajería,
-pruebas de carga/seguridad y el paso 7 siguen pendientes; no se afirma implementación ni cumplimiento de QAs.
+Agencia, enrutamiento y outbox del núcleo tienen contratos semánticos propuestos. RabbitMQ y el paso 7 se completan en ADR-0028; pruebas de carga/seguridad siguen pendientes, sin afirmar implementación o cumplimiento de QAs.
+
+## Cierre de diseño de la iteración 2
+
+Pasos 2 a 7 documentados, con RabbitMQ, políticas operativas y recorrido analítico de escenarios. Ver
+[ADR-0028](03-adr/0028-rabbitmq-y-politicas.md), [políticas](../specs/ingestion-operations.md),
+[autorización](../specs/ingestion-authorization.md) y [validación futura](../prototype/ingestion-validation.md).
+Los ADR permanecen proposed hasta revisión real; prototipo y aceptación del equipo no se inventan.

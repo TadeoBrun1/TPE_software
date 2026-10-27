@@ -19,7 +19,7 @@ flowchart TB
     R -->|"Avisos pendientes"| C
     T -->|"Transacción con avance esperado"| R
     R --> U["Publicador"]
-    U -->|"Novedad detectada"| Q["Canal persistente"]
+    U -->|"Novedad detectada"| Q["RabbitMQ regional: topic y colas quorum"]
     Q --> N["Núcleo: consumidor y reglas"]
 ```
 
@@ -93,3 +93,10 @@ se concilia en el núcleo sin asumir orden de llegada. Ingesta no se expone dire
 El núcleo conserva la configuración autoritativa de usuarios, filtros y vinculaciones. Ingesta guarda estado
 operativo de sincronización y secretos protegidos; consulta vigencia por un puerto interno, sin compartir tablas.
 Ver [asistencia de agencia](../../specs/agency-assistance.md), RF-06, y [publicación del núcleo](../../specs/core-publication.md).
+
+## Refinamiento operativo final de iteración 2
+
+[Políticas](../../specs/ingestion-operations.md): tres miembros quorum en tres zonas por región objetivo; demo local
+con un miembro sin afirmar HA. Ocho shards, consumidor activo/respaldo por shard, confirm+mandatory y ACK durable.
+[Autorización](../../specs/ingestion-authorization.md): metadata autoritativa y barrera de revocación coordinada.
+El paso 7 evalúa el recorrido y deja riesgos de cuotas/capacidad, no decisiones omitidas de broker.

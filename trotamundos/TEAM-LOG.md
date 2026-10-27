@@ -25,3 +25,7 @@ y ADR-0020 a 0024. No se registra aceptación del otro integrante ni prueba de p
 
 2026-10-27: propuesta asistida de alineación de la iteración 2 con la primera revisada. Ver ai/prompts.md,
 ADR-0020 a 0027 y contratos de integración. Pendiente revisión humana y enlace al PR; sin prueba de prototipo.
+
+## Cierre de diseño asistido de iteración 2
+
+Se prepara ADR-0028, políticas, protocolo de autorización y evaluación por escenarios del paso 7, solicitados por Tomas. Revisión cruzada en PR #4 y pruebas del prototipo pendientes.

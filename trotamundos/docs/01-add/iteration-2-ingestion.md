@@ -2,8 +2,8 @@
 
 **Responsable de la iteración:** Tomas Lateana (integrante A).
 **Preparación documental:** 2026-10-27, con asistencia de ChatGPT/Codex.
-**Estado:** pasos 2 a 6 documentados como propuesta; paso 7 pendiente de evaluación conjunta.
-**ADRs:** 0020 a 0027, dentro del bloque 0020–0039.
+**Estado:** pasos 2 a 7 completados al nivel de diseño; listo para revisión cruzada en PR #4. Pruebas de prototipo pendientes.
+**ADRs:** 0020 a 0028, dentro del bloque 0020–0039.
 
 ## Base y alcance
 
@@ -14,7 +14,7 @@ La separación lectura/escritura y el almacenamiento analítico no se presuponen
 
 Los RF/QA son los del repo. No se cambia el documento de requisitos ni se trasladan IDs de ejemplos anteriores.
 Ingesta publica novedades; solo el núcleo escribe el estado autoritativo y decide la asociación reserva-viaje.
-No se eligen nube, motor de datos, broker ni proveedor de correo concreto en esta iteración documental.
+Se elige RabbitMQ como broker en ADR-0028; nube, motor de datos y proveedor de correo real se fijan al implementar sus interfaces, sin alterar los contratos.
 
 ## Paso 2 — Objetivo y drivers
 
@@ -56,10 +56,10 @@ no se fija un intervalo universal sin conocer esas condiciones.
 | Tubería de etapas internas | Separar selección, extracción, normalización y validación | Rutina única; servicio por etapa | [0022](../03-adr/0022-tuberia-ingesta.md) |
 | Puertos y adaptadores | Aislar acceso al buzón, formatos de emisores y APIs de viajes | Condicionales dispersos; formato externo como modelo interno | [0023](../03-adr/0023-adaptadores-proveedores.md) |
 | Outbox y avance coordinados; reintentos por categoría | Recuperar publicación sin saltar novedades | Avanzar cursor antes de publicar; no persistir y reprocesar todo | [0024](../03-adr/0024-avance-y-publicacion-durable.md) |
-
 | Enrutamiento por vinculación de suscripción | Encontrar región sin confiar en datos no autenticados | Difusión a regiones; confiar en región enviada por tercero | [0025](../03-adr/0025-enrutamiento-de-avisos.md) |
 | Adaptador de agencia e interfaz de asistencia | Cubrir RF-06 conservando reglas en el núcleo | Integración desde clientes; asistencia mezclada con reservas | [0026](../03-adr/0026-integracion-agencia.md) |
 | Outbox de cambios confirmados en el núcleo | No perder eventos entre guardar y publicar | Publicar antes o después sin registro atómico | [0027](../03-adr/0027-publicacion-del-nucleo.md) |
+| RabbitMQ con topic exchanges y colas quorum | Entrega persistente y confirmaciones con políticas explícitas | Kafka; cola sobre base relacional | [0028](../03-adr/0028-rabbitmq-y-politicas.md) |
 
 ## Paso 5 — Componentes e interfaces
 
@@ -102,37 +102,76 @@ Identidad del mensaje e identidad de la reserva son diferentes; conciliación co
 | [Vista de ingesta](../02-views/ingestion-view.md) | Componentes/conectores, persistencia, propiedad e interfaces |
 | [Secuencias de ingesta](../02-views/ingestion-sequences.md) | Correo, avisos externos, recuperación de publicación y revocación |
 | [Interfaces compartidas](../02-views/interfaces.md) | Refinamiento ingesta-núcleo y dependencia con 3 |
-| ADR-0020 a 0027 | Contexto, drivers, alternativas, consecuencias y confirmación futura |
+| ADR-0020 a 0028 | Contexto, drivers, alternativas, consecuencias y confirmación futura |
 | [Impactos](impact-log.md) | Cambios que deben revisar los responsables de 1 y 3 |
 
 Todas las ADR de esta iteración quedan `proposed`: no se inventa revisión cruzada ni aprobación del otro integrante.
 Se preservan la primera iteración y sus ADR; la propuesta de ingesta debe revisarse con la tercera.
 
-## Paso 7 — Evaluación pendiente
+## Paso 7 — Análisis del diseño y cierre de la iteración
 
-No se declara cerrado: es el siguiente paso de trabajo. Esta tabla es agenda de evaluación, no resultado de pruebas.
+Se realiza un recorrido analítico de escenarios sobre contratos/vistas, no una prueba de software. Se seleccionó
+RabbitMQ en ADR-0028 y se fijaron hipótesis operativas en [ingestion-operations.md](../../specs/ingestion-operations.md).
+El análisis distingue resultados del razonamiento y evidencia que deberá producir el prototipo.
 
-| Driver | Evidencia futura requerida | Riesgo abierto |
+### Recorridos y resultados
+
+| Caso analizado | Recorrido y resultado esperado por diseño | Límite o riesgo |
 |---|---|---|
-| QA-1 | Medir generación externa a visualización, incluida recuperación | Cuotas, acumulación y actualización del cliente |
-| QA-6 | Dos formatos, repetición, desorden y conciliación | Identidad ausente o misma reserva desde correo y API |
-| QA-8 | Vincular, renovar, revocar y comprobar contenido conservado | Consultas ya iniciadas, permisos amplios del proveedor y retención |
-| CRN-3/4 | Fallos transitorios/permanentes y ausencia de secretos en mensajes/logs | Reintentos ilimitados o exposición de tokens |
+| Correo nuevo sin versión externa | Autorizar, filtrar, extraer identidad, deduplicar fuente, guardar outbox/cursor, publicar; núcleo puede crear reserva si datos suficientes | No se inventa versión; cambios contradictorios requieren conciliación |
+| Cancelación de tercero | Entrada global resuelve suscripción, Gateway valida, ingesta normaliza; núcleo aplica o conserva cancelación pendiente hasta identificar reserva | Un aviso sin región válida no se difunde globalmente; directorio protegido es dependencia |
+| Duplicado o caída tras publicar | Outbox conserva eventId; consumidor guarda control y resultado antes del ACK | Igual reserva desde dos fuentes requiere conciliación de negocio, no solo dedupe de mensaje |
+| Novedades desordenadas | Shard de usuario estabiliza publicación; núcleo compara versión si existe y serializa por reserva; conflicto sin orden no sobrescribe a ciegas | RabbitMQ no reconstruye orden temporal de una fuente ni resuelve competencia con cambios manuales |
+| Broker o consumidor fuera de servicio | Trabajo permanece en outbox/cola; se rechaza publicación sin espacio y se recupera consumo | Una caída prolongada viola frescura aunque no se pierda trabajo; alertar sin ocultarlo |
+| Correo desvinculado | Núcleo pasa a revoking y coordina barrera; sin respuesta no confirma revocación completa; nuevos inicios denegados | Operaciones enviadas antes pueden terminar; no se promete retirar mensajes ya publicados |
+| Agencia indisponible | Solicitud autorizada permanece en trabajo persistente; reintento conserva requestId; respuesta incierta se concilia | Agencia sin idempotencia exige consulta/revisión antes de duplicar una solicitud |
+| Caída de nodo/zona | Quorum de tres miembros en tres zonas conserva mayoría tras una pérdida; consumidor de respaldo retoma | Failover/throughput se deben medir; demo local no prueba independencia de zonas |
+| Error de datos repetido | Tras intentos acotados se aparca resultado durable y emite aviso mínimo antes de ACK | Si falla la persistencia no se confirma; contenido personal minimizado y revisión obligatoria |
 
-### Dependencias que deben acordarse con la iteración 3
+### Evaluación driver por driver
 
-* Esquema mínimo, región de origen y política de reservas sin identidad/viaje: no inventar asociaciones.
-* Idempotencia/orden refinados por esta iteración: la versión externa es opcional; distinguir reentrega, identidad de reserva y conflicto de estados.
-* Consumo idempotente, resultados durables y control de versiones/cambios simultáneos.
-* Presupuesto de cola/aplicación/visualización dentro de QA-1.
-* Cambios aplicados por el núcleo generan un evento distinto para analítica, también en operaciones manuales.
-* Revocar correo detiene nuevas consultas; no equivale a borrar reservas importadas ni a retirar eventos ya publicados.
+| Driver | Resultado de diseño | Estado del requisito y validación futura |
+|---|---|---|
+| RF-01/02/03 | Recorrido de correo/APIs, filtros, adaptadores y contratos definidos | Abordados en diseño; validar con al menos dos fuentes simuladas y un correo sin versión |
+| RF-06 | Contrato de asistencia y adaptador con autorización/seguimiento definidos | Abordado en diseño; agencia real/API y ensayo de fallos antes de producción |
+| QA-1 | Presupuesto de 300 s, alertas y carga hipotética definidos | Parcial/condicionado a cuotas y capacidad. No demostrado para millones de cuentas ni todos los proveedores |
+| QA-6 | Identidad separada, normalización, dedupe durable, conciliación y outboxes definidos | Parcial hasta pruebas de contrato/reentrega/desorden; no prometer exactly-once |
+| QA-8 | OAuth delegado, mínimo privilegio, propiedad y protocolo de revocación definidos | Parcial hasta pruebas de carrera, integración real, seguridad y conservación de datos |
+| CRN-3 | Reintentos clasificados, pendientes y recuperación definidos | Resuelto al nivel de diseño; falta ejercitar fallos |
+| CRN-4 | Secretos fuera de payload/log, roles del broker y vigencia de configuración definidos | Resuelto al nivel de diseño; infraestructura/secret store se verifica en implementación |
 
-### Prototipo futuro
+### Riesgos aceptados como pendientes de validación
 
-Simuladores de correo y terceros, almacenamiento con outbox, publicador/canal y consumidor acordado con 3.
-Los casos de demostración están en el contrato. No se incorpora código ni se afirma integración con proveedores
-reales en este paso. Las pruebas de carga/fallo son pendientes; no hay métricas observadas todavía.
+1. Cuotas del proveedor y número de vinculaciones: pueden impedir detectar cambios en 120 s. Requisito QA-1 no
+   se relaja; se valida antes de habilitar cada integración y se informa bloqueo si no es viable.
+2. Capacidad: 50/s normal, 250/s pico y 20 ms de servicio son hipótesis, no resultados. Pruebas de carga deben
+   demostrar cola ≤40 s, publicación ≤10 s y recorrido ≤300 s bajo el escenario acordado con 3.
+3. Política regional y secreto/token: CON-3 sigue como supuesto; los plazos operativos no prueban cumplimiento legal.
+4. Broker en tres zonas y base altamente disponible: dependen del despliegue que refina 3; no hay recuperación
+   entre regiones ni validación mensual en esta iteración.
+5. Casos ambiguos entre correo y API: conservar y resolver evita corrupción, pero puede requerir intervención y
+   no produce itinerario automáticamente hasta contar con evidencia suficiente.
+
+### Dependencias de implementación, no decisiones omitidas
+
+La iteración 3 implementa autorización por viaje, persistencia y consumidor con este contrato; elige actualización
+visible del cliente dentro del presupuesto y demuestra latencia web. La 4 define autenticación del viajero,
+compartición y almacén analítico. La seguridad OAuth del correo y la publicación confiable ya se deciden aquí.
+La release/digest, secretos y configuración del despliegue se fijan al implementar y se comprueban con las fuentes
+oficiales; no se dejan como elecciones arquitectónicas abiertas de broker.
+
+### Prototipo y criterios de aceptación
+
+[Plan de validación](../../prototype/ingestion-validation.md). Debe cubrir correo sin versión, dos fuentes,
+duplicado, cancelación antes del alta, caídas antes/después de commit/confirm, mensaje no enrutado, revocación
+concurrente, agencia con resultado incierto y carga de referencia. Resultados aún no ejecutados.
+
+### ¿Se sigue iterando?
+
+**Se finaliza el diseño de la iteración 2 y se entrega para revisión cruzada en PR #4.** No queda pendiente elegir
+broker ni redactar el paso 7. Los ADR-0020 a 0028 mantienen `proposed` hasta aceptación real por ambos; el cierre
+administrativo se registra al aprobar. Si pruebas o cuotas invalidan las hipótesis, se crea un refinamiento/ADR,
+no se afirma que el requisito estaba cumplido. Se continúa con implementación y las iteraciones 3/4.
 
 ## Acuerdos de integración actualizados
 
@@ -147,5 +186,4 @@ reales en este paso. Las pruebas de carga/fallo son pendientes; no hay métricas
   accede directamente a tablas del otro proceso ni se usan copias sin vigencia para confirmar revocación.
 * La versión externa no es condición universal para incorporar reservas. Un correo con referencia y datos
   suficientes puede crear una reserva; cambios conflictivos sin orden confiable requieren conciliación controlada.
-* El broker concreto, los límites de carga, retención, reintentos y la evaluación del paso 7 siguen pendientes.
-  Esta actualización alinea el diseño; no declara implementadas ni probadas sus garantías.
+* RabbitMQ, políticas operativas y paso 7 se completan en ADR-0028 y el contrato de operación. Sus garantías requieren las pruebas declaradas, no se presentan como observadas.

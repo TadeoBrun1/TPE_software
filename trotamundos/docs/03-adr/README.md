@@ -55,3 +55,12 @@ Estado propuesto sin aprobación cruzada registrada. La base ya incluye la prime
 | [0027](0027-publicacion-del-nucleo.md) | Outbox transaccional de cambios confirmados | proposed |
 
 0020–0024 se refinan: versión externa opcional, configuración autoritativa en núcleo y receptor interno.
+
+## Decisión final de diseño de iteración 2
+
+| ADR | Decisión | Estado |
+|---|---|---|
+| [0028](0028-rabbitmq-y-politicas.md) | RabbitMQ con colas quorum y políticas operativas | proposed |
+
+El análisis ADD del paso 7 ya se realizó. Las pruebas de implementación y la aceptación cruzada son evidencia
+posterior distinta; no se cambian estados a accepted sin esa revisión.

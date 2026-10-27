@@ -78,4 +78,4 @@ novedades por referencia estable de fuente o huella acordada, sin exigir una ver
 sin orden confiable. ADR-0003 define la región; ADR-0004, la puerta de entrada.
 
 Esta outbox es la de ingesta; la publicación transaccional del núcleo se documenta aparte en
-[ADR-0027](0027-publicacion-del-nucleo.md). La tecnología del broker y sus parámetros siguen pendientes.
+[ADR-0027](0027-publicacion-del-nucleo.md). RabbitMQ y sus políticas se definen en [ADR-0028](0028-rabbitmq-y-politicas.md); las pruebas del prototipo siguen pendientes.

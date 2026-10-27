@@ -74,3 +74,9 @@ Simular vinculación válida, expiración, renovación inválida, revocación co
 El núcleo administra usuario, región, filtros y vinculaciones. Ingesta administra cursores, trabajos y secretos
 protegidos. La vigencia se obtiene por una interfaz interna con coordinación de revocación; no mediante lectura
 directa de tablas ni una segunda autoridad de permisos. OAuth de correo no decide la autenticación de la app.
+
+### Protocolo refinado de vigencia
+
+[ingestion-authorization.md](../../specs/ingestion-authorization.md) fija estados/revisiones, inicio de operaciones
+y barrera de desvinculación. La app solo confirma éxito cuando la autoridad coordinó el sellado; llamadas ya
+iniciadas no se cancelan retroactivamente. La implementación debe probar carreras, no asumirlas resueltas por un flag.

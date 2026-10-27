@@ -2,18 +2,33 @@ asyncapi: 2.6.0
 info:
   title: Novedades de reservas detectadas — propuesta de iteración 2
   version: 0.1.0
-  description: 'Productor: ingesta. Consumidor: núcleo. v1 es la familia del evento;
-    propuesta sin compatibilidad estable aún. ADR-0020 a 0024. Semántica y fallos:
-    specs/ingestion-contract.md. publish se interpreta desde la aplicación productora
-    de ingesta. Broker y transporte pendientes.'
+  description: Productor ingesta, consumidor núcleo; contrato de diseño iteración
+    2. RabbitMQ AMQP 0-9-1 sobre TLS, vhost por región, exchange travel.ingestion,
+    routing booking.change.detected.v1.s0 a .s7. ADR-0028 y specs/ingestion-operations.md.
+    El nombre lógico del evento no es la routing key. Payload 0.1.0 sujeto a revisión.
 defaultContentType: application/json
 channels:
-  booking.change.detected.v1:
-    description: Novedad externa para evaluar; no es confirmación del estado operativo.
+  booking.change.detected.v1.s{shard}:
+    description: Routing key del exchange topic travel.ingestion; shard estable por
+      homeRegion/userId.
     publish:
       operationId: publishDetectedBookingChange
       message:
         $ref: '#/components/messages/BookingChangeDetected'
+    parameters:
+      shard:
+        description: Shard fijo; algoritmo en ingestion-operations.md.
+        schema:
+          type: string
+          enum:
+          - '0'
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+          - '6'
+          - '7'
 components:
   messages:
     BookingChangeDetected:
@@ -137,8 +152,8 @@ components:
           businessChangeKey:
             type: string
             minLength: 1
-            description: Identidad de la novedad por referencia estable de fuente o huella normalizada;
-              codificación canónica a acordar.
+            description: Identidad de la novedad por referencia estable de fuente
+              o huella normalizada; codificación canónica a acordar.
         allOf:
         - oneOf:
           - properties:

@@ -73,4 +73,12 @@ La documentación de un impacto no equivale a una aprobación ni a una prueba ej
 Se proponen los ajustes antes identificados: avisos por Gateway, ADR-0003 para región y ADR-0004 para entrada,
 correo sin versión externa obligatoria, autoridad de configuración en núcleo, RF-06 con adaptador de agencia y
 outbox propia del núcleo. Ver ADR-0025 a 0027. La revisión cruzada queda pendiente; no se atribuye aprobación.
-El broker, tiempos/cuotas/retención, migración o recuperación regional y la evaluación del paso 7 siguen abiertos.
+Broker, políticas iniciales y paso 7 se completan en ADR-0028. Validación de cuotas/capacidad y recuperación regional (iteración 3) siguen abiertas como riesgos.
+
+## Cierre analítico de iteración 2 — 2026-10-27
+
+Se elige RabbitMQ y se fijan carga/presupuesto/reintentos/retención, en ADR-0028. Las menciones anteriores de broker
+pendiente describen el estado previo, reemplazado por esta decisión. Paso 7 completado por recorrido de escenarios;
+prototipo sin ejecutar. Impacto a revisar con 3: tres zonas para quorum del broker (mínimo anterior dos), consumo
+por shard/usuario, aplicación transaccional, presupuesto del núcleo/cliente y barrera de autorización. Se conserva
+el dominio de 1 y no se impone separación lectura/escritura ni almacén analítico. La revisión cruzada sigue pendiente.

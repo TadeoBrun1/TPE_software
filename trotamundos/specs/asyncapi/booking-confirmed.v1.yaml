@@ -1,0 +1,63 @@
+asyncapi: 2.6.0
+info:
+  title: Cambios confirmados de reservas
+  version: 0.1.0
+  description: Contrato de diseño iteración 2 coordinado con 3/4. AMQP 0-9-1 sobre
+    RabbitMQ, exchange travel.domain; ADR-0027/0028.
+defaultContentType: application/json
+channels:
+  booking.changed.v1:
+    publish:
+      operationId: publishConfirmedBookingChange
+      message:
+        $ref: '#/components/messages/BookingChanged'
+components:
+  messages:
+    BookingChanged:
+      name: BookingChanged
+      payload:
+        type: object
+        additionalProperties: false
+        required:
+        - eventId
+        - schemaVersion
+        - correlationId
+        - homeRegion
+        - userId
+        - bookingId
+        - bookingVersion
+        - changeType
+        - committedAt
+        properties:
+          eventId:
+            type: string
+            minLength: 1
+          correlationId:
+            type: string
+            minLength: 1
+          homeRegion:
+            type: string
+            minLength: 1
+          userId:
+            type: string
+            minLength: 1
+          bookingId:
+            type: string
+            minLength: 1
+          schemaVersion:
+            type: string
+            enum:
+            - '1'
+          bookingVersion:
+            type: integer
+            minimum: 1
+          changeType:
+            type: string
+            enum:
+            - created
+            - updated
+            - cancelled
+            - deleted
+          committedAt:
+            type: string
+            format: date-time

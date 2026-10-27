@@ -20,3 +20,11 @@ Las rutas de lectura/escritura pueden seguir dentro del mismo desplegable; no se
 
 Validación futura: fallo antes de confirmar la transacción no genera cambio/evento parcial; fallo tras commit
 permite publicar al recuperar; reentregar una novedad no duplica el cambio; cambios manuales también se publican.
+
+## Transporte fijado
+
+RabbitMQ, exchange `travel.domain`, routing key `booking.changed.v1`, cola independiente por consumidor; TLS,
+roles y confirm/mandatory/ACK según [políticas](ingestion-operations.md). Esquema mínimo en
+[booking-confirmed.v1.yaml](asyncapi/booking-confirmed.v1.yaml). La versión bookingVersion es interna del núcleo,
+no sourceVersion del proveedor. El payload analítico puede ampliarse de forma compatible al refinar 4; este
+contrato mínimo no decide su almacenamiento ni autoriza copiar datos personales indiscriminadamente.

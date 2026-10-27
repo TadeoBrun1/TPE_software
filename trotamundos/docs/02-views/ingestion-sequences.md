@@ -115,3 +115,10 @@ se detalla antes de implementar con la iteración 3; no supone acceso de ingesta
 y la confirmación de revocación requieren coordinación de vigencia; una copia atrasada no demuestra QA-8.
 La publicación confirmada del núcleo se describe en [core-publication.md](../../specs/core-publication.md).
 La asistencia a agencias se describe en [agency-assistance.md](../../specs/agency-assistance.md).
+
+## Políticas de ejecución fijadas por el cierre de diseño
+
+El canal de los diagramas es RabbitMQ regional; outbox solo se marca enviada tras confirm y ausencia de retorno
+mandatory. El consumidor confirma después de resultado durable. Reintentos/errores/retención están en
+[ingestion-operations.md](../../specs/ingestion-operations.md). Revocación usa los estados y barrera de
+[ingestion-authorization.md](../../specs/ingestion-authorization.md), sin cancelar solicitudes ya enviadas.
