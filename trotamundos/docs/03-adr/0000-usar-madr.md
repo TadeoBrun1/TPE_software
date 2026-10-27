@@ -1,7 +1,7 @@
 ---
 status: "accepted"
 date: 2026-10-14
-decision-makers: "<A>, <B>"
+decision-makers: "Tadeo Brun, Tomas Lateana"
 ---
 
 # Usar MADR para registrar las decisiones de arquitectura
@@ -13,8 +13,8 @@ convención común para que las decisiones de las cuatro iteraciones sean consis
 
 ## Decision Drivers
 
-* CON-2: ADRs en formato MADR.
-* CRN-5: trazabilidad entre drivers, decisiones, vistas, specs y código.
+* Requisito del enunciado: documentar las decisiones con ADRs en formato MADR.
+* Criterio de evaluación: trazabilidad entre drivers, decisiones, vistas, specs y código.
 * Trabajo en paralelo de dos personas.
 
 ## Considered Options

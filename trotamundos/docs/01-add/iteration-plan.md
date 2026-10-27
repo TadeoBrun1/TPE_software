@@ -10,9 +10,9 @@ sistema, y las siguientes atacan los drivers de mayor prioridad, empezando por l
 
 | # | Objetivo | Drivers | Responsable |
 |---|---|---|---|
-| 1 | Estructura general del sistema, estilo arquitectónico y deployment de alto nivel | CRN-1, QA-5, QA-9 (a nivel de estructura), CON-7 | Ambos |
-| 2 | Ingesta de reservas desde correo y terceros: frescura, interoperabilidad y acceso seguro a correos | RF-01, RF-02, RF-03, QA-1, QA-6, QA-8, CRN-3 | `<A>` |
-| 3 | Consulta de itinerarios: latencia, disponibilidad y escala ante picos | RF-04, RF-05, QA-2, QA-3, QA-4, QA-5, CRN-4 | `<B>` |
+| 1 | Estructura general del sistema, estilo arquitectónico y deployment de alto nivel | RF-01, RF-03, RF-05, RF-07, QA-1, QA-2, QA-4, QA-5, QA-9, QA-10 (a nivel de estructura), CRN-1, CON-1, CON-2, CON-3 | Ambos |
+| 2 | Ingesta de reservas desde correo y terceros: frescura, interoperabilidad y acceso seguro a correos | RF-01, RF-02, RF-03, QA-1, QA-6, QA-8, CRN-3, CRN-4 | `<A>` |
+| 3 | Consulta de itinerarios: latencia, disponibilidad y escala ante picos | RF-04, RF-05, QA-2, QA-3, QA-4, QA-5 | `<B>` |
 | 4 | Seguridad de compartición, internacionalización, analítica sin afectar a los usuarios y evolucionabilidad | RF-07, RF-08, QA-7, QA-9, QA-10, CRN-2 | Ambos |
 | 5 (opcional) | Opción avanzada (A o B) y refinamientos si sobra tiempo | A definir | A definir |
 

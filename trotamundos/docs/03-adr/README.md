@@ -26,10 +26,10 @@ Plantilla: [adr-template.md](adr-template.md).
 
 | ADR | Título | Estado | Iteración | Drivers |
 |---|---|---|---|---|
-| [0000](0000-usar-madr.md) | Usar MADR para registrar decisiones | accepted | Previa | CON-2 |
-| 0001 | `<estilo arquitectónico>` | proposed | 1 | CRN-1, QA-5 |
-| 0002 | `<comunicación entre servicios>` | proposed | 1 | QA-5, QA-9 |
-| 0003 | `<separación de la carga analítica>` | proposed | 1 | QA-2, RF-07 |
-| 0004 | `<estrategia de despliegue multirregión>` | proposed | 1 | QA-4, QA-10 |
+| [0000](0000-usar-madr.md) | Usar MADR para registrar decisiones | accepted | Previa | Requisito del enunciado |
+| [0001](0001-nucleo-modular-con-procesos-separados.md) | Núcleo modular con procesos separados | proposed | 1 | CRN-1, QA-5, QA-4, QA-1, QA-9 |
+| [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md) | Mensajería persistente con publicación y suscripción | proposed | 1 | QA-1, QA-6, QA-4, QA-8, QA-9 |
+| [0003](0003-almacen-analitico-separado.md) | Almacén analítico separado | proposed | 1 | RF-07, QA-2, QA-4, CON-3 |
+| [0004](0004-despliegue-por-regiones-con-region-de-origen.md) | Despliegue por regiones con región de origen | proposed | 1 | QA-4, QA-2, QA-3, QA-5, QA-10, CON-3 |
 
 Mantener esta tabla actualizada al crear una ADR nueva o cambiar su estado.
