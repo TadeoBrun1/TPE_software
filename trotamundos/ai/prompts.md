@@ -78,3 +78,9 @@ Base inicial: `a5cf3ca379324426b493cee10a78953ab0a7ab30`; actualizada antes del 
 `5e3c0c377280046e934fad1d1e13c0d31711c5c5` para conservar la primera iteración publicada por el otro integrante.
 Se refinó el contrato con región de origen, clave de negocio y orden por reserva. No se atribuyen pruebas o
 aprobaciones inexistentes.
+
+## Alineación asistida de la iteración 2
+
+2026-10-27: ChatGPT/Codex prepara correcciones de integración solicitadas por Tomas tras revisar las correcciones
+de la primera iteración. Script local con respaldo; no se registran aprobación conjunta, pruebas de sistema ni
+publicación en GitHub. Revisar el diff y documentar los aportes humanos reales antes de integrar.

@@ -70,9 +70,12 @@ Inyectar fallos antes/después de guardar avance/outbox, después de recibir con
 | ADR relacionadas | [Índice](README.md), ADR-0020 a 0024 |
 | Prototipo | [Alcance](../../prototype/README.md); implementación pendiente |
 
-### Integración con la primera iteración publicada
+### Integración con la primera iteración revisada
 
-ADR-0002 requiere clave proveedor/reserva/versión y orden por reserva; el contrato distingue `eventId`,
-`businessChangeKey` y `reservationKey`, con ámbito usuario/región/vinculación. Si la fuente no aporta identidad
-o versión confiable, se conserva para resolución. ADR-0004 requiere enrutamiento por `homeRegion` del usuario,
-no por su ubicación actual. Queda por elegir broker y probar esas propiedades; no se cambian los ADR de la primera.
+ADR-0002 delega idempotencia/orden a esta iteración. `eventId` reconoce reentregas; `businessChangeKey` identifica
+novedades por referencia estable de fuente o huella acordada, sin exigir una versión externa a todos los correos.
+`reservationKey` identifica la reserva dentro de su ámbito. El núcleo no aplica ciegamente cambios contradictorios
+sin orden confiable. ADR-0003 define la región; ADR-0004, la puerta de entrada.
+
+Esta outbox es la de ingesta; la publicación transaccional del núcleo se documenta aparte en
+[ADR-0027](0027-publicacion-del-nucleo.md). La tecnología del broker y sus parámetros siguen pendientes.

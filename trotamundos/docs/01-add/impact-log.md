@@ -67,3 +67,10 @@ La rama de ingesta se preparó originalmente sobre una versión anterior de la p
 5. Registrar la resolución real antes de cerrar la iteración.
 
 La documentación de un impacto no equivale a una aprobación ni a una prueba ejecutada. Las decisiones y verificaciones pendientes deben permanecer identificadas como tales.
+
+## Resolución documental de alineación de ingesta
+
+Se proponen los ajustes antes identificados: avisos por Gateway, ADR-0003 para región y ADR-0004 para entrada,
+correo sin versión externa obligatoria, autoridad de configuración en núcleo, RF-06 con adaptador de agencia y
+outbox propia del núcleo. Ver ADR-0025 a 0027. La revisión cruzada queda pendiente; no se atribuye aprobación.
+El broker, tiempos/cuotas/retención, migración o recuperación regional y la evaluación del paso 7 siguen abiertos.

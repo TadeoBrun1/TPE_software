@@ -68,3 +68,8 @@ Dos simuladores con campos/estados distintos deben producir el contrato común; 
 | Relación con 1/3 | [Impactos](../01-add/impact-log.md); base de 1 publicada en main, revisión de integración pendiente |
 | ADR relacionadas | [Índice](README.md), ADR-0020 a 0024 |
 | Prototipo | [Alcance](../../prototype/README.md); implementación pendiente |
+
+### RF-06 y evolución
+
+El adaptador de agencia sigue las mismas fronteras, con un contrato de asistencia separado de novedades de reservas;
+ver [ADR-0026](0026-integracion-agencia.md). El puerto de consulta externa no es invocado directamente por el núcleo.

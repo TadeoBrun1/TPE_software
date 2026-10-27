@@ -78,21 +78,31 @@ retención de reservas importadas y el tratamiento de mensajes en tránsito se a
 Son criterios de validación para paso 7/prototipo, no pruebas ejecutadas. No se fija todavía un número universal
 para concurrencia, frecuencia, tamaño, retención o reintentos; se elige y prueba por proveedor/carga acordada.
 
-## Integración con ADR-0002 y ADR-0004 publicados en la primera iteración
+## Región, identidad e idempotencia
 
-* `homeRegion` identifica la región de origen del usuario obtenida de la configuración autoritativa de la
-  vinculación/directorio, no la ubicación física del viajero. Se enruta al núcleo propietario de esa partición;
-  el consumidor verifica región y usuario. Migración de región y enrutamiento en recuperación se refinan con 3/4.
-* `eventId` evita repetir un efecto por reentrega del mismo evento, pero no reemplaza la clave de negocio de
-  ADR-0002. `businessChangeKey` representa la tupla lógica de ámbito usuario/región/vinculación, proveedor, código
-  de reserva y versión externa. La codificación canónica se acuerda con el consumidor antes de implementar.
-* `reservationKey` identifica la misma reserva dentro de ese ámbito sin incluir la versión. El canal y sus
-  consumidores deben conservar procesamiento ordenado por esa clave; múltiples trabajadores no aplican a la
-  vez versiones de una misma reserva. El orden de publicación no arregla avisos que llegan ya desordenados:
-  el núcleo valida la versión y conserva cancelaciones pendientes si el alta aún no existe.
-* Si faltan referencia/versión confiables no se fabrica la clave ni se compara una hora de recepción como versión.
-  `requiresResolution=true`; el núcleo mantiene el caso durable o consulta estado autoritativo mediante política
-  coordinada con ingesta. Los cambios publicables automáticamente incluyen ambas claves y versión. Esto hace
-  explícita una limitación de las fuentes de correo que ADR-0002 todavía no desarrollaba.
-* El broker/tecnología concreta, partición física y parámetros de retención quedan pendientes de selección y
-  prueba; el contrato expresa sus requisitos y no demuestra orden real ni exactly-once.
+* ADR-0003 define región de origen; ADR-0004 define la puerta de entrada. `homeRegion` proviene de configuración
+  autoritativa, no del GPS ni de un campo externo sin verificar. Ver [enrutamiento](notification-routing.md).
+* `eventId` se conserva en reentregas. Reconocer correos reconsultados requiere además un registro durable de
+  `connectionId + sourceMessageId + referencia de reserva extraída`; un correo puede contener varias reservas.
+* `reservationKey` identifica una reserva dentro del ámbito usuario/vinculación/proveedor y región. La conciliación
+  entre correo y API puede necesitar localizar una reserva existente por reglas de negocio, no solo por esa clave.
+* `businessChangeKey` identifica una novedad a partir de una referencia de cambio estable si existe; para correo,
+  mensaje y reserva extraída. Cuando una API no ofrece ID de cambio ni versión, puede usarse una huella canónica
+  de los campos normalizados relevantes, excluyendo horas de detección y datos variables del procesamiento.
+  La codificación exacta y los campos de esa huella deben acordarse con el consumidor antes de implementar.
+* `sourceVersion` es opcional. No se fabrica una versión externa con el orden de llegada. Un correo sin versión,
+  con identidad y datos suficientes para una reserva nueva, puede incorporarse automáticamente.
+* Si la reserva existe y el estado normalizado es equivalente, no se duplica el efecto. Si el cambio sin versión
+  contradice el estado actual y no hay orden confiable, se conserva para conciliación. La consulta externa que
+  haga falta la ejecuta ingesta mediante su adaptador, no el núcleo directamente contra el proveedor.
+* Ausencia de versión por sí sola no exige `requiresResolution=true`. Sí lo exigen identidad insuficiente,
+  contradicciones no resueltas o datos requeridos ausentes. Una cancelación anterior al alta queda pendiente
+  hasta poder asociarla; una confirmación vieja no debe reactivar una cancelación sin evidencia suficiente.
+* El canal conserva el orden de publicación por reserva donde corresponda; eso no determina el orden real en
+  la fuente. El núcleo controla concurrencia y estados en su transacción. No se promete exactly-once.
+
+## Otros contratos de integración
+
+[Asistencia con agencias](agency-assistance.md), [publicación del núcleo](core-publication.md) y
+[enrutamiento/configuración](notification-routing.md). La autenticación de usuarios de la aplicación, pendiente
+para la iteración 4, es distinta de OAuth para autorizar correo, propuesto en ADR-0021.

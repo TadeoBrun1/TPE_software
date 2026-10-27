@@ -102,9 +102,6 @@ partición. Cualquier cambio sobre ellos se anota en [impact-log.md](../01-add/i
 
 [Módulos](module-view.md) · [Despliegue](deployment-view.md) · [Secuencias](sequence-views.md)
 
-## Refinamiento de ingesta — propuesta de iteración 2
+## Detalle de ingesta alineado
 
-Ver [ingestion-view.md](ingestion-view.md). El diagrama de arriba sigue siendo una plantilla de la iteración 1.
-En el refinamiento acordado, ingesta publica una novedad y el núcleo valida/aplica el estado: la flecha al servicio
-de consulta no implica escritura directa de ingesta ni un evento confirmado para analítica. Revisar la unión de
-ambas vistas cuando la primera iteración se publique.
+Ver [ingestion-view.md](ingestion-view.md). Se conserva la vista general de la primera iteración: avisos por entrada global y Gateway, núcleo único dueño de reservas y dos flujos de mensajes.

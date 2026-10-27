@@ -43,3 +43,9 @@ npx @asyncapi/cli validate specs/asyncapi/*.yaml
 No reemplaza con el mismo significado al ejemplo `booking-events.example.yaml`: distingue detectar una novedad
 de confirmar un cambio. Revisión con la iteración 3 pendiente. Transporte, broker y contratos por proveedor
 permanecen por definir. Validar sintaxis/esquemas no demuestra comportamiento ni cumplimiento temporal.
+
+## Alineación de contratos de ingesta
+
+[Enrutamiento y configuración](notification-routing.md), [agencia](agency-assistance.md),
+[publicación del núcleo](core-publication.md). El esquema de novedades permite correo sin versión externa si los
+datos son suficientes. Broker concreto y pruebas del sistema siguen pendientes.

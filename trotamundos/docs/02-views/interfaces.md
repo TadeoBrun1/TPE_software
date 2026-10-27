@@ -23,3 +23,14 @@ acá se explica quién usa cada uno y para qué.
 implementar: novedad detectada no equivale a cambio confirmado. No se exige `tripId`. El núcleo verifica la
 vinculación y decide conciliación/asociación. Los eventos no llevan secretos y deben tolerar reentregas.
 La API de consulta y el evento confirmado de analítica siguen pendientes; los ejemplos no son contratos reales.
+
+
+## Contratos complementarios de la iteración 2
+
+| Contrato | Productor / responsable | Consumidor / destino |
+|---|---|---|
+| [Enrutamiento](../../specs/notification-routing.md) | Entrada global y Gateway | Receptor interno de ingesta |
+| [Asistencia](../../specs/agency-assistance.md) | Núcleo autoriza; ingesta integra agencia | Agencia y seguimiento en núcleo |
+| [Publicación confirmada](../../specs/core-publication.md) | Núcleo y su outbox | Consumidores de eventos de dominio |
+
+La autenticación de la aplicación no es la autorización OAuth de un buzón. Sus mecanismos no se confunden.

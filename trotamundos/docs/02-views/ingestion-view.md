@@ -12,7 +12,9 @@ flowchart TB
     A --> E["Correo y APIs externas"]
     E -->|"Resultados"| A
     A --> T["Procesador de novedades"]
-    E -->|"Avisos si existen"| H["Receptor de avisos"]
+    E -->|"Avisos si existen"| EG["Entrada global: resuelve suscripción y región"]
+    EG --> GW["API Gateway regional"]
+    GW --> H["Receptor de avisos"]
     H -->|"Trabajo durable"| R["Registro: avance, pendientes y outbox"]
     R -->|"Avisos pendientes"| C
     T -->|"Transacción con avance esperado"| R
@@ -31,9 +33,10 @@ consulta adicional al proveedor. La fuente de datos operativos y los clientes se
 |---|---|---|
 | Planificador | Frecuencia configurable y distribución de consultas | Próximos intentos, cuotas |
 | Coordinador | Comprobar vigencia y ejecutar consulta con control de concurrencia | Lease/versionado por vinculación |
-| Gestor | Autorización, renovación coordinada, acceso a secretos | Vinculación habilitada/revocada; secretos protegidos |
+| Gestor | Vigencia de configuración del núcleo por interfaz interna; renovación de tokens | Estado técnico y referencias protegidas, sin otra autoridad de permisos |
 | Adaptadores | APIs, paginación y errores específicos | Ninguna escritura directa al núcleo |
-| Receptor | Verificar autenticidad según proveedor y registrar aviso antes de confirmarlo | IDs de avisos y trabajo durable |
+| Receptor | Recibir solo por Gateway y verificar proveedor/suscripción; persistir antes de confirmar | IDs de avisos y trabajo durable |
+| Adaptador de agencia | Enviar asistencia autorizada por el núcleo y obtener respuestas | Seguimiento de entrega, sin escribir reservas |
 | Procesador | Selección, extracción, normalización y validación | Resultados con motivo; no interpretar fallos como descartes |
 | Registro | Guardar resultados/pendientes/outbox y avance de forma coordinada | Propiedad de ingesta |
 | Publicador | Enviar, esperar confirmación y registrar envío | Intentos y fecha; ID del evento estable |
@@ -79,10 +82,14 @@ contenido y parámetros de reintento se fijarán antes de implementar según car
 autoriza el inicio de cada llamada; existe una carrera con revocación que debe coordinarse, no basta un chequeo
 lejano en el planificador.
 
-## Integración regional y claves de la primera iteración
+## Integración con la primera iteración revisada
 
-El planificador selecciona la región de origen de la vinculación y el publicador enruta a su destino regional.
-El sobre incluye `homeRegion`; el núcleo verifica propiedad de usuario/región. Para cambios con referencia y
-versión se adjuntan `reservationKey` y `businessChangeKey`: orden por reserva e idempotencia de negocio según
-ADR-0002, además de deduplicar `eventId`. Casos sin identidad o versión confiable quedan pendientes, nunca se
-inventa una secuencia. Configuración concreta del broker y la concurrencia se evaluarán en el paso 7.
+El [contrato regional](../../specs/notification-routing.md) fija entrada global y Gateway, suscripciones y región.
+La publicación ocurre en el canal de la región de origen. El consumidor verifica usuario y región.
+Las versiones externas son opcionales: [contrato de novedades](../../specs/ingestion-contract.md). Se deduplican
+reentregas con `eventId` y novedades de negocio con referencias de origen/huella acordadas; el estado de la reserva
+se concilia en el núcleo sin asumir orden de llegada. Ingesta no se expone directamente en Internet.
+
+El núcleo conserva la configuración autoritativa de usuarios, filtros y vinculaciones. Ingesta guarda estado
+operativo de sincronización y secretos protegidos; consulta vigencia por un puerto interno, sin compartir tablas.
+Ver [asistencia de agencia](../../specs/agency-assistance.md), RF-06, y [publicación del núcleo](../../specs/core-publication.md).

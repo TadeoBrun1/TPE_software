@@ -20,3 +20,8 @@ Una fila por aporte relevante. Sirve para que la evolución del trabajo y la lab
 de ChatGPT/Codex. Se prepara su redacción en [iteración 2](docs/01-add/iteration-2-ingestion.md), vistas, contratos
 y ADR-0020 a 0024. No se registra aceptación del otro integrante ni prueba de prototipo. Ver
 [registro de IA](ai/prompts.md); agregar PR y revisión real cuando ocurran.
+
+## Preparación de alineación documental
+
+2026-10-27: propuesta asistida de alineación de la iteración 2 con la primera revisada. Ver ai/prompts.md,
+ADR-0020 a 0027 y contratos de integración. Pendiente revisión humana y enlace al PR; sin prueba de prototipo.

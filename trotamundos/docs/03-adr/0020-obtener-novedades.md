@@ -69,3 +69,8 @@ Comparar detección/cola/aplicación/visualización con QA-1, simular avisos rep
 | Relación con 1/3 | [Impactos](../01-add/impact-log.md); base de 1 publicada en main, revisión de integración pendiente |
 | ADR relacionadas | [Índice](README.md), ADR-0020 a 0024 |
 | Prototipo | [Alcance](../../prototype/README.md); implementación pendiente |
+
+### Entrada de notificaciones
+
+Los avisos de terceros entran por la entrada global y el API Gateway regional, según ADR-0003/0004.
+El receptor de ingesta no se expone directamente. Ver [ADR-0025](0025-enrutamiento-de-avisos.md).

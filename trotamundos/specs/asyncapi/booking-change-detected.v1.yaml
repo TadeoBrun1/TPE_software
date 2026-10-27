@@ -137,7 +137,7 @@ components:
           businessChangeKey:
             type: string
             minLength: 1
-            description: Clave lógica de ámbito + proveedor + reserva + versión externa;
+            description: Identidad de la novedad por referencia estable de fuente o huella normalizada;
               codificación canónica a acordar.
         allOf:
         - oneOf:
@@ -185,11 +185,10 @@ components:
                 - false
             required:
             - externalReservationId
-            - sourceVersion
             - reservationKey
             - businessChangeKey
       examples:
-      - name: hotel-desde-correo
+      - name: hotel-desde-correo-sin-version
         payload:
           eventId: evt-demo-001
           schemaVersion: '1'
@@ -211,6 +210,5 @@ components:
             endAt: '2026-11-12T10:00:00-03:00'
             location: Destino de demostración
           homeRegion: region-demo
-          sourceVersion: '2'
           reservationKey: demo-reservation-key
-          businessChangeKey: demo-reservation-version-2
+          businessChangeKey: demo-message-reservation-change

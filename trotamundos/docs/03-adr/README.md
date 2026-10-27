@@ -45,3 +45,13 @@ Mantener esta tabla actualizada al crear una ADR nueva o cambiar su estado.
 | [0024](0024-avance-y-publicacion-durable.md) | Avance/outbox coordinados y reintentos controlados | proposed | QA-1/6, CRN-3/4 |
 
 Estado propuesto sin aprobación cruzada registrada. La base ya incluye la primera iteración publicada en main como propuesta.
+
+## Alineación de ingesta con la primera revisada
+
+| ADR | Decisión | Estado |
+|---|---|---|
+| [0025](0025-enrutamiento-de-avisos.md) | Enrutamiento regional de avisos por Gateway | proposed |
+| [0026](0026-integracion-agencia.md) | Integración de asistencia con agencia | proposed |
+| [0027](0027-publicacion-del-nucleo.md) | Outbox transaccional de cambios confirmados | proposed |
+
+0020–0024 se refinan: versión externa opcional, configuración autoritativa en núcleo y receptor interno.

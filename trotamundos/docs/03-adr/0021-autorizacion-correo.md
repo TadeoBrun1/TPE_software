@@ -68,3 +68,9 @@ Simular vinculación válida, expiración, renovación inválida, revocación co
 | Relación con 1/3 | [Impactos](../01-add/impact-log.md); base de 1 publicada en main, revisión de integración pendiente |
 | ADR relacionadas | [Índice](README.md), ADR-0020 a 0024 |
 | Prototipo | [Alcance](../../prototype/README.md); implementación pendiente |
+
+### Propiedad de la configuración
+
+El núcleo administra usuario, región, filtros y vinculaciones. Ingesta administra cursores, trabajos y secretos
+protegidos. La vigencia se obtiene por una interfaz interna con coordinación de revocación; no mediante lectura
+directa de tablas ni una segunda autoridad de permisos. OAuth de correo no decide la autenticación de la app.

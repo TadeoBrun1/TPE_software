@@ -162,18 +162,12 @@ Son componentes lógicos de la ingesta, no microservicios obligatoriamente indep
 | Semántica del intercambio | [ingestion-contract.md](../specs/ingestion-contract.md) |
 | AsyncAPI propuesto | [booking-change-detected.v1.yaml](../specs/asyncapi/booking-change-detected.v1.yaml) |
 
-### Ajustes pendientes frente a la primera iteración actualizada
+### Alineación documental de ingesta
 
-- Mostrar las notificaciones externas pasando por entrada global y puerta de entrada regional.
-- Corregir referencias: despliegue corresponde a ADR-0003 y arquitectura de referencia a ADR-0004.
-- Revisar la exigencia de versión externa para procesamiento automático de correos.
-- Resolver cómo identificar la región antes de enrutar una notificación.
-- Incorporar RF-06, integración con la agencia de viajes.
-- Definir la propiedad de la configuración de vinculaciones, filtros y autorizaciones.
-- Completar la publicación confiable de eventos confirmados del núcleo.
-- Seleccionar y justificar la tecnología del intermediario.
+Se actualizaron receptor por Gateway, referencias ADR-0003/0004, versión externa opcional, propiedad de
+vinculaciones, asistencia de agencia y publicación confirmada. Ver ADR-0020 a 0027 y contratos de ingesta.
+Son decisiones propuestas; la selección del broker, parámetros operativos y evaluación del paso 7 siguen pendientes.
 
-Estos puntos están registrados en [impact-log.md](01-add/impact-log.md). La segunda iteración no se declara cerrada hasta evaluar y resolver su alcance.
 
 ## 9. Interfaces y secuencias
 
@@ -285,3 +279,10 @@ Antes de cerrar la segunda iteración deben revisarse conjuntamente:
 - Los riesgos y criterios de evaluación del paso 7.
 
 Los aportes y revisiones reales se registran en [TEAM-LOG.md](../TEAM-LOG.md). La asistencia de IA se documenta en [ai/prompts.md](../ai/prompts.md).
+
+## Actualización documental de alineación
+
+La revisión incorpora los acuerdos de la primera iteración sin decidir perfiles de lectura/escritura, almacén
+analítico ni recuperación regional. El contrato de correo ya no exige versión externa para toda incorporación.
+Agencia, enrutamiento y outbox del núcleo tienen contratos semánticos propuestos. La tecnología de mensajería,
+pruebas de carga/seguridad y el paso 7 siguen pendientes; no se afirma implementación ni cumplimiento de QAs.

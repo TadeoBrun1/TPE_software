@@ -33,33 +33,35 @@ QA-1 incluye también consumo y visualización, fuera de este recorrido. QA-8 ex
 se aplican antes de conservar contenido que no sea necesario. Un resultado incompleto queda pendiente con
 motivo, sin impedir guardar el avance si está representado duraderamente.
 
-## SEQ-2 — Aviso de tercero y aplicación de novedad
+## SEQ-2 — Aviso externo por la entrada global y Gateway
 
 ```mermaid
 sequenceDiagram
     participant E as Proveedor
+    participant G as Entrada global y Gateway regional
     participant I as Ingesta
-    participant R as Registro de ingesta
-    participant Q as Canal persistente
+    participant Q as Canal regional
     participant N as Núcleo
-    E->>I: Notificación de cambio
-    I->>I: Valida origen y referencia del aviso
-    I->>R: Guarda trabajo pendiente e ID del aviso
-    R-->>I: Confirmación durable
-    I-->>E: Confirma recepción del aviso
-    I->>E: Consulta estado si el aviso no trae detalle suficiente
-    E-->>I: Información de reserva
-    I->>I: Normaliza y valida
-    I->>R: Persiste resultado y outbox
+    E->>G: Aviso con referencia de suscripción
+    G->>G: Resuelve vinculación y región; comprueba contexto de origen
+    G->>I: Deriva aviso al receptor interno
+    I->>I: Valida proveedor/suscripción y guarda trabajo durable
+    I-->>G: Confirma recepción durable
+    G-->>E: Respuesta al proveedor
+    I->>E: Consulta detalles si hace falta, con autorización
+    E-->>I: Información externa
+    I->>I: Normaliza y registra resultado/outbox
     I->>Q: booking.change.detected.v1
     Q->>N: Entrega posible más de una vez
-    N->>N: Valida identidad, versión y reglas; persiste resultado atómico
+    N->>N: Concilia y guarda resultado/control de aplicación
     N-->>Q: Confirma tras resultado durable
 ```
 
-Una API que no ofrezca avisos se sondea según ADR-0020. Confirmar un webhook no equivale a aplicar la reserva.
-El consumidor registra el efecto o una resolución pendiente de modo durable antes de confirmar al canal. El evento
-confirmado del núcleo para analítica es otro contrato, a refinar en 3/4.
+Entrada global y Gateway se agrupan en un participante para legibilidad, pero son responsabilidades distintas.
+El registro mínimo de suscripciones se configura antes del aviso; si no hay una región inequívoca no se difunde
+el contenido a todas las regiones. Ver [contrato regional](../../specs/notification-routing.md).
+La fuente puede no ofrecer versión: se compara estado o se conserva conflicto para conciliación, no se exige
+versión para toda incorporación automática. Confirmar un aviso no equivale a aplicar una reserva.
 
 ## SEQ-3 — Caída tras publicar y antes de registrar envío
 
@@ -105,3 +107,11 @@ trabajos aún no publicados tras comprobar su desvinculación. Coordinar ese blo
 a retirar mensajes ya entregados al canal ni borrar reservas existentes; ese alcance se define con 3/4.
 
 [Vista](ingestion-view.md) · [Contrato](../../specs/ingestion-contract.md) · [Iteración](../01-add/iteration-2-ingestion.md).
+
+## Configuración y revocación
+
+El rol Vinculaciones representa la coordinación con la configuración autoritativa del núcleo. El canal exacto
+se detalla antes de implementar con la iteración 3; no supone acceso de ingesta a sus tablas. El inicio de consultas
+y la confirmación de revocación requieren coordinación de vigencia; una copia atrasada no demuestra QA-8.
+La publicación confirmada del núcleo se describe en [core-publication.md](../../specs/core-publication.md).
+La asistencia a agencias se describe en [agency-assistance.md](../../specs/agency-assistance.md).
