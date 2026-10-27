@@ -11,7 +11,9 @@ Criterio: algo es una restricción si elimina opciones de diseño. Si solo pide 
 |---|---|---|---|---|
 | CON-1 | La integración con aerolíneas, hoteles y rentadoras se hace solo mediante APIs estándar | No se pueden definir interfaces propias con esos proveedores: el diseño se adapta a sus APIs | Enunciado: "a través de APIs estándar" | Confirmada |
 | CON-2 | Los proveedores de correo, las redes sociales, la agencia de viajes y los sistemas de terceros son sistemas externos existentes que no podemos modificar | No se puede cambiar cómo se comunican ni pedirles ajustes: hay que tolerar sus latencias, límites y caídas | Inferida del enunciado | Confirmada |
-| CON-3 | Los datos personales se tratan según la normativa de protección de datos de las regiones donde opera el sistema | Dónde y cómo se almacenan y procesan los datos queda condicionado por la región del usuario | Suposición: el enunciado dice que el sistema "procesa información personal" y debe operar en varias regiones | Confirmada |
+| CON-3 | Los datos personales se tratan según la normativa de protección de datos de las regiones donde opera el sistema | Dónde y cómo se almacenan y procesan los datos queda condicionado por la región del usuario | Suposición: el enunciado dice que el sistema "procesa información personal" y debe operar en varias regiones | **Suposición a validar** (falta fijar qué normativa se toma como criterio) |
+
+| CON-4 | El cliente móvil debe aprovechar capacidades nativas del dispositivo, como el GPS | Descarta clientes móviles que no accedan a esas capacidades (por ejemplo, una página web dentro de una app) | Enunciado: "interfaz rica (aprovechando capacidades nativas como GPS en móviles)" | Confirmada |
 
 El enunciado **no impone** lenguaje, nube, base de datos ni framework. Esas son decisiones de diseño y se toman en las iteraciones con su ADR, no son restricciones.
 

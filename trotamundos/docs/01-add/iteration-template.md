@@ -25,17 +25,26 @@
 
 ## Paso 4 — Conceptos de diseño elegidos
 
-| Concepto elegido | Justificación | Alternativas descartadas | ADR |
-|---|---|---|---|
-|  |  |  |  |
+Se eligen conceptos de diseño (patrones y tácticas con su nombre del libro de Bass), no tecnologías. Las
+alternativas descartadas van en la ADR.
 
-<!-- Opcional: matriz de decisión (Keeling, actividad 32), con escala Promueve fuerte / Promueve / Neutral / Inhibe / Inhibe fuerte. -->
+### Patrones
+
+| Patrón | Tipo (arquitectónico, de diseño, de despliegue) | Cómo se aplica | Drivers | ADR |
+|---|---|---|---|---|
+|  |  |  |  |  |
+
+### Tácticas
+
+| Atributo | Táctica | Cómo se aplica | Drivers | ADR |
+|---|---|---|---|---|
+|  |  |  |  |  |
 
 ## Paso 5 — Instanciación
 
-| Decisión de instanciación | Justificación |
-|---|---|
-|  |  |
+| Elemento | Tipo | Responsabilidades | Se refina en |
+|---|---|---|---|
+|  |  |  |  |
 
 ### Contratos nuevos o modificados
 

@@ -3,7 +3,7 @@
 **Qué es:** punto de entrada y resumen de toda la arquitectura. No repite el detalle: lo resume y enlaza a la vista,
 iteración, ADR o spec que lo contiene.
 **Mantiene:** ambos. Se actualiza **al cerrar cada iteración** (y la revisa la otra persona).
-**Estado:** esqueleto. Completar secciones a medida que avanzan las iteraciones.
+**Estado:** completo hasta la iteración 1 (en revisión). Las secciones restantes se completan con las iteraciones 2 a 4.
 
 Las secciones siguen la estructura sugerida por el paper adjunto al TPE (introducción, contexto, drivers, dominio,
 contenedores, componentes, secuencias, interfaces y decisiones).
@@ -12,11 +12,17 @@ contenedores, componentes, secuencias, interfaces y decisiones).
 
 ## 1. Introducción
 
-<!-- Una o dos páginas: qué es Trotamundos, para quién es este documento, cómo se leyó el enunciado, estado actual. -->
+Trotamundos es un panel de gestión de viajes para web y móvil que reúne en un único lugar todas las reservas de un
+viajero (vuelos, hoteles, autos, trenes y autobuses), organizadas por viaje. Las reservas llegan solas desde el correo
+del usuario y desde sistemas de terceros. El sistema es global: 15 millones de cuentas, 2 millones de usuarios activos
+por semana y picos fuertes ante disrupciones.
+
+Este documento resume la arquitectura y enlaza al detalle. Está dirigido a los docentes y a quien tenga que evolucionar
+el diseño.
 
 | Iteración | Estado | Qué aportó a este documento |
 |---|---|---|
-| 1 | Pendiente |  |
+| 1 | En revisión | Arquitectura de referencia, contenedores, despliegue multirregión y primeras ADRs |
 | 2 | Pendiente |  |
 | 3 | Pendiente |  |
 | 4 | Pendiente |  |
@@ -48,11 +54,18 @@ Ver [cc-view.md](02-views/cc-view.md) y [deployment-view.md](02-views/deployment
 
 | Contenedor | Responsabilidad |
 |---|---|
-|  |  |
+| Aplicación web y app móvil | Clientes ricos; la app móvil es nativa y usa GPS (CON-4) |
+| Entrada global | Dirige cada solicitud a la región de origen del usuario |
+| Puerta de entrada | Único punto de entrada a cada región; valida, balancea y limita el tráfico |
+| Núcleo | Monolito modular sin estado; único dueño de viajes y reservas |
+| Ingesta | Sondea correos, recibe notificaciones y consulta a terceros; un adaptador por proveedor |
+| Intermediario de mensajes | Temas de novedades de reservas y de eventos de dominio |
+| Base operativa | Datos de la región, particionados por usuario |
+| Analítica | Proceso separado; su almacén se decide en la iteración 4 |
 
 ## 6. Vista de componentes
 
-<!-- Un diagrama por contenedor, con su tabla de responsabilidades; enlazar o resumir desde cc-view.md. -->
+Ver [module-view.md](02-views/module-view.md): módulos del núcleo y de la ingesta. Se refina en las iteraciones 2 y 3.
 
 ## 7. Vistas de secuencia
 
@@ -68,7 +81,7 @@ Ver [índice de ADRs](03-adr/README.md).
 
 | Iteración | Decisiones principales |
 |---|---|
-| 1 |  |
+| 1 | Clientes ricos y API Gateway ([0004](03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md)); núcleo modular con ingesta y analítica separadas ([0001](03-adr/0001-nucleo-modular-con-procesos-separados.md)); publicación y suscripción ([0002](03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md)); multirregión con región de origen ([0003](03-adr/0003-despliegue-por-regiones-con-region-de-origen.md)) |
 | 2 |  |
 | 3 |  |
 | 4 |  |
@@ -77,10 +90,10 @@ Ver [índice de ADRs](03-adr/README.md).
 
 | Driver | Iteración | ADRs | Vista(s) | Spec(s) | Prototipo |
 |---|---|---|---|---|---|
-| QA-1 |  |  |  |  |  |
+| QA-1 | 1, 2 | 0001, 0002 | C&C | asyncapi | Ingesta y broker |
 | QA-2 |  |  |  |  |  |
-| QA-4 |  |  |  |  |  |
-| QA-5 |  |  |  |  |  |
+| QA-4 | 1, 3 | 0001, 0003, 0004 | C&C, despliegue | — | Consulta con la ingesta caída |
+| QA-5 | 1, 3 | 0001, 0003, 0004 | Despliegue | — | — |
 | QA-6 |  |  |  |  |  |
 | QA-8 |  |  |  |  |  |
 
@@ -88,4 +101,8 @@ Ver [índice de ADRs](03-adr/README.md).
 
 | Riesgo o deuda | Origen | Mitigación | Estado |
 |---|---|---|---|
-|  |  |  |  |
+| Sondear millones de buzones puede no entrar en los 5 minutos (QA-1) | Iteración 1 | Notificaciones del proveedor de correo, sondeo como respaldo | Abierto (iteración 2) |
+| La conmutación ante fallas puede consumir el presupuesto de QA-4 | Iteración 1 | Heartbeat y conmutación automática con tiempos medibles | Abierto (iteración 3) |
+| Notificaciones de terceros sin región conocida | Iteración 1 | Ubicar la región a partir de la reserva | Abierto (iteración 2) |
+| Itinerarios compartidos entre regiones | Iteración 1 | Leer desde la región de origen del dueño | Abierto (iteración 4) |
+| CON-3 es una suposición sin normativa concreta | Requerimientos | Validarla | Abierto |
