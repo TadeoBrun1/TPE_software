@@ -17,3 +17,7 @@ Completar al cerrar la iteración 1.
 | Modelo de datos de reservas | Iteración 1 | Cualquiera, con aviso |
 | Bus o cola de eventos | Iteración 1 | Cualquiera, con aviso |
 | Contratos de `specs/` | Iteración que los crea | Su dueño, con aviso |
+| Modelo canónico de reserva | Iteración 1 | Cualquiera, con aviso |
+| Esquema de mensajes (novedades y eventos de dominio) | Iteración 1 | Cualquiera, con aviso |
+| Clave de partición por usuario y región de origen | Iteración 1 | Cualquiera, con aviso |
+| Perfiles de consulta y de gestión del núcleo | Iteración 1 | Iteración 3, con aviso |

@@ -13,7 +13,7 @@ El sistema Trotamundos es un panel de gestión de viajes en línea para permitir
 | Página | Qué contiene |
 |---|---|
 | [Diagrama de contexto](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/context-diagram.md) | Límites del sistema y actores externos |
-| [Casos de uso](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/functional-rqmts.md) | Qué hace el sistema |
+| [Requerimientos funcionales](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/functional-rqmts.md) | Qué hace el sistema |
 | [Atributos de calidad](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/quality-attribute-scenarios.md) | Escenarios SEI de 6 partes |
 | [Árbol de utilidad](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/utility-tree.md) | Escenarios priorizados (importancia, dificultad) |
 | [Restricciones y concerns](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/constraints-concerns.md) | Lo que quita libertad al diseño y las preocupaciones de diseño |
