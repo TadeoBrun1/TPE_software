@@ -89,3 +89,20 @@ Ver [índice de ADRs](03-adr/README.md).
 | Riesgo o deuda | Origen | Mitigación | Estado |
 |---|---|---|---|
 |  |  |  |  |
+
+## Refinamiento propuesto de ingesta — iteración 2
+
+Pasos 2 a 6 de [la iteración 2](01-add/iteration-2-ingestion.md) documentados; evaluación del paso 7 pendiente.
+La base ya incluye la primera iteración en main. Las vistas generales siguen pendientes de completar por su
+responsable; este anexo no declara cerrada la arquitectura ni reemplaza sus decisiones.
+
+| Elemento | Documento |
+|---|---|
+| Componentes/conectores de ingesta | [Vista](02-views/ingestion-view.md) |
+| Comportamiento y recuperación | [Secuencias](02-views/ingestion-sequences.md) |
+| Interfaz ingesta-núcleo | [Contrato](../specs/ingestion-contract.md), [AsyncAPI](../specs/asyncapi/booking-change-detected.v1.yaml) |
+| Decisiones | [Índice ADR](03-adr/README.md), 0020–0024 propuestas |
+| Riesgos compartidos | [Impactos](01-add/impact-log.md) |
+
+Ingesta detecta novedades con autorización; núcleo controla las reservas y publica cambios confirmados. La
+transferencia analítica es otro contrato. No hay implementación ni prueba de latencia, seguridad o recuperación.

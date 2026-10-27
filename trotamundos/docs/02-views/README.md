@@ -21,3 +21,10 @@ Los diagramas son Mermaid.
 1. Copiar [view-template.md](view-template.md).
 2. Completar propósito, diagrama, catálogo y rationale.
 3. Agregar la fila al índice de arriba y a [../architecture.md](../architecture.md).
+
+## Refinamiento propuesto de ingesta (iteración 2)
+
+* [Componentes y conectores de ingesta](ingestion-view.md).
+* [Secuencias de correo, avisos, recuperación y revocación](ingestion-sequences.md).
+
+Estos detalles complementan las vistas generales; deben integrarse con la actualización de la iteración 1.

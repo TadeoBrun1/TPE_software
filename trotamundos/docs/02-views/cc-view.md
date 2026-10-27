@@ -55,3 +55,10 @@ flowchart LR
 ## 8. Vistas relacionadas
 
 [Módulos](module-view.md) · [Despliegue](deployment-view.md) · [Secuencias](sequence-views.md)
+
+## Refinamiento de ingesta — propuesta de iteración 2
+
+Ver [ingestion-view.md](ingestion-view.md). El diagrama de arriba sigue siendo una plantilla de la iteración 1.
+En el refinamiento acordado, ingesta publica una novedad y el núcleo valida/aplica el estado: la flecha al servicio
+de consulta no implica escritura directa de ingesta ni un evento confirmado para analítica. Revisar la unión de
+ambas vistas cuando la primera iteración se publique.

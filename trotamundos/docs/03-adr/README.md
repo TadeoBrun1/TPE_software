@@ -33,3 +33,15 @@ Plantilla: [adr-template.md](adr-template.md).
 | [0004](0004-despliegue-por-regiones-con-region-de-origen.md) | Despliegue por regiones con región de origen | proposed | 1 | QA-4, QA-5, CON-3 |
 
 Mantener esta tabla actualizada al crear una ADR nueva o cambiar su estado.
+
+## Iteración 2 — decisiones propuestas
+
+| ADR | Decisión | Estado | Drivers |
+|---|---|---|---|
+| [0020](0020-obtener-novedades.md) | Sondeo configurable y avisos disponibles | proposed | RF-01/03, QA-1/6 |
+| [0021](0021-autorizacion-correo.md) | Autorización delegada y mínimo privilegio | proposed | QA-8, CRN-4 |
+| [0022](0022-tuberia-ingesta.md) | Etapas internas de procesamiento | proposed | RF-01/02/03, QA-6/8 |
+| [0023](0023-adaptadores-proveedores.md) | Puertos y adaptadores por fuente | proposed | QA-6/9, CON-1/2 |
+| [0024](0024-avance-y-publicacion-durable.md) | Avance/outbox coordinados y reintentos controlados | proposed | QA-1/6, CRN-3/4 |
+
+Estado propuesto sin aprobación cruzada registrada. La base ya incluye la primera iteración publicada en main como propuesta.

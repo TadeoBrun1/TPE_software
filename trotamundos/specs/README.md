@@ -34,3 +34,12 @@ definan en las iteraciones.
 npx @redocly/cli lint specs/openapi/*.yaml
 npx @asyncapi/cli validate specs/asyncapi/*.yaml
 ```
+
+## Contrato propuesto de iteración 2
+
+* [Semántica, errores y coordinación con el núcleo](ingestion-contract.md).
+* [AsyncAPI de novedad detectada](asyncapi/booking-change-detected.v1.yaml), borrador 0.1.0.
+
+No reemplaza con el mismo significado al ejemplo `booking-events.example.yaml`: distingue detectar una novedad
+de confirmar un cambio. Revisión con la iteración 3 pendiente. Transporte, broker y contratos por proveedor
+permanecen por definir. Validar sintaxis/esquemas no demuestra comportamiento ni cumplimiento temporal.

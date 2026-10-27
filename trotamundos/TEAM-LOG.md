@@ -12,3 +12,10 @@ Una fila por aporte relevante. Sirve para que la evolución del trabajo y la lab
 | 2026-10-27 | `Tadeo Brun` | Revision y correccion de requerimientos funcionales | `functional-rqmts.md` |
 | 2026-10-27 | `Tadeo Brun` + `Tomas Lateana` | Iteracion 1 de ADD y ADRs 0001 a 0004 | `iteration-1-structure.md`, `docs/03-adr/` |
 |  |  |  |  |
+
+## Preparación asistida pendiente de revisión
+
+2026-10-27: Tomas desarrolló en conversación el objetivo, los conceptos y los componentes de ingesta con asistencia
+de ChatGPT/Codex. Se prepara su redacción en [iteración 2](docs/01-add/iteration-2-ingestion.md), vistas, contratos
+y ADR-0020 a 0024. No se registra aceptación del otro integrante ni prueba de prototipo. Ver
+[registro de IA](ai/prompts.md); agregar PR y revisión real cuando ocurran.
