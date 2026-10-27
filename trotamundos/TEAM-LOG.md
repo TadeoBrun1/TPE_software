@@ -7,4 +7,6 @@ Una fila por aporte relevante. Sirve para que la evolución del trabajo y la lab
 |---|---|---|---|
 | 2026-10-14 | `Tadeo Brun` + `Tomas Lateana` | Esqueleto del repo y plantillas | `README.md` |
 | 2026-10-15 | `Tadeo Brun` | Revision y correccion de QAs con skill /test-Qa | `quality-attribute-scenarios.md` |
+| 2026-10-27 | `Tadeo Brun` | Revision y correccion de restricciones y concerns | `constraints-concerns.md` |
+| 2026-10-27 | `Tadeo Brun` | Correccion de los links de la portada y el menu lateral de la wiki para que apunten al repo | `wiki/Home.md`, `wiki/_Sidebar.md` |
 |  |  |  |  |

@@ -1,29 +1,40 @@
-# Trotamundos — Wiki del TPE
+# Wiki TPE Ingeniería de software: Trotamundos
 
-Arquitectura de software de **Trotamundos**, un panel de gestión de viajes, diseñada con **ADD** (Attribute-Driven
-Design). Esta wiki es la portada; el contenido completo vive en el repositorio.
+El fin de este proyecto es diseñar la arquitectura del sistema 'Trotamundos' mediante iteraciones ADD, documentando todas las decisiones elegidas con sus respectivas ventajas y desventajas, con sus distintos tipos de vistas (vista estática, dinámica, hexagonal, etc.), y mediante la elaboración de un prototipo.
 
-> Reemplazar `<usuario>` por el usuario u organización en los links.
+### ¿Qué es el sistema 'Trotamundos'?
 
-## Navegación
+El sistema Trotamundos es un panel de gestión de viajes en línea para permitir a los viajeros ver todas sus reservas existentes organizadas por viaje, ya sea a través de la web o desde su dispositivo móvil. El objetivo es ofrecer un único punto de verdad para todos los arreglos de viaje (hoteles, autos, vuelos, trenes, autobuses) en una interfaz simple centrada en el viaje, mitigando la frustración de rastrear múltiples aplicaciones y bandejas de correo.
 
-- [Documento central de arquitectura](https://github.com/<usuario>/trotamundos/blob/main/docs/architecture.md)
-- [Requerimientos y QAs](https://github.com/<usuario>/trotamundos/tree/main/docs/00-requirements)
-- [Iteraciones ADD](https://github.com/<usuario>/trotamundos/tree/main/docs/01-add)
-- [Vistas arquitectónicas](https://github.com/<usuario>/trotamundos/tree/main/docs/02-views)
-- [ADRs](https://github.com/<usuario>/trotamundos/tree/main/docs/03-adr)
-- [Contratos (specs)](https://github.com/<usuario>/trotamundos/tree/main/specs)
-- [Prototipo](https://github.com/<usuario>/trotamundos/tree/main/prototype)
+---
 
-## Estado
+### Requerimientos iniciales
 
-| Iteración | Objetivo | Responsable | Estado |
-|---|---|---|---|
-| 1 | Estructura general | Ambos | Pendiente |
-| 2 | Ingesta de reservas | A | Pendiente |
-| 3 | Consulta, latencia, disponibilidad y escala | B | Pendiente |
-| 4 | Seguridad, compartición, i18n y analítica | Ambos | Pendiente |
+| Página | Qué contiene |
+|---|---|
+| [Diagrama de contexto](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/context-diagram.md) | Límites del sistema y actores externos |
+| [Casos de uso](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/functional-rqmts.md) | Qué hace el sistema |
+| [Atributos de calidad](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/quality-attribute-scenarios.md) | Escenarios SEI de 6 partes |
+| [Árbol de utilidad](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/utility-tree.md) | Escenarios priorizados (importancia, dificultad) |
+| [Restricciones y concerns](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/constraints-concerns.md) | Lo que quita libertad al diseño y las preocupaciones de diseño |
+| [Drivers arquitectónicos](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/00-requirements/architectural-drivers.md) | Resumen priorizado que guía el diseño |
 
-## Registro de avance
+### Iteraciones ADD
 
-Ver [TEAM-LOG](https://github.com/<usuario>/trotamundos/blob/main/TEAM-LOG.md).
+La explicación del método y el documento de cada iteración están en una misma carpeta.
+
+- [Proceso ADD e iteraciones](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/docs/01-add)
+
+### Documentación derivada de las iteraciones
+
+| Página | Qué contiene |
+|---|---|
+| [Arquitectura de Trotamundos](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/architecture.md) | Documento central: resumen de todo y trazabilidad entre drivers, decisiones y vistas |
+| [ADRs](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/docs/03-adr) | Decisiones de diseño con sus alternativas, ventajas y desventajas |
+| [Vistas](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/docs/02-views) | Modelo de dominio, vista estática (módulos), componentes y conectores, despliegue, secuencias e interfaces |
+
+### Código y seguimiento
+
+- [Contratos (specs)](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/specs): OpenAPI y AsyncAPI
+- [Prototipo](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/prototype)
+- [Registro de trabajo del equipo](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/TEAM-LOG.md)
