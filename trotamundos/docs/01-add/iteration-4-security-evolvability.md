@@ -33,10 +33,11 @@ la analítica pesada sin afectar a los usuarios y dejar la arquitectura lista pa
 
 | Concepto elegido | Justificación | Alternativas descartadas | ADR |
 |---|---|---|---|
-| Almacén analítico propio alimentado por eventos de dominio (heredada de la iteración 1) | Ver ADR | Ver ADR | [ADR-0060](../03-adr/0060-almacen-analitico-separado.md) (propuesta) |
+|  |  |  | ADR-0060 |
 
 Candidatos a considerar (no son decisiones): autenticación y autorización delegadas, control de acceso por
-itinerario, auditoría, almacén analítico separado y réplica de lectura, puntos de extensión o plug-ins para nuevos
+itinerario, auditoría, almacén analítico (la analítica ya es un proceso separado por ADR-0001; falta decidir de dónde
+saca los datos y dónde los guarda; la ADR de la iteración 1 que lo proponía se eliminó), puntos de extensión o plug-ins para nuevos
 transportes, internacionalización por recursos externos, residencia de datos por región.
 
 ## Paso 5 — Instanciación

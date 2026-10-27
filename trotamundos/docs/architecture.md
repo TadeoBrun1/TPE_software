@@ -54,10 +54,11 @@ Ver [cc-view.md](02-views/cc-view.md) y [deployment-view.md](02-views/deployment
 
 | Contenedor | Responsabilidad |
 |---|---|
-| Aplicación web y app móvil | Clientes ricos; la app móvil usa GPS y guarda el último itinerario |
-| Puerta de entrada | Único punto de entrada; enruta a la región de origen, balancea y limita el tráfico |
+| Aplicación web y app móvil | Clientes ricos; la app móvil es nativa y usa GPS (CON-4) |
+| Entrada global | Dirige cada solicitud a la región de origen del usuario |
+| Puerta de entrada | Único punto de entrada a cada región; valida, balancea y limita el tráfico |
 | Núcleo | Monolito modular sin estado; único dueño de viajes y reservas |
-| Ingesta | Sondea correos y consulta a terceros; un adaptador por proveedor |
+| Ingesta | Sondea correos, recibe notificaciones y consulta a terceros; un adaptador por proveedor |
 | Intermediario de mensajes | Temas de novedades de reservas y de eventos de dominio |
 | Base operativa | Datos de la región, particionados por usuario |
 | Analítica | Proceso separado; su almacén se decide en la iteración 4 |
@@ -80,7 +81,7 @@ Ver [índice de ADRs](03-adr/README.md).
 
 | Iteración | Decisiones principales |
 |---|---|
-| 1 | Clientes ricos y API Gateway ([0005](03-adr/0005-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md)); núcleo modular con ingesta y analítica separadas ([0001](03-adr/0001-nucleo-modular-con-procesos-separados.md)); publicación y suscripción ([0002](03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md)); multirregión con región de origen ([0004](03-adr/0004-despliegue-por-regiones-con-region-de-origen.md)) |
+| 1 | Clientes ricos y API Gateway ([0004](03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md)); núcleo modular con ingesta y analítica separadas ([0001](03-adr/0001-nucleo-modular-con-procesos-separados.md)); publicación y suscripción ([0002](03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md)); multirregión con región de origen ([0003](03-adr/0003-despliegue-por-regiones-con-region-de-origen.md)) |
 | 2 |  |
 | 3 |  |
 | 4 |  |
@@ -91,8 +92,8 @@ Ver [índice de ADRs](03-adr/README.md).
 |---|---|---|---|---|---|
 | QA-1 | 1, 2 | 0001, 0002 | C&C | asyncapi | Ingesta y broker |
 | QA-2 |  |  |  |  |  |
-| QA-4 | 1, 3 | 0001, 0004, 0005 | C&C, despliegue | — | Consulta con la ingesta caída |
-| QA-5 | 1, 3 | 0001, 0004, 0005 | Despliegue | — | — |
+| QA-4 | 1, 3 | 0001, 0003, 0004 | C&C, despliegue | — | Consulta con la ingesta caída |
+| QA-5 | 1, 3 | 0001, 0003, 0004 | Despliegue | — | — |
 | QA-6 |  |  |  |  |  |
 | QA-8 |  |  |  |  |  |
 
@@ -102,5 +103,6 @@ Ver [índice de ADRs](03-adr/README.md).
 |---|---|---|---|
 | Sondear millones de buzones puede no entrar en los 5 minutos (QA-1) | Iteración 1 | Notificaciones del proveedor de correo, sondeo como respaldo | Abierto (iteración 2) |
 | La conmutación ante fallas puede consumir el presupuesto de QA-4 | Iteración 1 | Heartbeat y conmutación automática con tiempos medibles | Abierto (iteración 3) |
+| Notificaciones de terceros sin región conocida | Iteración 1 | Ubicar la región a partir de la reserva | Abierto (iteración 2) |
 | Itinerarios compartidos entre regiones | Iteración 1 | Leer desde la región de origen del dueño | Abierto (iteración 4) |
 | CON-3 es una suposición sin normativa concreta | Requerimientos | Validarla | Abierto |

@@ -9,7 +9,8 @@
 
 Mostrar los elementos que existen en ejecución y cómo se comunican. Sirve para razonar sobre performance,
 disponibilidad, seguridad y escalabilidad. Muestra **una región**; todas las regiones tienen la misma estructura
-(ver [vista de despliegue](deployment-view.md)).
+(ver [vista de despliegue](deployment-view.md)). La entrada global que elige la región no aparece acá: está en la
+vista de despliegue.
 
 ## 2. Presentación primaria
 
@@ -17,7 +18,7 @@ disponibilidad, seguridad y escalabilidad. Muestra **una región**; todas las re
 flowchart LR
     subgraph Clientes
         W["Aplicación web<br/>(una sola página)"]
-        M["App móvil nativa<br/>(caché local, GPS)"]
+        M["App móvil nativa<br/>(GPS)"]
     end
 
     subgraph Trotamundos["Trotamundos (una región)"]
@@ -32,6 +33,8 @@ flowchart LR
     EC["Proveedores de correo"]
     ET["Sistemas de terceros<br/>(aerolíneas, hoteles, rentadoras)"]
 
+    ET -- "notificaciones (API estándar)" --> G
+    G -- "deriva notificaciones" --> I
     W -- "HTTPS / REST" --> G
     M -- "HTTPS / REST" --> G
     G -- "REST" --> N
@@ -52,12 +55,12 @@ en la dirección de la solicitud o del mensaje.
 | Elemento | Responsabilidad | Iteración que lo refina |
 |---|---|---|
 | Aplicación web | Panel de viajes y carga manual de reservas | 3 |
-| App móvil | Panel de viajes, GPS y caché del último itinerario | 3 |
-| Puerta de entrada | Único punto de entrada; valida identidad, enruta a la región de origen, balancea y limita tráfico | 3, 4 |
+| App móvil | Panel de viajes y GPS (CON-4) | 3 |
+| Puerta de entrada | Único punto de entrada a la región; valida identidad, balancea y limita tráfico; deriva las notificaciones de terceros a la ingesta | 2, 3, 4 |
 | Núcleo | Único dueño del estado de viajes y reservas; aplica novedades; publica eventos de dominio; archiva viajes completados | 3 |
 | Base operativa | Datos del núcleo de los usuarios de la región, particionados por usuario | 3 |
 | Intermediario de mensajes | Conserva y entrega los mensajes de los dos temas | 2 |
-| Ingesta | Sondea correos, consulta a terceros, traduce al modelo canónico y publica novedades | 2 |
+| Ingesta | Sondea correos, recibe notificaciones y consulta a terceros, traduce al modelo canónico y publica novedades | 2 |
 | Analítica | Consume eventos de dominio sin compartir recursos con la consulta | 4 |
 
 ## 4. Conectores
@@ -70,7 +73,8 @@ en la dirección de la solicitud o del mensaje.
 | Intermediario (tema novedades) | Núcleo | Asíncrono, suscripción | `asyncapi/` (a crear) |
 | Núcleo | Intermediario (tema eventos de dominio) | Asíncrono, publicación | `asyncapi/` (a crear) |
 | Intermediario (tema eventos de dominio) | Analítica | Asíncrono, suscripción | `asyncapi/` (a crear) |
-| Ingesta | Proveedores de correo y terceros | Síncrono, API del proveedor | Externo (CON-1, CON-2) |
+| Ingesta | Proveedores de correo y terceros | Síncrono, API del proveedor (sondeo y consulta) | Externo (CON-1, CON-2) |
+| Terceros | Puerta de entrada → Ingesta | Síncrono, notificaciones por API estándar | Externo; se detalla en la iteración 2 |
 
 ## 5. Elementos compartidos entre iteraciones
 
@@ -81,7 +85,7 @@ partición. Cualquier cambio sobre ellos se anota en [impact-log.md](../01-add/i
 
 | Decisión | ADR |
 |---|---|
-| Clientes ricos y puerta de entrada única | [0005](../03-adr/0005-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
+| Clientes ricos y puerta de entrada única | [0004](../03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
 | Núcleo modular; ingesta y analítica como procesos separados | [0001](../03-adr/0001-nucleo-modular-con-procesos-separados.md) |
 | Comunicación asincrónica por publicación y suscripción | [0002](../03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) |
 

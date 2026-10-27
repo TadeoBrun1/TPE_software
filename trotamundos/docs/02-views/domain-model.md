@@ -61,7 +61,7 @@ classDiagram
 
 | Elemento | Descripción |
 |---|---|
-| Usuario | Viajero con cuenta en la plataforma. Su región de origen decide dónde se guardan sus datos (ADR-0004) |
+| Usuario | Viajero con cuenta en la plataforma. Su región de origen decide dónde se guardan sus datos (ADR-0003) |
 | Viaje | Agrupación de reservas; una tarea programada del núcleo lo archiva al completarse (RF-05) |
 | Reserva | Hotel, auto, vuelo, tren o autobús; puede venir de correo, de un tercero o de carga manual. Si no se puede asociar a un viaje, queda en estado `pendiente` de resolución. Agregar un medio de transporte es agregar un valor a `tipo` y un adaptador (QA-9) |
 | CuentaDeCorreo | Buzón vinculado con autorización del usuario |

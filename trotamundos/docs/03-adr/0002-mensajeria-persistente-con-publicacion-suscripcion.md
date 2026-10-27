@@ -49,12 +49,12 @@ El formato de los mensajes de ambos flujos se define como contrato en `specs/asy
 
 Patrones y tácticas que aplica:
 
-| Patrón o táctica (Bass) | Cómo se aplica | Driver |
+| Patrón o táctica | Cómo se aplica | Driver |
 |---|---|---|
 | Patrón *Publish-Subscribe* | Los productores publican en un tema sin conocer a los consumidores | QA-9 |
 | Táctica *usar un intermediario* (modificabilidad e integrabilidad) | El broker separa a productores y consumidores | QA-9, QA-4 |
-| Táctica *limitar el tamaño de las colas* / amortiguar la demanda (performance) | Las ráfagas de los proveedores se acumulan en el broker y el núcleo las consume a su ritmo | QA-1, CON-2 |
-| Táctica *redundancia* del intermediario (disponibilidad) | El broker se despliega replicado entre zonas (ADR-0004) | QA-4 |
+| Táctica *limitar la respuesta a eventos* (performance) | Las ráfagas de los proveedores se encolan en el broker y el núcleo las procesa al ritmo que puede sostener | QA-1, CON-2 |
+| Táctica *redundancia* del intermediario (disponibilidad) | El broker se despliega replicado entre zonas (ADR-0003) | QA-4 |
 
 ### Qué no decide esta ADR
 
@@ -123,5 +123,5 @@ QA-8 seguridad de correos). Queda registrado en el [registro de impactos](../01-
 | Drivers | QA-4, QA-1, QA-9, CON-2 |
 | Vistas afectadas | [cc-view](../02-views/cc-view.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | `specs/asyncapi/` |
-| ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0004](0004-despliegue-por-regiones-con-region-de-origen.md), [0060](0060-almacen-analitico-separado.md) |
+| ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0003](0003-despliegue-por-regiones-con-region-de-origen.md) |
 | Código del prototipo | `prototype/` |

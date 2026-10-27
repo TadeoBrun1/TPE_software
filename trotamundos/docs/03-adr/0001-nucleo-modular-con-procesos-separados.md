@@ -52,11 +52,11 @@ Estructura resultante:
   traduce todo a un **modelo canónico de reserva**. No escribe en la base del núcleo: le entrega novedades
   (ver ADR-0002).
 * **Analítica:** proceso separado que no comparte recursos con la consulta. Cómo se alimenta y dónde guarda los
-  datos se decide en la iteración 4 (ADR-0060).
+  datos se decide en la iteración 4.
 
 Patrones y tácticas que aplica:
 
-| Patrón o táctica (Bass) | Cómo se aplica | Driver |
+| Patrón o táctica | Cómo se aplica | Driver |
 |---|---|---|
 | Patrón monolito modular | Núcleo con módulos de responsabilidad clara y dependencias controladas | RF-05, QA-9 |
 | Táctica *dividir módulo* / *aumentar cohesión* (modificabilidad) | Ingesta y analítica salen del núcleo porque cambian y escalan por motivos distintos | QA-5, QA-9 |
@@ -128,5 +128,5 @@ iteración 3, sobre el núcleo que define esta ADR.
 | Drivers | CRN-1, QA-5, QA-4, QA-1, QA-9, RF-05 |
 | Vistas afectadas | [module-view](../02-views/module-view.md), [cc-view](../02-views/cc-view.md) |
 | Specs | — |
-| ADRs relacionadas | [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md), [0004](0004-despliegue-por-regiones-con-region-de-origen.md), [0005](0005-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md), [0060](0060-almacen-analitico-separado.md) |
+| ADRs relacionadas | [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md), [0003](0003-despliegue-por-regiones-con-region-de-origen.md), [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
 | Código del prototipo | `prototype/` |

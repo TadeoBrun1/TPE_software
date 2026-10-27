@@ -13,7 +13,7 @@ Mostrar dónde corre cada elemento. Sirve para razonar sobre escalabilidad, disp
 
 ```mermaid
 flowchart TB
-    U["Clientes web y móvil"] --> E["Entrada global redundante<br/>(enruta a la región de origen)"]
+    U["Clientes web y móvil<br/>y notificaciones de terceros"] --> E["Entrada global redundante<br/>(enruta a la región de origen)"]
 
     subgraph R1["Región 1 (celda completa)"]
         direction TB
@@ -36,10 +36,6 @@ flowchart TB
         B1 -. "replicación" .- B2
     end
 
-    subgraph R1b["Respaldo pasivo de Región 1<br/>(misma jurisdicción)"]
-        BK[("Copia de respaldo")]
-    end
-
     subgraph R2["Región 2 (celda completa)"]
         X2["Misma estructura que la Región 1"]
     end
@@ -47,26 +43,24 @@ flowchart TB
     E --> G1
     E --> G2
     E --> X2
-    D1 -. "replicación asincrónica" .-> BK
 ```
 
 ## 3. Catálogo de elementos
 
 | Nodo o recurso | Qué corre | Réplicas | Observaciones |
 |---|---|---|---|
-| Entrada global | Enrutamiento por región de origen | Redundante | Resuelve la región a partir de la identidad del usuario |
+| Entrada global | Enrutamiento por región de origen | Redundante | Resuelve la región a partir de la identidad del usuario; para notificaciones de terceros, se resuelve en la iteración 2 |
 | Región (celda) | Todos los procesos y datos de los usuarios con esa región de origen | Una por mercado | Sumar una región es desplegar una celda más |
-| Zona de falla | Puerta de entrada, núcleo, ingesta, broker y base | Al menos 2 por región | Redundancia activa: todas las zonas atienden tráfico |
+| Zona de falla | Puerta de entrada, núcleo, ingesta, broker y base | Al menos 2 por región | Redundancia activa de los procesos: todas las zonas atienden tráfico; la base es primaria en una zona y réplica en la otra (redundancia pasiva) |
 | Base operativa | Datos de la región, particionados por usuario | Primaria + réplica sincrónica en otra zona | Conmutación automática |
-| Región de respaldo | Copia de los datos de una región | 1 por región, misma jurisdicción | Redundancia pasiva para la falla de una región completa |
 | Analítica | Proceso analítico | Por región | Dónde se agregan los datos de todas las regiones: iteración 4 |
 
 ## 4. Rationale
 
 | Decisión | ADR |
 |---|---|
-| Multirregión con región de origen; zonas de falla; respaldo en la misma jurisdicción | [0004](../03-adr/0004-despliegue-por-regiones-con-region-de-origen.md) |
-| Puerta de entrada redundante como único acceso | [0005](../03-adr/0005-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
+| Multirregión con región de origen; zonas de falla | [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) |
+| Puerta de entrada por región, redundante, como único acceso | [0004](../03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
 
 ## 5. Drivers que sustenta
 
@@ -75,7 +69,7 @@ flowchart TB
 | QA-4 Disponibilidad | La falla de una instancia o zona se absorbe con las otras zonas (redundancia activa) |
 | QA-5 Escalabilidad | Cada proceso tiene `n` instancias por zona y escala por separado |
 | QA-10 Multirregión | Cada región es una celda independiente que atiende a sus usuarios |
-| CON-3 (suposición) | Los datos de un usuario y su respaldo quedan en la misma jurisdicción |
+| CON-3 (suposición) | Los datos de un usuario quedan en su región de origen |
 
 ## 6. Prototipo
 
