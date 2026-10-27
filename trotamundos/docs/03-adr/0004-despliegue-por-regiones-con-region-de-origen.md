@@ -6,84 +6,109 @@ consulted: ""
 informed: ""
 ---
 
-# Despliegue por regiones con región de origen por usuario
+# Despliegue multirregión con región de origen por usuario
 
 ## Context and Problem Statement
 
-El sistema es global, debe cumplir 800 ms y 1,4 s para usuarios de todo el mundo, tolerar 5 minutos de inactividad por
-mes y tratar los datos personales según la normativa de cada región. Hay que decidir la estrategia general de
-despliegue y cómo se reparten los datos entre regiones.
+El enunciado pide que el sistema sea de uso global, accesible en todo momento (máximo 5 minutos por mes de
+inactividad no planificada) y "preparado arquitectónicamente para operar en el mercado internacional
+(multirregión)". Hay que decidir la estrategia general de despliegue: en cuántas regiones corre el sistema, cómo se
+reparten los datos entre ellas y cómo se tolera la falla de una parte de la infraestructura.
 
 ## Decision Drivers
 
-* QA-4 Disponibilidad: una sola instancia, zona o región no puede ser un punto único de falla.
-* QA-5 Escalabilidad: escalar el almacenamiento para 15 millones de cuentas.
-* CON-3: los datos personales dependen de la región del usuario.
-* Considerados, pero no drivers de esta iteración: la latencia global (QA-2 y QA-3, iteración 3) y la atención desde la región más cercana (QA-10, iteración 4).
+* QA-10 (parte multirregión): el sistema debe poder operar en varias regiones y atender al usuario desde una región
+  cercana. Es un requisito explícito del enunciado.
+* QA-4 Disponibilidad: la falla de una instancia o de una zona no debe interrumpir el servicio (estímulo del
+  escenario), dentro de un presupuesto de 5 minutos por mes.
+* CON-3 (**suposición**): los datos personales se guardan según la normativa de la región del usuario. Si se
+  descarta, la decisión sigue siendo válida por QA-10 y QA-4, pero pierde uno de sus argumentos.
+
+Beneficio esperado, que **no** es driver de esta iteración y se valida en la iteración 3: menor latencia de red
+para usuarios lejanos (QA-2, QA-3).
 
 ## Considered Options
 
-* A. Una región con varias zonas de fallo
-* B. Varias zonas más una región pasiva de recuperación
-* C. Región primaria con réplicas de lectura en todas las regiones
-* D. Región de origen por usuario, con varias zonas por región y recuperación en otra región
+* A. Una sola región con varias zonas de falla
+* B. Una región activa con varias zonas, más una región pasiva de recuperación
+* C. Una región primaria para escrituras, con réplicas de lectura en todas las regiones
+* D. Varias regiones activas; cada usuario tiene una región de origen que guarda sus datos y atiende su tráfico
 
 ## Decision Outcome
 
-Chosen option: "D. Región de origen por usuario", because acota las fallas a una región (QA-4), reparte los datos
-por usuario (QA-5) y cumple CON-3 sin conflictos de escritura: cada usuario escribe siempre en una sola región.
-Además deja preparada la latencia global y QA-10.
+Chosen option: "D. Región de origen por usuario", because es la única opción que cumple el requisito multirregión
+(QA-10) sin replicar los datos personales en todas las regiones (CON-3) y sin conflictos de escritura: cada usuario
+escribe siempre en una sola región.
 
 Reglas:
 
-* Cada usuario tiene una región de origen que guarda sus datos y atiende su tráfico.
-* Dentro de cada región hay varias instancias del núcleo repartidas en zonas de fallo distintas, con almacenamiento y
-  mensajería redundantes.
-* Cada región tiene recuperación en otra región (inicialmente pasiva para escrituras).
-* La entrada de tráfico es redundante y enruta por región de origen.
-* La región de origen forma parte de la clave de partición de datos.
+* Cada usuario tiene una **región de origen**, asignada al crear la cuenta según su país.
+* Dentro de cada región, todos los procesos (puerta de entrada, núcleo, ingesta, broker y base de datos) tienen
+  instancias en **al menos dos zonas de falla**. Esto es lo que cubre el escenario QA-4.
+* La base de datos de cada región tiene una réplica sincrónica en otra zona, con conmutación automática.
+* La entrada global de tráfico es redundante y dirige cada solicitud a la región de origen del usuario.
+* Para la falla de una región completa (que no está en el estímulo de QA-4), cada región tiene una copia de respaldo
+  en **otra región de la misma jurisdicción**, para no sacar los datos personales de donde la normativa los permite.
+* La región de origen forma parte de la clave de partición de los datos.
 
-**Qué queda sin resolver:** usuarios que viajan, itinerarios compartidos con personas de otra región (RF-08) y la
-atención regional completa de QA-10 (idiomas y formatos). Se tratan en las iteraciones 3 y 4. QA-10 **no** se marca
-como resuelto en esta iteración. Si el equipo decide no asumir el costo de D, la alternativa es B, y habrá que
-registrar que QA-2, QA-3 y QA-10 no se cumplen para usuarios lejanos.
+Patrones y tácticas que aplica:
+
+| Patrón o táctica (Bass) | Cómo se aplica | Driver |
+|---|---|---|
+| Patrón de despliegue por celdas (*Deployment Stamps*) | Cada región es una copia completa e independiente del sistema que atiende a un subconjunto de usuarios | QA-10, QA-4 |
+| Táctica *redundancia activa* (disponibilidad) | Instancias en varias zonas atendiendo tráfico al mismo tiempo | QA-4 |
+| Táctica *monitoreo / heartbeat* (disponibilidad) | El balanceador detecta instancias o zonas que no responden y deja de enviarles tráfico | QA-4 |
+| Táctica *mantener múltiples copias de los datos* | Réplica de la base en otra zona de la misma región | QA-4 |
+| Táctica *redundancia pasiva* (disponibilidad) | Copia de respaldo en otra región de la misma jurisdicción | QA-4, CON-3 |
+| Partición de datos por usuario (*sharding*) | La región de origen es parte de la clave de partición | QA-10, CON-3 |
+
+Queda sin resolver, y se trata en otras iteraciones:
+
+* Usuarios que viajan fuera de su región: se siguen atendiendo desde su región de origen; si la latencia no
+  alcanza, se revisa en la iteración 3.
+* Itinerarios compartidos con personas de otra región (RF-08): iteración 4.
+* La parte de idiomas y formatos de QA-10: iteración 4.
 
 ### Consequences
 
-* Good, because una falla queda acotada a una región.
-* Good, because cumple CON-3 y reduce la latencia sin replicar datos personales en todas partes.
-* Good, because resuelve la partición de datos por usuario (QA-5).
-* Bad, because aumenta mucho la operación: replicar datos, detectar fallas y conmutar.
-* Bad, because la conmutación debe ser automática y tardar bastante menos de 5 minutos para no consumir el
-  presupuesto mensual de QA-4.
-* Bad, because el prototipo local no puede demostrar disponibilidad global.
+* Good, because el sistema queda preparado para sumar regiones sin cambiar la estructura: sumar una región es
+  desplegar una celda más.
+* Good, because la falla de una instancia o zona no corta el servicio, y la falla de una región solo afecta a sus
+  usuarios.
+* Good, because los datos personales quedan en la región del usuario.
+* Bad, because multiplica la infraestructura: cada región tiene todos los procesos.
+* Bad, because la conmutación ante la falla de una región completa es lenta y probablemente supere el presupuesto
+  mensual de QA-4 si ocurre; se acepta porque ese evento no está en el escenario.
+* Bad, because la analítica global necesita juntar datos de todas las regiones (se decide en la iteración 4).
 
 ### Confirmation
 
-Revisión de la vista de despliegue y prueba en el prototipo: dos regiones locales simuladas, un usuario atendido por su
-región de origen y la caída de una instancia sin interrumpir la consulta.
+Revisión de la [vista de despliegue](../02-views/deployment-view.md). En el prototipo se demuestra la falla de una
+instancia del núcleo sin interrumpir la consulta; la multirregión se documenta, pero no se simula en el prototipo.
 
 ## Pros and Cons of the Options
 
-### A. Una región con varias zonas de fallo
+### A. Una sola región con varias zonas
 
-* Good, because es la más simple.
-* Bad, because una falla regional deja el sistema caído y los usuarios lejanos no cumplen la latencia.
+* Good, because es la opción más simple y cubre el estímulo de QA-4 (falla de instancia o zona).
+* Bad, because no cumple el requisito multirregión del enunciado (QA-10).
+* Bad, because guarda los datos de todos los usuarios en una sola jurisdicción (CON-3).
 
-### B. Varias zonas más una región pasiva de recuperación
+### B. Región activa más región pasiva de recuperación
 
-* Good, because cubre fallas de región con poco costo.
-* Bad, because los usuarios lejanos de la región activa no cumplen QA-2, QA-3 ni QA-10.
-* Bad, because una conmutación lenta consume el presupuesto de QA-4.
+* Good, because cubre además la falla de una región completa con poco costo.
+* Bad, because en operación normal todo el tráfico va a una sola región: no es una operación multirregión real
+  (QA-10) y todos los datos siguen en una jurisdicción (CON-3).
 
 ### C. Región primaria con réplicas de lectura en todas las regiones
 
-* Good, because mejora la latencia de lectura.
-* Bad, because las escrituras siguen siendo remotas y los datos personales se replican en todas las regiones (CON-3).
+* Good, because acerca las lecturas a los usuarios.
+* Bad, because copia los datos personales de todos los usuarios en todas las regiones (CON-3).
+* Bad, because todas las escrituras viajan a la región primaria, que sigue siendo un único punto crítico.
 
 ### D. Región de origen por usuario
 
-* Good, because satisface los cinco drivers.
+* Good, because cumple QA-10 y CON-3, y cubre QA-4 dentro de cada región.
 * Bad, because es la opción más compleja de construir y operar.
 
 ## More Information
@@ -93,8 +118,8 @@ región de origen y la caída de una instancia sin interrumpir la consulta.
 | Elemento | Enlace |
 |---|---|
 | Iteración ADD | 1, [iteration-1-structure](../01-add/iteration-1-structure.md) |
-| Drivers | QA-4, QA-5, CON-3 (considerados: QA-2, QA-3, QA-10) |
+| Drivers | QA-10 (multirregión), QA-4, CON-3 (suposición) |
 | Vistas afectadas | [deployment-view](../02-views/deployment-view.md) |
 | Specs | `specs/openapi/` |
-| ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0003](0003-almacen-analitico-separado.md) |
+| ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0005](0005-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
 | Código del prototipo | `prototype/` |

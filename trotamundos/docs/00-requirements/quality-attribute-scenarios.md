@@ -49,7 +49,7 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 | Artefacto | Servicio de consulta de itinerarios y su almacenamiento |
 | Ambiente | Operación normal, con tráfico global |
 | Respuesta | El sistema detecta la falla, redirige el tráfico a réplicas sanas y sigue atendiendo |
-| Medida de respuesta | Máximo 5 minutos de inactividad no planificada por mes |
+| Medida de respuesta | La falla se detecta en 30 s o menos y el tráfico se redirige a réplicas sanas en 60 s o menos, sin superar 5 minutos de inactividad no planificada por mes |
 
 ## QA-5 Escalabilidad
 
@@ -126,6 +126,7 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 | Pico de 5 veces el promedio | QA-5 | Estimación por analogía con plataformas de viajes en disrupciones; el enunciado solo dice "dramáticos" |
 | 99,9 % sin pérdida ni duplicación | QA-6 | Analogía con SLAs de integraciones entre sistemas |
 | 10 días-persona | QA-9 | Estimación por analogía con una integración nueva de complejidad media |
+| Detección en 30 s y redirección en 60 s | QA-4 | El presupuesto de 5 min/mes solo admite unas pocas fallas por mes si cada una se resuelve en alrededor de un minuto |
 
 
 ## === Escenarios de atributos de calidad para parte 2 ===

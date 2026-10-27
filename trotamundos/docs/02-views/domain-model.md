@@ -1,7 +1,7 @@
 # Modelo de dominio
 
 **Tipo:** Soporte (vocabulario)
-**Actualizada en la iteración:** Preparación
+**Actualizada en la iteración:** 1
 **Mantiene:** Ambos. **Estado:** BORRADOR (propuesta inicial a discutir)
 
 ## 1. Propósito
@@ -16,21 +16,21 @@ classDiagram
         id
         email
         idioma
-        region
+        regionDeOrigen
     }
     class Viaje {
         id
         nombre
-        estado
+        estado : activo | archivado
         fechaInicio
         fechaFin
     }
     class Reserva {
         id
-        tipo
-        proveedor
-        estado
-        origen
+        tipo : vuelo | hotel | auto | tren | autobús
+        codigoDelProveedor
+        estado : confirmada | modificada | cancelada | pendiente
+        origen : correo | tercero | manual
     }
     class Remitente {
         direccion
@@ -61,9 +61,9 @@ classDiagram
 
 | Elemento | Descripción |
 |---|---|
-| Usuario | Viajero con cuenta en la plataforma |
-| Viaje | Agrupación de reservas; se archiva al completarse |
-| Reserva | Hotel, auto, vuelo, tren o autobús; puede venir de correo, de un tercero o de carga manual |
+| Usuario | Viajero con cuenta en la plataforma. Su región de origen decide dónde se guardan sus datos (ADR-0004) |
+| Viaje | Agrupación de reservas; una tarea programada del núcleo lo archiva al completarse (RF-05) |
+| Reserva | Hotel, auto, vuelo, tren o autobús; puede venir de correo, de un tercero o de carga manual. Si no se puede asociar a un viaje, queda en estado `pendiente` de resolución. Agregar un medio de transporte es agregar un valor a `tipo` y un adaptador (QA-9) |
 | CuentaDeCorreo | Buzón vinculado con autorización del usuario |
 | Remitente | Remitente de una whitelist |
 | Comparticion | Permiso de un viaje para una persona designada |
@@ -72,4 +72,5 @@ classDiagram
 ## 4. Preguntas abiertas
 
 - ¿La persona con quien se comparte tiene cuenta propia?
-- ¿"Origen" de la reserva (correo, tercero, manual) se modela como atributo o como entidad?
+- ¿"Origen" de la reserva (correo, tercero, manual) se modela como atributo o como entidad? En la iteración 1 queda como atributo.
+- ¿Cuándo se considera "completo" un viaje para archivarlo (fecha de fin, última reserva)?

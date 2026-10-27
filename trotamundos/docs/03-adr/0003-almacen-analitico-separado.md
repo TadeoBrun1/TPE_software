@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "superseded by ADR-0060"
 date: 2026-10-27
 decision-makers: "Tadeo Brun, Tomas Lateana"
 consulted: ""
@@ -7,6 +7,11 @@ informed: ""
 ---
 
 # Almacenamiento y procesamiento analíticos separados del operativo
+
+> **Reemplazada por [ADR-0060](0060-almacen-analitico-separado.md).** En la revisión de la iteración 1 se concluyó
+> que esta decisión no corresponde a esa iteración: su driver principal (RF-07) está asignado a la iteración 4, y el
+> aislamiento de la analítica como proceso separado ya lo decide [ADR-0001](0001-nucleo-modular-con-procesos-separados.md).
+> El contenido se conserva abajo como registro histórico.
 
 ## Context and Problem Statement
 

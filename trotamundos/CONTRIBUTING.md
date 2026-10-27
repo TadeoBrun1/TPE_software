@@ -1,6 +1,6 @@
 # Cómo trabajamos
 
-Dos personas, 10 días, iteraciones ADD en paralelo. Estas reglas existen para no pisarnos y para que la Wiki
+Dos personas, iteraciones ADD en paralelo. Estas reglas existen para no pisarnos y para que la Wiki
 muestre el trabajo de cada integrante.
 
 ## 1. Ramas y Pull Requests
@@ -55,7 +55,8 @@ Regla corta: **lo que es de una iteración se edita libre; lo que usa la otra pe
 
 ## 5. Spec-driven
 
-1. Primero se escribe o actualiza el contrato en `specs/`.
+1. Primero se escribe o actualiza el contrato en `specs/`. Si el contrato lo usan dos iteraciones, ambos acuerdan
+   el formato antes de implementarlo.
 2. Después se implementa en `prototype/`.
 3. Cada servicio del prototipo indica en su README qué spec y qué ADRs implementa.
 
