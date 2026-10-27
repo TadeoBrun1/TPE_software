@@ -1,7 +1,7 @@
 # Requerimientos funcionales
 
 **Qué es:** requerimientos extraídos del enunciado y su priorización.
-**Mantiene:** ambos. **Estado:** COMPLETADO (lista de requerimientos revisada contra el enunciado). Los casos de uso se agregan en la sección "Casos de uso" con `/generador-casos-de-uso` (plantilla Cockburn).
+**Mantiene:** ambos. **Estado:** COMPLETADO (lista de requerimientos revisada contra el enunciado).
 
 Los RF-01 a RF-07 salen de la sección "Requerimientos Funcionales Principales" del enunciado. RF-08 se deriva del atributo de Seguridad (uso compartido de itinerarios con personas designadas) y de Interoperabilidad (redes sociales). La priorización es **suposición a validar**: se hizo según cuánto condiciona
 la estructura del sistema.
@@ -25,12 +25,3 @@ la estructura del sistema.
 | B | Asistente virtual (chatbot) de primer nivel, derivando casos complejos a la agencia | **Decisión pendiente** |
 
 > Cuando se elija una opción, registrar la decisión en una ADR (bloque de la iteración que la incorpore) y agregar el RF.
-
-## Casos de uso
-
-<!-- Pegar acá el resultado de /generador-casos-de-uso, o enlazar a docs/00-requirements/use-cases.md -->
-
-## Supuestos
-
-- Los RF se pensaron para los tipos de reserva del enunciado: hoteles, autos, vuelos, trenes y autobuses. Trenes y
-  autobuses se tratan como integraciones futuras en el atributo de evolucionabilidad.
