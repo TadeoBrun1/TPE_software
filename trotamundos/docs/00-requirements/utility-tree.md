@@ -9,7 +9,7 @@ Las prioridades de esta tabla son **propuestas a validar** (ningún stakeholder 
 
 | ID | Atributo | Refinamiento | Escenario resumido | Prioridad (I, D) |
 |---|---|---|---|---|
-| QA-4 | Disponibilidad | Recuperación ante fallas | Máx. 5 min/mes de inactividad no planificada | (H, H) |
+| QA-4 | Disponibilidad | Recuperación ante fallas | Detección en 30 s, redirección en 60 s; máx. 5 min/mes | (H, H) |
 | QA-5 | Escalabilidad | Picos por disrupciones | 2 M usuarios activos y pico de 5x cumpliendo QA-1 y QA-2 | (H, H) |
 | QA-1 | Performance | Frescura de actualizaciones | 99 % de las actualizaciones visibles en 5 min | (H, H) |
 | QA-2 | Performance | Latencia web | 95 % de respuestas en 800 ms o menos | (H, M) |
@@ -18,7 +18,7 @@ Las prioridades de esta tabla son **propuestas a validar** (ningún stakeholder 
 | QA-8 | Seguridad | Acceso a correos | 100 % de accesos con credenciales autorizadas | (H, M) |
 | QA-7 | Seguridad | Itinerarios compartidos | 100 % de accesos no designados rechazados | (M, M) |
 | QA-9 | Evolucionabilidad | Nuevos medios de transporte | Agregar un medio en 10 días-persona o menos | (M, M) |
-| QA-10 | Usabilidad / i18n | Multirregión e idiomas | Nuevo idioma sin cambios de código | (M, H) |
+| QA-10 | Usabilidad / i18n | Multirregión e idiomas | Idioma y formato del usuario, atendido desde una región cercana | (M, H) |
 
 ## Árbol
 
@@ -51,7 +51,7 @@ flowchart TD
     E --> E1["Nuevos medios de transporte"]
     E1 --> QA9["QA-9 10 días-persona (M, M)"]
     X --> X1["Multirregión e idiomas"]
-    X1 --> QA10["QA-10 Nuevo idioma sin código (M, H)"]
+    X1 --> QA10["QA-10 Idioma, formato y región cercana (M, H)"]
 ```
 
 ## Drivers (H, H)

@@ -27,10 +27,10 @@ Plantilla: [adr-template.md](adr-template.md).
 | ADR | Título | Estado | Iteración | Drivers |
 |---|---|---|---|---|
 | [0000](0000-usar-madr.md) | Usar MADR para registrar decisiones | accepted | Previa | Requisito del enunciado |
-| [0001](0001-nucleo-modular-con-procesos-separados.md) | Núcleo modular con procesos separados | proposed | 1 | CRN-1, QA-5, QA-4, QA-1, QA-9 |
-| [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md) | Mensajería persistente con publicación y suscripción | proposed | 1 | QA-1, QA-4, QA-9 (QA-6 y QA-8 se detallan en la iteración 2) |
-| [0003](0003-almacen-analitico-separado.md) | Almacén analítico separado | proposed | 1 | QA-4, QA-5, RF-07, CON-3 |
-| [0004](0004-despliegue-por-regiones-con-region-de-origen.md) | Despliegue por regiones con región de origen | proposed | 1 | QA-4, QA-5, CON-3 |
+| [0001](0001-nucleo-modular-con-procesos-separados.md) | Núcleo como monolito modular, con ingesta y analítica como procesos separados | proposed | 1 | CRN-1, QA-5, QA-4, QA-1, QA-9, RF-05 |
+| [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md) | Comunicación asincrónica con intermediario de publicación y suscripción | proposed | 1 | QA-4, QA-1, QA-9, CON-2 |
+| [0003](0003-despliegue-por-regiones-con-region-de-origen.md) | Despliegue multirregión con región de origen por usuario | proposed | 1 | QA-10 (multirregión), QA-4, CON-3 (suposición) |
+| [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) | Arquitectura de referencia: clientes ricos y puerta de entrada única | proposed | 1 | CRN-1, CON-4, QA-4, QA-5 |
 
 Mantener esta tabla actualizada al crear una ADR nueva o cambiar su estado.
 

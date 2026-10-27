@@ -59,5 +59,9 @@ Se revisa también el [registro de impactos](impact-log.md).
 - Una iteración deja un diseño parcialmente refinado; nunca se intenta diseñar todo de una vez.
 - Cada decisión tiene rationale y alternativas descartadas ("paths not taken").
 - Los drivers no se modifican durante ADD; si hay que cambiarlos, se justifica por PR de ambos.
+- El plazo del TPE y el tamaño del grupo no son criterio de decisión de la arquitectura: solo acotan el alcance del
+  prototipo.
+- En el paso 4 se eligen arquitecturas de referencia, patrones y tácticas con su nombre (Bass); las tecnologías
+  concretas se deciden después.
 - Cuando se usa IA, las decisiones críticas (estilo arquitectónico, base de datos, cómo se distribuye el sistema) las
   confirma una persona: los modelos pueden cambiar de opinión entre corridas.
