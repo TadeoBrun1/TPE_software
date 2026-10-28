@@ -104,8 +104,8 @@ para concurrencia, frecuencia, tamaño, retención o reintentos; se elige y prue
 ## Otros contratos de integración
 
 [Asistencia con agencias](agency-assistance.md), [publicación del núcleo](core-publication.md) y
-[enrutamiento/configuración](notification-routing.md). La autenticación de usuarios de la aplicación, pendiente
-para la iteración 4, es distinta de OAuth para autorizar correo, propuesto en ADR-0021.
+[enrutamiento/configuración](notification-routing.md). La autenticación de usuarios de la aplicación, definida en la
+iteración 4 (ADR-0060), es distinta de OAuth para autorizar correo, propuesto en ADR-0021.
 
 ## Transporte y cierre de diseño
 

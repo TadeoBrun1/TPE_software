@@ -72,7 +72,7 @@ flowchart TD
     COM --> AUD
     COM --> USR
     RES --> ESQ
-    ESQ --> CON
+    ESQ --> CFG["configuración<br/>(esquemas registrados,<br/>cargados al arrancar)"]
     ACO --> AAN
     AAN --> AAL
     ACO --> CON
@@ -118,9 +118,9 @@ Leyenda: la flecha significa "puede usar".
 | núcleo/panel | Proyector: único escritor de `panel_por_usuario`; lo actualiza en la transacción del cambio y lo regenera desde las tablas (ADR-0040) | `nucleo/panel` |
 | núcleo/ruteo-particiones | Calcula la partición de cada usuario y conoce el nodo primario; lo usan la API, el consumidor de novedades y la tarea diaria (ADR-0042) | `nucleo/datos` |
 | núcleo/usuarios | Región de origen, idioma y país (ADR-0065), cuentas de correo vinculadas, remitentes permitidos y referencias a viajes compartidos conmigo (ADR-0062). Las credenciales viven en el proveedor de identidad, no acá (ADR-0060) | `nucleo/usuarios` |
-| núcleo/comparticion | Invitaciones, aceptación, permisos por viaje y persona, revocación, vista compartida sin notas ni códigos, tarjeta para redes (ADR-0061, ADR-0063); verifica el permiso en cada lectura | `nucleo/comparticion` |
+| núcleo/comparticion | Invitaciones, aceptación, permisos por viaje y persona, revocación, vista compartida sin notas ni códigos, tarjeta para redes (ADR-0061, ADR-0063); acepta solo con el email invitado (`emailHmac`); intercepta todo pedido sobre un viaje ajeno | `nucleo/comparticion` |
 | núcleo/auditoria | Puerto de escritura de solo agregado al registro de auditoría; si falla, la operación se rechaza (ADR-0061) | `nucleo/auditoria` |
-| núcleo/esquemas-detalles | Registro de los esquemas de `details` por configuración y validación del bloque (ADR-0066) | `nucleo/esquemas` |
+| núcleo/esquemas-detalles | Carga al arrancar los esquemas de `details` registrados en la configuración (no se compilan) y valida cada bloque (ADR-0066) | `nucleo/esquemas` |
 | analítica/consumidor-hechos | Consume `booking.facts.v1` y `trip.changed.v1` con su propia cola (ADR-0064) | `analitica/consumo` |
 | analítica/anonimizador | Reemplaza identificadores con la clave anual, descarta campos fuera de la lista permitida | `analitica/anonimizacion` |
 | analítica/almacen-analitico | Escritura y consultas pesadas del almacén analítico regional | `analitica/almacen` |
@@ -150,8 +150,8 @@ Leyenda: la flecha significa "puede usar".
   registro por configuración (ADR-0066).
 * `viajes`, `panel` y la lógica de `reservas` usan solo los campos comunes; ningún módulo del núcleo interpreta los
   campos de `details` (ADR-0066).
-* Toda lectura de un viaje ajeno pasa por `comparticion`, que siempre escribe en `auditoria` antes de devolver datos
-  (ADR-0061).
+* Todo pedido sobre un viaje ajeno, por cualquier endpoint, pasa por `comparticion`, que siempre escribe en
+  `auditoria` antes de responder (ADR-0061).
 * La analítica no importa código del núcleo ni accede a su base: solo `contratos` (ADR-0064).
 * `observabilidad` es la única biblioteca común además de `contratos`; no contiene lógica de dominio.
 * Los módulos de dominio del núcleo (viajes, reservas, usuarios, comparticion) no dependen de `api` ni de la

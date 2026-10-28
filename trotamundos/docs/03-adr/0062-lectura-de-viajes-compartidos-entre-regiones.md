@@ -2,7 +2,7 @@
 status: "proposed"
 date: 2026-10-28
 decision-makers: "Tadeo Brun"
-consulted: "Tomas Lateana (revisión cruzada en el PR de la iteración 4)"
+consulted: "Tomas Lateana (revisión cruzada pendiente en el PR de la iteración 4)"
 informed: ""
 ---
 
@@ -36,17 +36,21 @@ Reglas:
 * Los identificadores de viajes e invitaciones incluyen la región del dueño (por ejemplo `sa-east:7f3c...`). La
   puerta de entrada de la región de Ana ve que el recurso es de otra región y reenvía la solicitud a la puerta de
   entrada de esa región por un canal interno entre regiones con autenticación mutua (mTLS), con el token original de
-  Ana. La región de Juan valida ese token con las claves públicas del proveedor de identidad de la región de Ana
-  (cada puerta de entrada conoce las claves públicas de todas las regiones).
+  Ana. La región de Juan acepta ese token solo porque llega por ese canal (excepción de ADR-0060) y valida su firma
+  con las claves públicas del proveedor de identidad de la región de Ana (cada puerta de entrada conoce las claves
+  públicas de todas las regiones). La puerta solo enruta: no conoce reglas de compartición.
 * El núcleo de la región de Juan verifica el permiso, registra el acceso (ADR-0061) y responde. La respuesta no se
   guarda en la región de Ana.
-* **Lista de viajes compartidos conmigo:** cuando Ana acepta una invitación, su región guarda en la partición de Ana
-  solo la referencia (identificador del viaje y fecha de aceptación), sin datos del itinerario. `GET /shared/trips`
-  devuelve esas referencias, y cada viaje se lee de forma remota al abrirlo. Si una referencia apunta a un permiso
-  revocado, la lectura devuelve `404` y la app la quita de la lista.
-* Un identificador con una región que no existe se rechaza en la puerta de entrada de Ana y se registra en el
-  registro de auditoría de esa región.
-* Si la región de Juan no responde, Ana recibe `503`: no hay copia de respaldo (consecuencia de no copiar datos).
+* **Lista de viajes compartidos conmigo:** después de aceptar, la app de Ana llama a `POST /shared/trips` en su
+  propia región, y el módulo `usuarios` del núcleo de Ana guarda en su partición solo la referencia (identificador
+  del viaje y fecha de aceptación), sin datos del itinerario. La operación es idempotente: si falla, la app la
+  reintenta, y como la aceptación también es idempotente, volver a aceptar y registrar deja todo igual. La
+  referencia es solo un marcador: no da permiso, porque el permiso se verifica en la región de Juan al leer.
+  `GET /shared/trips` devuelve las referencias y cada viaje se lee de forma remota al abrirlo. Si una lectura
+  devuelve `404` (permiso quitado o viaje eliminado), la app borra la referencia con `DELETE /shared/trips/{tripId}`.
+* Un identificador con una región que no existe, o una región del dueño que no responde, se rechazan en la puerta de
+  entrada de Ana (`404` y `503`) y se registran en el registro de auditoría de la región de Ana (ADR-0061). No hay
+  copia de respaldo del viaje (consecuencia de no copiar datos).
 * El notificador de la región de Ana no recibe avisos de viajes de otra región: la app de Ana revalida el viaje
   compartido al abrirlo. Los avisos en vivo de viajes compartidos quedan fuera de alcance, también dentro de una
   misma región.
@@ -55,18 +59,20 @@ Patrones y tácticas que aplica:
 
 | Patrón o táctica | Cómo se aplica | Driver |
 |---|---|---|
-| Patrón *Gateway Routing* | La puerta de entrada enruta según la región del viaje | CON-3 |
+| Patrón *Gateway Routing* | La puerta de entrada enruta según el prefijo de región del recurso, sin lógica de dominio | CON-3 |
 | Táctica *limitar la exposición* (seguridad) | Los datos no se copian fuera de su región | CON-3, QA-7 |
 | Táctica *autenticar actores* (seguridad) | Canal entre regiones con mTLS; la región del dueño valida el token del lector | QA-7 |
 
 ### Consequences
 
 * Good, because los datos personales del dueño no salen de su región.
-* Good, because revocar es inmediato: no hay copias que borrar.
+* Good, because quitar el permiso tiene efecto inmediato: no hay copias que borrar.
 * Bad, because la lectura suma la latencia de red entre regiones. Se supone de 100 a 250 ms; con un panel típico
   (ADR-0040) sigue dentro de 800 ms, pero los usuarios lejanos quedan más cerca del límite.
 * Bad, because si la región del dueño cae, el viaje compartido no se puede ver.
 * Bad, because los viajes compartidos entre regiones no tienen avisos en vivo.
+* Bad, because la referencia en la región del lector puede quedar desactualizada (permiso quitado) hasta que la app
+  la borra; no expone datos, porque la lectura siempre se verifica en la región del dueño.
 
 ### Confirmation
 

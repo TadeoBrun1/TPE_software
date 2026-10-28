@@ -2,7 +2,7 @@
 status: "proposed"
 date: 2026-10-28
 decision-makers: "Tadeo Brun"
-consulted: "Tomas Lateana (revisión cruzada en el PR de la iteración 4)"
+consulted: "Tomas Lateana (revisión cruzada pendiente en el PR de la iteración 4)"
 informed: ""
 ---
 
@@ -36,16 +36,21 @@ través del broker y permite medir cada etapa del presupuesto de QA-1, y no ata 
 Reglas:
 
 * **Correlación:** el `correlationId` que ya existe en los eventos (iteración 2) se genera cuando la ingesta detecta
-  el cambio y viaja por `booking.change.detected.v1`, la transacción del núcleo, `booking.changed.v1` y
-  `panel.changed.v1`. Las solicitudes HTTP llevan el contexto de traza estándar (`traceparent`).
+  el cambio y recorre la cadena de QA-1: `booking.change.detected.v1` → transacción del núcleo →
+  `panel.changed.v1` (campo `correlationIds`, una lista, porque un cambio del panel puede juntar varias novedades)
+  → evento SSE `panel-changed` (mismo campo) → la app. `booking.changed.v1` no está en esa cadena: no tiene
+  consumidores. Todos los mensajes llevan además el contexto de traza estándar (`traceparent`) en sus encabezados
+  AMQP, declarado en sus AsyncAPI, y las solicitudes HTTP lo llevan en el encabezado HTTP.
 * **Métricas por etapa de QA-1:** detección, extracción, publicación, espera en cola, aplicación y aviso al cliente,
-  con los límites de `specs/ingestion-operations.md`. La app informa cuándo mostró la versión nueva, para cerrar la
-  medición de punta a punta.
+  con los límites de `specs/ingestion-operations.md`. Para cerrar la medición de punta a punta, la app informa cuándo
+  mostró la versión nueva con `POST /telemetry/panel-shown` (versión del panel, `correlationIds` e instante), una
+  operación de prioridad baja que se puede descartar ante sobrecarga (ADR-0047).
 * **Métricas de QA-4:** disponibilidad de la puerta de entrada (solicitudes exitosas sobre totales, por minuto),
   conmutaciones del monitor de base y tiempo con una sola copia (ADR-0042).
 * **Logs estructurados:** sin emails, nombres, códigos de reserva ni tokens; solo identificadores internos.
 * **Colector por región:** cada región guarda sus trazas, métricas y logs (CON-3). Las alertas (por ejemplo, la
-  antigüedad de la cola de más de 40 s o una conmutación) se envían al equipo de operación.
+  antigüedad de la cola de más de 40 s, una conmutación, o un aumento de rechazos en la auditoría de ADR-0061) se
+  envían al equipo de operación.
 * **Muestreo:** se guardan todas las trazas con error o lentas y una fracción de las normales (suposición: 10 %); las
   métricas no se muestrean.
 
@@ -53,8 +58,7 @@ Patrones y tácticas que aplica:
 
 | Patrón o táctica | Cómo se aplica | Driver |
 |---|---|---|
-| Táctica *monitor* (disponibilidad) | Métricas y alertas de disponibilidad y conmutaciones | QA-4 |
-| Táctica *grabar y reproducir* (testeabilidad) | Trazas y logs estructurados que permiten reconstruir cada recorrido | QA-1, CRN-2 |
+| Táctica *monitor* (disponibilidad) | Métricas, trazas y alertas de disponibilidad, conmutaciones y tiempos por etapa | QA-4, QA-1, CRN-2 |
 | Patrón *Distributed Tracing* con identificador de correlación | `correlationId` y `traceparent` de punta a punta | QA-1 |
 | Táctica *adherir a estándares* (integrabilidad) | OpenTelemetry | CRN-2 |
 
@@ -69,7 +73,8 @@ Patrones y tácticas que aplica:
 ### Confirmation
 
 Prototipo: una novedad simulada genera una traza que recorre ingesta, broker, núcleo y notificador con el mismo
-`correlationId`, y las métricas por etapa muestran el tiempo de cada una.
+`correlationId`; el cliente de prueba recibe el `panel-changed` con ese identificador y lo informa en
+`POST /telemetry/panel-shown`; las métricas por etapa muestran el tiempo de cada una.
 
 ## Pros and Cons of the Options
 
@@ -97,6 +102,6 @@ Prototipo: una novedad simulada genera una traza que recorre ingesta, broker, n�
 | Iteración ADD | 4, [iteration-4-security-evolvability](../01-add/iteration-4-security-evolvability.md) |
 | Drivers | CRN-2, QA-1, QA-4, CON-3 |
 | Vistas afectadas | [deployment-view](../02-views/deployment-view.md), [cc-view](../02-views/cc-view.md) |
-| Specs | [ingestion-operations.md](../../specs/ingestion-operations.md) |
+| Specs | [ingestion-operations.md](../../specs/ingestion-operations.md), [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml), [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0024](0024-avance-y-publicacion-durable.md), [0027](0027-publicacion-del-nucleo.md), [0042](0042-particion-de-la-base-por-usuario.md), [0046](0046-notificador-de-cambios-del-panel.md) |
 | Código del prototipo | `prototype/` |

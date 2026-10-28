@@ -29,9 +29,10 @@ classDiagram
     }
     class Reserva {
         id
-        tipo : código abierto (vuelo, hotel, auto, tren, autobús, ...)
+        tipo : código abierto
         inicio
         fin
+        zonaHoraria
         lugar
         lugarDeLlegada
         precio : monto y moneda ISO 4217
@@ -67,10 +68,11 @@ classDiagram
         emailInvitado
         estado : pendiente | aceptada | vencida
         venceEn
+        emailHmac
         aceptadaPor
     }
     class ReferenciaCompartida {
-        viajeId (con región)
+        viajeIdConRegion
         aceptadaEn
     }
     class RegistroDeAuditoria {
@@ -147,7 +149,7 @@ classDiagram
 | MarcaDeBorrado | Recuerda que el usuario eliminó una reserva que vino de un proveedor, para que las novedades posteriores no la recreen (ADR-0044) |
 | CuentaDeCorreo | Buzón vinculado con autorización del usuario |
 | Remitente | Remitente de una whitelist |
-| Comparticion | Invitación del dueño a una persona por email; al aceptarse queda atada al usuario que aceptó y es un permiso de solo lectura. Se revoca en cualquier momento y se borra con el viaje (ADR-0061) |
+| Comparticion | Invitación del dueño a una persona por email; solo la puede aceptar una cuenta con ese email verificado (se compara `emailHmac`), y desde ahí queda atada a ese usuario como permiso de solo lectura. Se revoca en cualquier momento y se borra con el viaje (ADR-0061) |
 | ReferenciaCompartida | Lo único que guarda la región de quien recibió el viaje: el identificador y la fecha de aceptación, sin datos del itinerario (ADR-0062) |
 | RegistroDeAuditoria | Registro de solo agregado de cada acceso, invitación, aceptación y revocación, en la región del dueño (ADR-0061, [access-audit.md](../../specs/access-audit.md)) |
 | TarjetaSocial | Resumen público de un viaje (destino, mes, días) para redes sociales; no da acceso al viaje (ADR-0063) |

@@ -2,7 +2,7 @@
 status: "proposed"
 date: 2026-10-28
 decision-makers: "Tadeo Brun"
-consulted: "Tomas Lateana (revisión cruzada en el PR de la iteración 4)"
+consulted: "Tomas Lateana (revisión cruzada pendiente en el PR de la iteración 4)"
 informed: ""
 ---
 
@@ -45,22 +45,42 @@ quedan en la región del usuario y la falla de una región no afecta el login de
 
 Reglas:
 
-* **Login:** la app envía a la entrada global un hash del email. El directorio global mínimo traduce ese hash a la
-  región de origen; la entrada global deriva el login al proveedor de identidad de esa región. El directorio guarda
-  solo `hash(email) → región`, sin datos personales legibles (mismo criterio que el directorio de suscripciones de
-  ADR-0025). Una cuenta nueva se crea en la región que corresponde al país del usuario y registra su hash ahí.
-* **Tokens:** el proveedor emite un token de acceso firmado de 15 minutos, con `userId` y `homeRegion`, y un token de
-  renovación de 30 días que se puede revocar. La puerta de entrada valida firma y vencimiento con las claves públicas
-  del proveedor, que guarda en caché; no consulta al proveedor en cada solicitud.
-* **Enrutamiento:** la entrada global lee `homeRegion` del token (sin validar la firma, solo para elegir región); la
-  puerta de entrada de esa región sí valida la firma, y si la región no coincide rechaza la solicitud.
-* **Revocación:** cerrar sesión o bloquear una cuenta revoca el token de renovación. El token de acceso vigente sigue
-  sirviendo hasta 15 minutos (riesgo aceptado). Para revocar el acceso a un viaje compartido no hace falta esperar:
-  el permiso se verifica en cada lectura (ADR-0061).
+* **Login:** la app envía el email a la entrada global (por HTTPS). La entrada global calcula
+  `HMAC(clave_directorio, email normalizado)`, con una clave que solo tiene la entrada global, y la busca en el
+  directorio global mínimo, que devuelve la región de origen; el login sigue en el proveedor de identidad de esa
+  región. El directorio guarda solo `HMAC(email) → región`. Como el cálculo se hace del lado del servidor y la clave
+  no es pública, no se puede revertir con un diccionario ni usar desde afuera para averiguar si un email tiene cuenta
+  (la consulta tiene límite de tasa y responde igual exista o no la cuenta: si no existe, deriva al proveedor de la
+  región del país que indica la app, donde se puede crear). Una cuenta nueva se crea en la región que corresponde a
+  su país y registra su HMAC en el directorio.
+* **El directorio frente a CON-3:** el HMAC de un email es un seudónimo, y un seudónimo sigue siendo dato personal
+  para normativas como el GDPR. Se acepta por proporcionalidad: es el mínimo indispensable para saber a qué región
+  derivar el login (un identificador y una región por usuario, sin historia ni contenido), con el mismo criterio que
+  el directorio de suscripciones de ADR-0025. Es distinto de copiar historiales de viajes a un almacén global, que
+  ADR-0064 descarta.
+* **Tokens:** el proveedor emite un token de acceso firmado de 15 minutos y un token de renovación de 30 días que se
+  puede revocar. El token de acceso lleva `userId`, `homeRegion` y `emailHmac` (HMAC del email verificado con una
+  clave común a los proveedores de todas las regiones, que usa ADR-0061 para atar una invitación a su destinatario
+  sin mover emails entre regiones). La puerta de entrada valida firma y vencimiento con las claves públicas de los
+  proveedores, que guarda en caché; no consulta al proveedor en cada solicitud.
+* **Enrutamiento:** la entrada global elige la región por `homeRegion` del token (sin validar la firma, solo para
+  elegir); una solicitud sin token se enruta por el prefijo de región del recurso (tarjetas para redes, tickets SSE,
+  ADR-0062 y ADR-0063) o, en el login, por el directorio. La puerta de entrada de la región sí valida la firma.
+* **Token de otra región:** la puerta de entrada rechaza (`401`) un token cuyo `homeRegion` no es el suyo, **salvo**
+  que la solicitud le llegue por el canal mTLS desde la puerta de entrada de otra región (ADR-0062) y se refiera a un
+  recurso con el prefijo de su región (viajes e invitaciones). En ese caso valida la firma con las claves del
+  proveedor de la región del token. El permiso sobre el recurso lo decide el núcleo (ADR-0061).
+* **Revocación:** cerrar sesión o bloquear una cuenta comprometida revoca el token de renovación. El token de acceso
+  vigente sigue sirviendo hasta 15 minutos (riesgo aceptado). El permiso sobre un viaje compartido no depende del
+  token: se verifica en cada lectura (ADR-0061).
 * **SSE:** el navegador no permite enviar el encabezado `Authorization` en una conexión SSE. La app pide con su token
-  un ticket de un solo uso (`POST /panel/events/ticket`, válido 30 s) y abre `GET /panel/events?ticket=...`. El
-  ticket no sirve para otra cosa y no queda en los logs.
-* El proveedor de identidad se despliega en cada región con instancias en al menos dos zonas (ADR-0003).
+  un ticket (`POST /panel/events/ticket`) y abre `GET /panel/events?ticket=...`. El ticket está firmado por la
+  puerta de entrada, lleva el prefijo de la región, el `userId` y un vencimiento de 30 s, y solo sirve para abrir la
+  conexión de avisos; se valida sin estado compartido entre las instancias de la puerta. No se controla el uso único:
+  reusarlo dentro de esos 30 s solo abre otra conexión de avisos del mismo usuario, que no lleva datos de reservas
+  (ADR-0046). No queda en los logs.
+* El proveedor de identidad se despliega en cada región con instancias en al menos dos zonas (ADR-0003). El
+  directorio global se replica en varias regiones, como la entrada global.
 
 Patrones y tácticas que aplica:
 
@@ -68,7 +88,8 @@ Patrones y tácticas que aplica:
 |---|---|---|
 | Táctica *autenticar actores* (seguridad) | Token firmado por el proveedor de identidad en cada solicitud | QA-7 |
 | Táctica *limitar el acceso* (seguridad) | Solo la puerta de entrada acepta solicitudes externas, y solo con token válido | QA-7 |
-| Táctica *revocar el acceso* (seguridad) | Revocación del token de renovación; vida corta del token de acceso | QA-7 |
+| Táctica *revocar el acceso* (seguridad, reaccionar a ataques) | Bloqueo de una cuenta comprometida: se revoca su token de renovación | QA-7 |
+| Táctica *limitar la exposición* (seguridad) | El directorio guarda solo un HMAC calculado en el servidor; vida corta del token de acceso | QA-7, CON-3 |
 | Patrón *Federated Identity* / token firmado (OpenID Connect) | El proveedor emite, la puerta valida sin consultar | QA-5 |
 | Táctica *redundant spare* (disponibilidad) | Un proveedor por región, con instancias en dos zonas | QA-4 |
 
@@ -76,17 +97,23 @@ Patrones y tácticas que aplica:
 
 * Good, because la puerta de entrada y el núcleo siguen sin estado de sesión (QA-5).
 * Good, because los emails y credenciales quedan en la región de origen (CON-3).
-* Good, because si cae la identidad de una región, solo sus usuarios no pueden iniciar sesión; quienes ya tienen
-  token siguen usando el sistema hasta que venza.
+* Good, because si cae la identidad de una región, solo sus usuarios no pueden iniciar sesión ni renovar el token;
+  quienes ya tienen un token de acceso siguen hasta que venza (a lo sumo 15 minutos).
 * Good, because es un estándar: permite agregar más adelante login con Google o Apple sin cambiar la arquitectura.
 * Bad, because un token de acceso revocado sigue valiendo hasta 15 minutos.
-* Bad, because hay un directorio global más que operar (aunque sin datos personales legibles).
+* Bad, because el directorio global guarda un seudónimo de cada usuario fuera de su región (se acepta por
+  proporcionalidad, ver la regla) y hay que custodiar su clave.
+* Bad, because el directorio es necesario para iniciar sesión en un dispositivo nuevo: si cae en todas las regiones a
+  la vez, nadie puede iniciar sesión desde cero (es el mismo punto de falla que se le marca a B2, acotado al login).
+  Se mitiga replicándolo en varias regiones y con la app recordando la región del último login.
+* Bad, because un ticket SSE copiado sirve para abrir otra conexión de avisos durante 30 s (sin datos de reservas).
 * Bad, because cambiar la región de origen de un usuario exige mover su identidad y actualizar el directorio.
 
 ### Confirmation
 
 Prototipo: un proveedor de identidad local emite tokens; la puerta de entrada rechaza un token vencido, uno con firma
-inválida y uno de otra región; un ticket SSE sirve una sola vez.
+inválida y uno de otra región que no llega por el canal entre regiones; acepta uno de otra región que llega por ese
+canal; un ticket SSE vencido no abre la conexión.
 
 ## Pros and Cons of the Options
 
@@ -108,14 +135,16 @@ inválida y uno de otra región; un ticket SSE sirve una sola vez.
 
 ### B1. Uno por región
 
-* Good, because respeta CON-3 y aísla fallas por región.
-* Bad, because necesita el directorio global para el login.
+* Good, because respeta CON-3 para emails y credenciales, y aísla por región las fallas del login y de la renovación.
+* Bad, because necesita el directorio global (un seudónimo por usuario) para el login en un dispositivo nuevo, y ese
+  directorio es un punto de falla para ese caso.
 
 ### B2. Uno global
 
 * Good, because es más simple.
-* Bad, because guarda los emails de todos los usuarios en un solo lugar (CON-3) y, si cae, nadie puede iniciar sesión
-  en ninguna región.
+* Bad, because guarda emails y credenciales de todos los usuarios en un solo lugar (CON-3) y, si cae, nadie puede
+  iniciar sesión ni renovar tokens en ninguna región: afecta también a quien ya tenía sesión, no solo a quien entra
+  desde un dispositivo nuevo.
 
 ## More Information
 

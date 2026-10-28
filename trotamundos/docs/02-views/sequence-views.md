@@ -109,29 +109,39 @@ sequenceDiagram
     GE->>GE: Valida el token de Ana, prefijo de otra región
     GE->>GS: Reenvía por mTLS con el token de Ana
     GS->>GS: Valida el token con las claves de Europa
-    GS->>N: Acepta, permiso atado al userId de Ana
+    GS->>N: Aceptar invitación
+    N->>N: Secreto válido y emailHmac del token igual al de la invitación
     N->>AU: share.accept permitido
-    N-->>GE: 200
-    GE->>NE: Guarda la referencia en la partición de Ana
-    GE-->>A: 200
+    N-->>A: 200, permiso atado al userId de Ana (vía GS y GE)
+    A->>GE: POST /shared/trips (referencia sa-east:7)
+    GE->>NE: Guarda solo la referencia en la partición de Ana (idempotente)
+    NE-->>A: 200
     A->>GE: GET /shared/trips/sa-east:7
     GE->>GS: Reenvía por mTLS
     GS->>N: Lectura compartida
     N->>N: Verifica el permiso de Ana
     N->>AU: share.read permitido (antes de responder)
     N-->>A: 200 viaje sin notas ni códigos (vía GS y GE)
-    X->>GE: GET /shared/trips/sa-east:7 con el enlace reenviado
+    X->>GE: POST /shares/sa-east:s1/accept con el secreto reenviado
+    GE->>GS: Reenvía por mTLS
+    GS->>N: Aceptar invitación
+    N->>N: El emailHmac del token de X no es el invitado
+    N->>AU: share.accept rechazado (email_mismatch)
+    N-->>X: 404 (vía GS y GE)
+    X->>GE: GET /shared/trips/sa-east:7
     GE->>GS: Reenvía por mTLS
     GS->>N: Lectura compartida
     N->>N: Sin permiso para ese userId
     N->>AU: share.read rechazado
     N-->>X: 404 (vía GS y GE)
     Note over N,AU: Si la auditoría no se puede escribir, la respuesta es 503 y no se devuelven datos
+    Note over GE,GS: Sin token, región inexistente o región del dueño caída, la puerta de Europa rechaza y registra en la auditoría de Europa
 ```
 
-**Qué representa:** el permiso queda atado a la cuenta que aceptó, así que reenviar el enlace no da acceso; cada
-intento, permitido o rechazado, queda registrado antes de responder (QA-7). Los datos de Juan se leen en su región y
-no se copian a Europa; Europa solo guarda la referencia al viaje (CON-3, RF-08). ADR-0060, ADR-0061 y ADR-0062.
+**Qué representa:** solo una cuenta con el email invitado puede aceptar, y desde ahí el permiso queda atado a esa
+cuenta, así que reenviar el enlace no da acceso ni antes ni después de aceptar; cada intento, permitido o rechazado,
+queda registrado antes de responder (QA-7). Los datos de Juan se leen en su región y no se copian a Europa; la app de
+Ana registra en Europa solo la referencia al viaje (CON-3, RF-08). ADR-0060, ADR-0061 y ADR-0062.
 
 ## SEQ-6 — Una novedad pisa un campo editado por el usuario
 
@@ -167,25 +177,27 @@ sequenceDiagram
     participant IDP as Proveedor de identidad (su región)
     participant G as Puerta de entrada (su región)
     participant NT as Notificador
-    App->>E: Región para hash(email)
-    E->>DIR: Busca hash(email)
+    App->>E: Región para este email (HTTPS)
+    E->>E: Calcula HMAC del email con su clave, con límite de tasa
+    E->>DIR: Busca HMAC(email)
     DIR-->>E: sa-east
     E-->>App: Proveedor de identidad de sa-east
     App->>IDP: Login (OpenID Connect)
-    IDP-->>App: Token de acceso 15 min (userId, homeRegion) y token de renovación
+    IDP-->>App: Token de acceso 15 min (userId, homeRegion, emailHmac) y token de renovación
     App->>E: GET /panel con el token
     E->>G: Elige la región por homeRegion
     G->>G: Valida firma y vencimiento con claves en caché
     G-->>App: 200 panel
     App->>G: POST /panel/events/ticket con el token
-    G-->>App: Ticket de un solo uso, 30 s
+    G-->>App: Ticket firmado con prefijo de región, 30 s
     App->>G: GET /panel/events?ticket=t
-    G->>G: Valida y consume el ticket
+    G->>G: Valida firma y vencimiento del ticket, sin estado compartido
     G->>NT: Conexión SSE del usuario
     NT-->>App: ready
     Note over App,IDP: A los 15 min la app renueva el token con el proveedor, sin volver a iniciar sesión
 ```
 
 **Qué representa:** la puerta de entrada valida cada token sin consultar al proveedor de identidad ni guardar
-sesiones (QA-5), y el navegador abre la conexión SSE con un ticket porque no puede enviar el encabezado
-`Authorization` (QA-7). El directorio global solo guarda `hash(email)` y región (CON-3). ADR-0060.
+sesiones (QA-5), y el navegador abre la conexión SSE con un ticket firmado porque no puede enviar el encabezado
+`Authorization` (QA-7). El directorio global solo guarda el HMAC del email, calculado por la entrada global con una
+clave propia, y la región (CON-3). ADR-0060.

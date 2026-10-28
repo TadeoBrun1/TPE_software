@@ -1,13 +1,14 @@
 asyncapi: 2.6.0
 info:
   title: Avisos de cambio del panel
-  version: 0.1.0
+  version: 0.2.0
   description: >
     Contrato propuesto de la iteración 3 (ADR-0046). Lo publica el núcleo desde su outbox (ADR-0027) en la misma
     transacción que cambia panel_por_usuario (ADR-0040). Lo consume solo el notificador: cada instancia con una
     cola exclusiva (fan-out) para los avisos SSE, y una cola compartida notifier.push para los push del sistema
     operativo de relevancia important. Transporte: RabbitMQ, exchange travel.domain, routing key panel.changed.v1
     (ADR-0028). No lleva datos de reservas: el cliente los pide por la API autenticada.
+    0.2.0 (iteración 4, ADR-0067): agrega correlationIds y el encabezado traceparent para medir QA-1 de punta a punta.
 defaultContentType: application/json
 channels:
   panel.changed.v1:
@@ -19,6 +20,14 @@ components:
   messages:
     PanelChanged:
       name: PanelChanged
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+            description: Contexto de traza W3C (ADR-0067); lo propagan productores y consumidores.
+          tracestate:
+            type: string
       payload:
         type: object
         additionalProperties: false
@@ -72,3 +81,11 @@ components:
           committedAt:
             type: string
             format: date-time
+          correlationIds:
+            type: array
+            description: correlationId de las novedades que originaron este cambio del panel (ADR-0067). Vacío o
+              ausente en los cambios manuales.
+            items:
+              type: string
+              minLength: 1
+            maxItems: 50

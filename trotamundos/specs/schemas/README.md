@@ -15,8 +15,13 @@ entonces esas reservas solo tienen campos comunes.
 ## Reglas
 
 * El núcleo valida `details` contra su esquema y lo guarda sin interpretarlo; un esquema que no conoce se rechaza.
-* Un cambio compatible (un campo opcional nuevo) se hace en el mismo archivo. Un cambio incompatible crea una
-  versión nueva (`<tipo>.v2`) que convive con la anterior mientras haya reservas que la usen.
+* Todo cambio, incluso agregar un campo opcional, crea una versión nueva (`<tipo>.v2`), porque los esquemas tienen
+  `additionalProperties: false`: un identificador designa siempre el mismo contenido. Las versiones conviven mientras
+  haya reservas que las usen, y un adaptador manda la nueva recién cuando el núcleo la tiene registrada.
+* El núcleo no compila los esquemas: los carga al arrancar desde los archivos registrados en su configuración.
+* Un esquema no puede incluir códigos de reserva, números de billete, nombres de pasajeros ni otros datos personales:
+  esos datos van en los campos comunes, que la vista compartida y la analítica filtran (ADR-0061, ADR-0064).
+* No se repiten campos comunes (fechas, zonas horarias, lugares de salida y llegada).
 * Agregar un medio de transporte nuevo (QA-9) empieza por su esquema acá; los pasos completos están en ADR-0066 y en
   el recorrido de QA-9 de la [iteración 4](../../docs/01-add/iteration-4-security-evolvability.md).
 * Los detalles no van en `booking.facts.v1` (analítica) ni se traducen: el cliente los muestra con los textos de sus

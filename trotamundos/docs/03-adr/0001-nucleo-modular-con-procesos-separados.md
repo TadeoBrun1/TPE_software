@@ -52,7 +52,7 @@ Estructura resultante:
   traduce todo a un **modelo canónico de reserva**. No escribe en la base del núcleo: le entrega novedades
   (ver ADR-0002).
 * **Analítica:** proceso separado que no comparte recursos con la consulta. Cómo se alimenta y dónde guarda los
-  datos se decide en la iteración 4.
+  datos se decide en la iteración 4 (resuelto en ADR-0064).
 
 Patrones y tácticas que aplica:
 

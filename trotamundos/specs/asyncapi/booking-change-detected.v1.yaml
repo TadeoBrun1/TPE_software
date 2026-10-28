@@ -6,7 +6,8 @@ info:
     2. RabbitMQ AMQP 0-9-1 sobre TLS, vhost por región, exchange travel.ingestion,
     routing booking.change.detected.v1.s0 a .s7. ADR-0028 y specs/ingestion-operations.md.
     El nombre lógico del evento no es la routing key. Payload 0.2.0 sujeto a revisión.
-    0.2.0 (iteración 4, ADR-0066) abre el tipo de reserva y agrega arrivalLocation y details.
+    0.2.0 (iteración 4, ADR-0066 y ADR-0065) abre el tipo de reserva y agrega arrivalLocation, zonas horarias IANA
+    y details; los mensajes llevan traceparent en sus encabezados (ADR-0067).
 defaultContentType: application/json
 channels:
   booking.change.detected.v1.s{shard}:
@@ -34,6 +35,14 @@ components:
   messages:
     BookingChangeDetected:
       name: BookingChangeDetected
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+            description: Contexto de traza W3C (ADR-0067); lo propagan productores y consumidores.
+          tracestate:
+            type: string
       title: Novedad externa de reserva
       correlationId:
         location: $message.payload#/correlationId
@@ -138,6 +147,12 @@ components:
                 type: string
                 minLength: 1
                 description: Lugar de llegada en los traslados (iteración 4).
+              timeZone:
+                type: string
+                description: Zona horaria IANA del lugar de inicio (iteración 4, ADR-0065).
+              arrivalTimeZone:
+                type: string
+                description: Zona horaria IANA del lugar de llegada (iteración 4).
               details:
                 type: object
                 required:

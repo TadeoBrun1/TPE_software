@@ -2,7 +2,7 @@
 status: "proposed"
 date: 2026-10-28
 decision-makers: "Tadeo Brun"
-consulted: "Tomas Lateana (revisión cruzada en el PR de la iteración 4)"
+consulted: "Tomas Lateana (revisión cruzada pendiente en el PR de la iteración 4)"
 informed: ""
 ---
 
@@ -34,16 +34,22 @@ fechas, archivado, panel) usa solo los campos comunes, y lo propio de cada medio
 
 Reglas:
 
-* **Campos comunes:** tipo, estado, inicio y fin, lugar (y lugar de llegada en los traslados), proveedor y
-  referencia, notas. Son los únicos que usan los módulos `viajes`, `reservas` y `panel`, y alcanzan para mostrar
+* **Campos comunes:** tipo, estado, inicio y fin con su zona horaria, lugar (y lugar de llegada en los traslados, por
+  ejemplo el código del aeropuerto o la estación), precio, proveedor y referencia, notas. Son los únicos que usan los módulos `viajes`, `reservas` y `panel`, y alcanzan para mostrar
   cualquier reserva en una vista genérica.
 * **Tipo como código abierto:** `type` es un código (`flight`, `hotel`, `car`, `train`, `bus`, ...) y no una lista
   cerrada en los contratos. Un cliente que recibe un tipo que no conoce lo muestra con la vista genérica, así que
   agregar un tipo no rompe a las versiones viejas de la app.
 * **Detalles:** un bloque `details` con el identificador de su esquema (por ejemplo `train.v1`) y sus campos. Cada
-  esquema es un archivo en `specs/schemas/`. El núcleo valida el bloque contra su esquema, lo guarda tal cual y no lo
-  interpreta; el panel lo devuelve y el cliente lo muestra según el esquema. Un bloque con un esquema que el núcleo
-  no conoce se rechaza (`400` en la API; la novedad queda para revisión en la ingesta).
+  esquema es un archivo en `specs/schemas/`. El módulo `esquemas-detalles` del núcleo carga los archivos registrados
+  en su configuración al arrancar (no se compilan dentro del código), valida el bloque contra su esquema, y el núcleo
+  lo guarda tal cual sin interpretarlo; el panel lo devuelve y el cliente lo muestra según el esquema. Un bloque con
+  un esquema que el núcleo no conoce, o que no lo cumple, se rechaza (`400` en la API; la novedad queda para revisión
+  en la ingesta).
+* **Qué no va en `details`:** códigos de reserva, números de billete, nombres de pasajeros ni otros datos personales.
+  Esos datos van en los campos comunes (`providerReference`, notas), que la vista compartida y la analítica ya
+  filtran (ADR-0061, ADR-0064). Así, el bloque se puede mostrar en un viaje compartido sin que el núcleo lo
+  interprete.
 * **Agregar un medio nuevo** (recorrido de QA-9 con un medio que hoy no existe, por ejemplo ferry):
   1. esquema `specs/schemas/details-ferry.v1.json` y el código `ferry` en la lista de tipos conocidos del contrato;
   2. adaptador del proveedor en la ingesta (ADR-0023), que produce los campos comunes y los detalles;
@@ -54,8 +60,10 @@ Reglas:
   esfuerzo estimado (suposición): 1 día el esquema y su registro, 4 a 6 días el adaptador, 2 días las vistas de los
   clientes y 1 día de pruebas; entre 8 y 10 días-persona. Si el proveedor no tiene API y llega solo por correo, el
   adaptador es un extractor de correos nuevo y puede superar el límite (riesgo).
-* Un cambio incompatible en los detalles de un medio crea una versión nueva del esquema (`ferry.v2`); las dos conviven
-  mientras haya reservas con la anterior.
+* **Versionado:** todo cambio en un esquema, incluso agregar un campo opcional, crea una versión nueva (`ferry.v2`),
+  porque los esquemas no admiten campos extra. Un identificador (`ferry.v1`) siempre designa el mismo contenido. Las
+  versiones conviven mientras haya reservas con la anterior; un adaptador manda la versión nueva recién cuando el
+  núcleo la tiene registrada.
 
 Patrones y tácticas que aplica:
 
@@ -63,10 +71,9 @@ Patrones y tácticas que aplica:
 |---|---|---|
 | Táctica *abstraer servicios comunes* (modificabilidad) | Campos comunes que usa toda la lógica del núcleo | QA-9 |
 | Táctica *encapsular* (modificabilidad) | Lo propio de cada medio queda en su bloque de detalles | QA-9 |
-| Táctica *diferir el enlace* (modificabilidad) | El esquema de detalles se elige en tiempo de ejecución por su identificador y se registra por configuración | QA-9 |
+| Táctica *diferir el enlace* (modificabilidad) | Los esquemas se registran por configuración y se cargan al arrancar; el de cada bloque se elige por su identificador | QA-9 |
 | Táctica *restringir dependencias* (modificabilidad) | El núcleo y el panel no dependen de los campos propios de cada medio | QA-9 |
 | Táctica *adherir a estándares* (integrabilidad) | Esquemas en JSON Schema dentro de `specs/` | QA-9 |
-| Táctica *validar la entrada* (seguridad) | El núcleo rechaza detalles que no cumplen su esquema | QA-9 |
 
 ### Consequences
 

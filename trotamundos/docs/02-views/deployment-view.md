@@ -15,7 +15,7 @@ Mostrar dónde corre cada elemento. Sirve para razonar sobre escalabilidad, disp
 ```mermaid
 flowchart TB
     U["Clientes web y móvil<br/>y notificaciones de terceros"] --> E["Entrada global redundante<br/>(enruta a la región de origen)"]
-    E -. "login: hash(email) a región" .- DIR[("Directorio global de regiones<br/>(sin datos personales legibles,<br/>replicado en varias regiones)")]
+    E -. "login: HMAC(email) a región" .- DIR[("Directorio global de regiones<br/>(seudónimo HMAC y región,<br/>replicado en varias regiones)")]
 
     subgraph R1["Región 1 (celda completa)"]
         direction TB
@@ -28,7 +28,7 @@ flowchart TB
             D1[("Nodos de base 1..k: primaria<br/>k+1..N: réplica")]
             MB1["Monitor de base"]
             IDP1["Proveedor de identidad"]
-            AU1[("Auditoría: primaria")]
+            AU1[("Auditoría: primaria<br/>(nodo de base)")]
             OT1["Colector de observabilidad"]
         end
         subgraph Z2["Zona de falla B"]
@@ -40,7 +40,7 @@ flowchart TB
             D2[("Nodos de base 1..k: réplica<br/>k+1..N: primaria")]
             MB2["Monitor de base"]
             IDP2["Proveedor de identidad"]
-            AU2[("Auditoría: réplica")]
+            AU2[("Auditoría: réplica<br/>(nodo de base)")]
             OT2["Colector de observabilidad"]
         end
         subgraph Z3["Zona de falla C"]
@@ -81,9 +81,9 @@ flowchart TB
 | Notificador | Conexiones SSE y envío de push (ADR-0046) | Varias instancias en A y B; escala por conexiones abiertas | Cada instancia tiene su cola de avisos; si cae, la app sigue con su caché |
 | Monitor de base | *Ping/echo* a las primarias cada 5 s; promoción de réplicas | 3 instancias, una por zona | Una promoción requiere acuerdo de dos de tres, para evitar promociones dobles |
 | Analítica y almacén analítico | Consumo de `booking.facts.v1` y `trip.changed.v1`, anonimización y consultas pesadas (ADR-0064) | Por región; no hay almacén global | No está en el camino de los viajeros: su caída solo atrasa los datos analíticos, que esperan en su cola |
-| Directorio global de regiones | `hash(email)` → región para el login (ADR-0060) | Replicado en varias regiones, como la entrada global | Sin datos personales legibles; si cae, no se puede iniciar sesión, pero quien ya tiene token sigue |
+| Directorio global de regiones | `HMAC(email)` → región para el login, calculado por la entrada global con una clave propia (ADR-0060) | Replicado en varias regiones, como la entrada global | Guarda un seudónimo por usuario (aceptado por proporcionalidad frente a CON-3); si cae, no se puede iniciar sesión desde un dispositivo nuevo |
 | Proveedor de identidad | Login, tokens y revocación de los usuarios de la región (ADR-0060) | Instancias en A y B | Guarda credenciales y emails solo de su región (CON-3) |
-| Registro de auditoría | Accesos a viajes compartidos (ADR-0061) | Primaria en A y réplica sincrónica en B | Si no se puede escribir, la lectura compartida se rechaza (`503`) |
+| Registro de auditoría | Accesos a viajes compartidos (ADR-0061) | Se opera como un nodo más de la base (ADR-0042): primaria en A, réplica sincrónica en B, mismo monitor de base y reconstrucción en C | Si no se puede escribir, la lectura compartida se rechaza (`503`) |
 | Colector de observabilidad | Trazas, métricas, logs y alertas (ADR-0067) | Instancias en A y B | Guarda los datos en la región; si cae, los procesos siguen funcionando y se pierde observabilidad, no servicio |
 | Canal entre regiones | Reenvío de solicitudes de viajes compartidos (ADR-0062) | Entre las puertas de entrada de cada par de regiones | mTLS; lleva el token original del usuario |
 

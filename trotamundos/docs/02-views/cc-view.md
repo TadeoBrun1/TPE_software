@@ -62,6 +62,7 @@ flowchart LR
     M -- "login y renovación (OIDC)" --> IDP
     G -- "claves públicas (en caché)" --> IDP
     N -- "registra accesos compartidos" --> AU
+    G -- "registra rechazos previos al núcleo" --> AU
     G -- "reenvía recursos de otra región (mTLS)" --> OR
     RS -- "vista previa de /cards/{id}" --> G
     N -. "trazas, métricas y logs (todos los procesos)" .-> OT
@@ -92,7 +93,7 @@ sola para no recargar el diagrama.
 | Analítica | Consume `booking.facts.v1` y `trip.changed.v1`, anonimiza y guarda; no lee la base operativa (ADR-0064) | 4 |
 | Almacén analítico | Hechos anonimizados de la región para consultas pesadas del equipo de datos (ADR-0064) | 4 |
 | Proveedor de identidad | Login, tokens de 15 min, renovación y revocación de los usuarios de la región (ADR-0060) | 4 |
-| Registro de auditoría | Registros de solo agregado de los accesos a viajes compartidos de la región (ADR-0061) | 4 |
+| Registro de auditoría | Registros de solo agregado de los accesos a viajes compartidos de la región; lo escriben el núcleo y la puerta de entrada (ADR-0061) | 4 |
 | Colector de observabilidad | Recibe trazas, métricas y logs de la región y dispara alertas (ADR-0067) | 4 |
 | Notificador | Consume `panel.changed.v1`; avisa a las apps abiertas por SSE y a las cerradas por push; no lleva datos de reservas (ADR-0046) | 3 |
 | Monitor de base | Tres instancias (zonas A, B y C); detecta primarias caídas en 30 s y promueve la réplica con acuerdo de dos de tres (ADR-0042) | 3 |
@@ -103,10 +104,11 @@ sola para no recargar el diagrama.
 |---|---|---|---|
 | Clientes | Puerta de entrada | Síncrono, HTTPS/REST | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | Puerta de entrada | Núcleo | Síncrono, REST | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
-| Clientes | Puerta de entrada → Notificador | SSE (`/panel/events?ticket=...`), solo versión del panel; ticket de un solo uso (ADR-0060) | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
+| Clientes | Puerta de entrada → Notificador | SSE (`/panel/events?ticket=...`), versión del panel y `correlationIds`; ticket firmado de 30 s (ADR-0060) | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | Clientes | Proveedor de identidad | Síncrono, OpenID Connect (login y renovación) | Estándar OIDC |
 | Puerta de entrada | Puerta de entrada de otra región | Síncrono, REST sobre mTLS, con el token original del usuario (ADR-0062) | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | Núcleo | Registro de auditoría | Escritura de solo agregado antes de responder (ADR-0061) | [access-audit.md](../../specs/access-audit.md) |
+| Puerta de entrada | Registro de auditoría | Escritura de solo agregado de los rechazos que ocurren antes de llegar al núcleo del dueño (ADR-0061) | [access-audit.md](../../specs/access-audit.md) |
 | Redes sociales | Puerta de entrada (`/cards/{id}`) | Síncrono, HTML con metadatos Open Graph, sin autenticación (ADR-0063) | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | Todos los procesos | Colector de observabilidad | Asíncrono, OpenTelemetry (ADR-0067) | Estándar OpenTelemetry |
 | Intermediario (`panel.changed.v1`) | Notificador | Asíncrono: una cola exclusiva por instancia (todos los avisos) y una cola compartida `notifier.push` | [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml) |
@@ -151,7 +153,7 @@ partición. Cualquier cambio sobre ellos se anota en [impact-log.md](../01-add/i
 | QA-3 | La app muestra su caché local sin esperar la red |
 | QA-4 | Si la ingesta o la analítica fallan, la consulta (clientes → puerta → núcleo → base) sigue funcionando |
 | QA-5 | Núcleo sin estado detrás de la puerta de entrada; cada proceso escala por su cuenta |
-| QA-7 | Solo la puerta de entrada recibe solicitudes externas y valida el token; el núcleo verifica el permiso y audita cada acceso compartido |
+| QA-7 | Solo la puerta de entrada recibe solicitudes externas y valida el token; el núcleo verifica el permiso de todo pedido sobre un viaje ajeno; el núcleo y la puerta auditan cada intento |
 | QA-9 | Productores y consumidores no se conocen; los adaptadores aíslan a cada proveedor; los detalles por tipo no pasan por la lógica del núcleo |
 | QA-10 | El backend devuelve datos neutros y la puerta de entrada sirve los catálogos; los clientes formatean |
 | RF-07 | La analítica tiene su propio almacén y no comparte recursos con la consulta |

@@ -260,7 +260,7 @@ Las decisiones de la segunda, la tercera y la cuarta iteración se revisan conju
 | QA-8 | 2 | 0021 | Autorización, renovación, revocación y datos conservados. |
 | QA-9 | 1, 2 y 4 | 0001, 0002, 0023, 0066 | Agregar un medio nuevo (ferry) al prototipo y registrar el esfuerzo. |
 | QA-7 y RF-08 | 4, sobre la base de 1 | 0004, 0060, 0061, 0062, 0063 | Designado, no designado, revocado y enlace reenviado; auditoría de cada intento. |
-| QA-10 | 1, 3 y 4 | 0003, 0040, 0065 | Dos idiomas y zonas horarias sobre el mismo panel. |
+| QA-10 | 1, 3 y 4 | 0003, 0040, 0065 | Dos idiomas y zonas horarias sobre el mismo panel; latencia de QA-2 desde lejos de la región (parcial). |
 | CRN-2 | 4 | 0067 | Propagación del contexto a través del broker. |
 | RF-06 | 2, implementación coordinada con 3 | 0026: asistencia saliente del núcleo | Solicitud de asistencia a la agencia preferida. |
 | RF-07 | 1 y 4 | 0001, 0064 | Consultas del equipo de datos y anonimización. |
@@ -284,8 +284,9 @@ Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 | Dos componentes pueden mantener estados contradictorios de una autorización. | Definir fuente autoritativa y coordinación de revocación. | Iteraciones 2 y 3 |
 | Los análisis pueden competir por recursos con las operaciones. | Almacén analítico propio por región, alimentado por eventos (ADR-0064). | Iteración 4 (diseñado) |
 | Un token de acceso robado sirve hasta 15 minutos. | Vida corta y revocación del token de renovación (ADR-0060). | Iteración 4 (aceptado) |
+| Una primera solicitud desde muy lejos de la región de origen puede superar los 800 ms de QA-2. | Se cumple con la conexión abierta; mitigación candidata: TLS en la entrada global cerca del usuario. | Iteración 4 (aceptado), candidata para la 5 |
 | Si falla la auditoría, se rechazan las lecturas de viajes compartidos. | QA-7 exige el 100 %; auditoría replicada en dos zonas (ADR-0061). | Iteración 4 (aceptado) |
-| Los datos analíticos de una cuenta eliminada siguen seudonimizados hasta un año. | Destrucción anual de la clave (ADR-0064); validar con la normativa elegida (CON-3). | Iteración 4 (aceptado) |
+| Los datos analíticos de una cuenta eliminada, o un hecho tardío de un viaje eliminado, siguen seudonimizados hasta un año. | Destrucción anual de la clave (ADR-0064); validar con la normativa elegida (CON-3). | Iteración 4 (aceptado) |
 | CON-3 carece de un criterio concreto validado. | Precisar la política regional de datos y sus consecuencias. | Ambos integrantes |
 
 ## 13. Prototipo y evidencia
@@ -359,15 +360,17 @@ año (ADR-0045). Ver [iteración 3](01-add/iteration-3-query-scale.md).
 
 ## Diseño de la iteración 4
 
-Cada región tiene su proveedor de identidad (OpenID Connect) y un directorio global mínimo traduce `hash(email)` a
-región para el login; la puerta de entrada valida tokens de 15 minutos sin consultar al proveedor y la conexión SSE se
-abre con un ticket de un solo uso (ADR-0060). Un viaje se comparte con personas que tienen cuenta: el dueño invita por
-email, la persona acepta y el permiso queda atado a su cuenta; el núcleo verifica el permiso en cada lectura y
-registra cada acceso, permitido o rechazado, antes de responder (ADR-0061). Si la persona es de otra región, la puerta
-de entrada reenvía la solicitud a la región del dueño y los datos no se copian (ADR-0062). En redes sociales se publica
-una tarjeta de resumen que no da acceso al itinerario (ADR-0063). La analítica tiene un almacén por región, alimentado
-por el evento `booking.facts.v1` y anonimizado al entrar con una clave que se destruye cada año (ADR-0064). El backend
-devuelve datos neutros y los clientes formatean con catálogos de textos remotos (ADR-0065). Las reservas tienen campos
+Cada región tiene su proveedor de identidad (OpenID Connect) y un directorio global mínimo traduce el HMAC del email,
+calculado por la entrada global, a la región para el login; la puerta de entrada valida tokens de 15 minutos sin
+consultar al proveedor y la conexión SSE se abre con un ticket firmado (ADR-0060). Un viaje se comparte con personas
+que tienen cuenta: el dueño invita por email, solo una cuenta con ese email puede aceptar y el permiso queda atado a
+ella; todo pedido sobre un viaje ajeno pasa por el módulo `comparticion`, y cada intento, permitido o rechazado, queda
+registrado antes de responder, por el núcleo o por la puerta de entrada (ADR-0061). Si la persona es de otra región,
+la puerta de entrada reenvía la solicitud a la región del dueño por un canal mTLS y los datos no se copian (ADR-0062).
+En redes sociales se publica una tarjeta de resumen que no da acceso al itinerario (ADR-0063). La analítica tiene un
+almacén por región, alimentado por el evento `booking.facts.v1` y anonimizado al entrar con una clave que se destruye
+cada año (ADR-0064). El backend devuelve datos neutros y los clientes formatean con catálogos de textos remotos
+(ADR-0065); QA-2 fuera de la región queda en riesgo para conexiones nuevas desde muy lejos. Las reservas tienen campos
 comunes y un bloque de detalles con esquema propio por tipo, para agregar medios sin tocar el núcleo (ADR-0066). Todos
-los procesos envían trazas, métricas y logs a un colector por región, con el `correlationId` de punta a punta
-(ADR-0067). Ver [iteración 4](01-add/iteration-4-security-evolvability.md).
+los procesos envían trazas, métricas y logs a un colector por región, con el `correlationId` de punta a punta hasta la
+app (ADR-0067). Ver [iteración 4](01-add/iteration-4-security-evolvability.md).

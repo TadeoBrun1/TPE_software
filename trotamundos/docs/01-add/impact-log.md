@@ -43,7 +43,7 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 | Vinculaciones | Núcleo es autoridad; ingesta conserva cursor, suscripción y estado técnico | Propuesto para revisión con 3 |
 | Agencia | Módulo de asistencia saliente del núcleo con trabajador acotado; ADR-0026 | Propuesto para revisión con 3 |
 | Eventos confirmados | Outbox transaccional del núcleo y contrato; ADR-0027 | Propuesto para revisión con 3 |
-| Analítica | Flujo de cambios confirmados disponible; almacenamiento sigue en iteración 4 | Delimitado; diseño de almacén fuera de 2 |
+| Analítica | Flujo de cambios confirmados disponible; el almacenamiento se resolvió en la iteración 4 (ADR-0064) | Delimitado; diseño de almacén fuera de 2 |
 | Broker | RabbitMQ, topología y políticas; ADR-0028 | Propuesto para revisión |
 
 ## Impactos que requieren coordinación
@@ -78,11 +78,16 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 
 | Fecha | Origen | Cambio o decisión | Afecta | Tratamiento | Estado |
 |---|---|---|---|---|---|
-| 2026-10-28 | 4, ADR-0060 | La entrada global usa `homeRegion` del token para enrutar y un directorio global `hash(email) → región` para el login | 1 | Refina ADR-0003 y ADR-0004 sin cambiarlas; el directorio sigue el criterio del de suscripciones (ADR-0025) | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0060 | La entrada global usa `homeRegion` del token para enrutar y un directorio global `HMAC(email) → región` para el login (HMAC calculado en la entrada global); sin token, enruta por el prefijo de región del recurso | 1 | Refina ADR-0003 y ADR-0004 sin cambiarlas; el directorio sigue el criterio del de suscripciones (ADR-0025) | Propuesto para revisión |
 | 2026-10-28 | 4, ADR-0062 | La puerta de entrada reenvía por mTLS a otra región los recursos con su prefijo; los identificadores de viajes e invitaciones llevan la región del dueño | 1 y 3 | Nuevo conector entre regiones; no se copian datos | Propuesto para revisión |
 | 2026-10-28 | 4, ADR-0066 | `booking.change.detected.v1` pasa a 0.2.0: tipo abierto, `arrivalLocation` y `details` según `specs/schemas/` | 2 | Contrato de diseño 0.x sin consumidores en producción; los adaptadores producen `details` y el núcleo lo valida | Propuesto para revisión con 2 |
 | 2026-10-28 | 4, ADR-0064 | El núcleo publica `booking.facts.v1` desde su outbox; la analítica consume además `trip.changed.v1`. `booking.changed.v1` queda sin consumidores en la primera entrega | 2 y 3 | Nueva cola quorum de la analítica en `travel.domain` (ADR-0028) | Propuesto para revisión |
 | 2026-10-28 | 4, ADR-0067 | Además del `correlationId`, los mensajes llevan el contexto de traza (`traceparent`) en sus encabezados | 2 y 3 | Todos los productores y consumidores propagan el contexto con la biblioteca `observabilidad` | Propuesto para revisión con 2 |
+| 2026-10-28 | 4, ADR-0067 | `panel.changed.v1` pasa a 0.2.0 con `correlationIds` (opcional) y el evento SSE `panel-changed` lo incluye; nuevo `POST /telemetry/panel-shown` | 3 | Cambio compatible sobre contratos de la iteración 3 (campo opcional) | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0065 | Las reservas llevan la zona horaria IANA (`timeZone`, `arrivalTimeZone`) en la API y en `booking.change.detected.v1` | 2 y 3 | Campos opcionales; los adaptadores los informan cuando la fuente los tiene | Propuesto para revisión con 2 |
+| 2026-10-28 | 4, ADR-0061 | El registro de auditoría de cada región se opera como un nodo más de la base: mismo monitor de base y misma conmutación | 3 | Amplía lo que vigila el monitor de ADR-0042; no cambia su funcionamiento | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0063 | El núcleo sirve una única página HTML (tarjeta para redes) con texto en el idioma del dueño | 1 | Excepción acotada a ADR-0004 (el núcleo no genera pantallas) y a ADR-0065 | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0060 a 0064 | Notas agregadas en ADR-0001, ADR-0003 y ADR-0004 que remiten a las ADRs de la iteración 4 que resolvieron sus pendientes | 1 | Solo referencias | Compatible |
 | 2026-10-28 | 4, ADR-0045 | ADR-0045 remitía a la iteración 4 la anonimización de los eventos de viajes eliminados | 3 | Nota agregada en ADR-0045 que remite a ADR-0064 | Compatible |
 | 2026-10-28 | 4, ADR-0064 | **Segunda entrega (opción A, recomendación):** el almacén analítico no tiene datos por usuario | 2da entrega | Un sistema de recomendación tendrá que guardar su propio perfil resumido por usuario (métricas comprimidas), calculado desde los datos operativos, en la región del usuario y eliminado junto con su cuenta | Para la segunda entrega |
 

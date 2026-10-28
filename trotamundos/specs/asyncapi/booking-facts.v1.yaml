@@ -20,6 +20,14 @@ components:
   messages:
     BookingFacts:
       name: BookingFacts
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+            description: Contexto de traza W3C (ADR-0067); lo propagan productores y consumidores.
+          tracestate:
+            type: string
       payload:
         type: object
         additionalProperties: false
@@ -88,6 +96,11 @@ components:
           provider:
             type: string
             description: Nombre del proveedor (aerolínea, cadena hotelera), no la referencia de la reserva.
+          createdDate:
+            type: string
+            format: date
+            description: Día en que se creó la reserva; permite medir la anticipación de una cancelación sin vincular
+              eventos (ADR-0064).
           startDate:
             type: string
             format: date

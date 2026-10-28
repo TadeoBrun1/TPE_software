@@ -2,7 +2,7 @@
 status: "proposed"
 date: 2026-10-28
 decision-makers: "Tadeo Brun"
-consulted: "Tomas Lateana (revisión cruzada en el PR de la iteración 4)"
+consulted: "Tomas Lateana (revisión cruzada pendiente en el PR de la iteración 4)"
 informed: ""
 ---
 
@@ -35,11 +35,16 @@ Reglas:
 
 * A pedido del usuario (`POST /trips/{tripId}/social-card`), el núcleo genera una tarjeta con: destino (ciudad o
   país), mes y cantidad de días. Nunca incluye vuelos, hoteles, horarios, direcciones ni códigos de reserva.
-* La tarjeta tiene un enlace público propio (`/cards/{cardId}`) con metadatos estándar para que las redes muestren la
-  vista previa (Open Graph). Ese enlace no da acceso al viaje.
+* La tarjeta tiene un enlace público propio (`/cards/{cardId}`), con el prefijo de la región del dueño en `cardId`
+  para que la entrada global la enrute sin token (ADR-0060). Ese enlace no da acceso al viaje.
+* **Excepción a ADR-0004 y ADR-0065, acotada a esta página:** los robots de las redes sociales no ejecutan la
+  aplicación web ni tienen sesión, así que necesitan una página HTML con metadatos Open Graph ya armados. El núcleo
+  sirve esa única página con una plantilla fija; no es una pantalla de la aplicación. El texto se arma una vez, al
+  crear la tarjeta, en el idioma del perfil del dueño (ADR-0065), porque el robot no tiene un idioma propio.
+* La tarjeta se borra cuando el usuario la borra o cuando el viaje se elimina (ADR-0045); el enlace deja de
+  funcionar. Archivar el viaje no la borra.
 * El usuario comparte el enlace con la función de compartir de su teléfono o del navegador; Trotamundos no publica en
   nombre del usuario ni guarda credenciales de redes sociales.
-* El usuario puede borrar la tarjeta; el enlace deja de funcionar.
 
 Patrones y tácticas que aplica:
 
@@ -53,7 +58,10 @@ Patrones y tácticas que aplica:
 * Good, because el itinerario sigue protegido y la publicación funciona en cualquier red.
 * Good, because no hay integración por red social ni credenciales que custodiar (CON-2).
 * Bad, because lo que se publica es un resumen, no el itinerario.
-* Bad, because cualquiera con el enlace ve el destino y el mes: es información que el usuario elige hacer pública.
+* Bad, because cualquiera con el enlace ve el destino y el mes: es información que el usuario elige hacer pública, y
+  puede indicar cuándo el viajero no está en su casa. La app lo advierte al crear la tarjeta.
+* Bad, because el núcleo sirve una página HTML y arma un texto en un idioma, dos excepciones acotadas a ADR-0004 y
+  ADR-0065.
 
 ### Confirmation
 
@@ -87,5 +95,5 @@ viaje; borrarla invalida el enlace.
 | Drivers | QA-7, interoperabilidad con redes sociales, CON-2 |
 | Vistas afectadas | [cc-view](../02-views/cc-view.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
-| ADRs relacionadas | [0061](0061-comparticion-con-cuenta-y-auditoria.md) |
+| ADRs relacionadas | [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md), [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md), [0060](0060-identidad-por-region-con-tokens.md), [0061](0061-comparticion-con-cuenta-y-auditoria.md), [0065](0065-internacionalizacion-en-el-cliente.md) |
 | Código del prototipo | — |

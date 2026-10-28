@@ -2,7 +2,7 @@
 status: "proposed"
 date: 2026-10-28
 decision-makers: "Tadeo Brun"
-consulted: "Tomas Lateana (revisión cruzada en el PR de la iteración 4)"
+consulted: "Tomas Lateana (revisión cruzada pendiente en el PR de la iteración 4)"
 informed: ""
 ---
 
@@ -18,7 +18,7 @@ la interfaz y cómo se formatean fechas, horas, zonas horarias y monedas.
 
 * QA-10: textos y formatos en el idioma del usuario.
 * QA-2 y QA-3: el idioma no debe afectar la latencia ni la caché del panel (ADR-0040, ADR-0041).
-* QA-9: agregar un idioma no debería cambiar código.
+* Modificabilidad: agregar un idioma no debería cambiar código (no es QA-9, que trata de medios de transporte).
 
 ## Considered Options
 
@@ -40,9 +40,11 @@ Reglas:
   los guarda con caché larga, porque una versión no cambia nunca. La app móvil abre con el catálogo que ya tiene y
   actualiza en segundo plano, así que el idioma no suma espera a QA-3; la web descarga el catálogo una vez y lo
   reutiliza.
-* **Datos neutros del backend:** fechas y horas en ISO 8601 con zona horaria (la del lugar de la reserva), monedas con
-  código ISO 4217 y montos numéricos, y códigos en lugar de textos para estados y tipos. El backend no devuelve textos
-  traducidos.
+* **Datos neutros del backend:** fechas y horas en ISO 8601 con el desfase horario del lugar de la reserva, más el
+  nombre de la zona horaria IANA (`timeZone`, por ejemplo `Asia/Tokyo`), para que el cliente muestre la zona y
+  resuelva bien los cambios de horario de verano; monedas con código ISO 4217 y montos numéricos; códigos en lugar de
+  textos para estados y tipos. El backend no devuelve textos traducidos, salvo la tarjeta para redes (excepción de
+  ADR-0063).
 * **Formato en el cliente:** fechas, horas, números y monedas se formatean con las reglas estándar de cada idioma y
   país (Unicode CLDR, disponibles en las librerías estándar de web y móvil). Las horas de una reserva se muestran en
   la zona horaria del lugar, indicándola.
@@ -54,9 +56,8 @@ Patrones y tácticas que aplica:
 
 | Patrón o táctica | Cómo se aplica | Driver |
 |---|---|---|
-| Táctica *diferir el enlace* (modificabilidad) | Los textos se eligen en tiempo de ejecución desde catálogos externos | QA-10, QA-9 |
-| Táctica *adherir a estándares* (integrabilidad) | ISO 8601, ISO 4217 y Unicode CLDR | QA-10 |
-| Táctica *mantener múltiples copias de los datos* (performance) | El panel en caché sirve para cualquier idioma | QA-3 |
+| Táctica *diferir el enlace* (modificabilidad) | Los textos se eligen en tiempo de ejecución desde catálogos externos | QA-10 |
+| Táctica *adherir a estándares* (integrabilidad) | ISO 8601, zonas IANA, ISO 4217 y Unicode CLDR | QA-10 |
 
 ### Consequences
 
@@ -94,7 +95,7 @@ publicando solo su catálogo; una clave sin traducir muestra el idioma base.
 | Elemento | Enlace |
 |---|---|
 | Iteración ADD | 4, [iteration-4-security-evolvability](../01-add/iteration-4-security-evolvability.md) |
-| Drivers | QA-10, QA-2, QA-3, QA-9 |
+| Drivers | QA-10, QA-2, QA-3 |
 | Vistas afectadas | [module-view](../02-views/module-view.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0003](0003-despliegue-por-regiones-con-region-de-origen.md), [0040](0040-modelo-de-lectura-del-panel.md), [0041](0041-cache-local-del-panel.md) |

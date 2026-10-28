@@ -55,11 +55,14 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
   /panel/events/ticket:
     post:
-      summary: Ticket de un solo uso para abrir la conexión SSE
+      summary: Ticket para abrir la conexión SSE
       description: >
         El navegador no puede enviar el encabezado Authorization en una conexión SSE. Con el token de acceso, el
-        cliente pide un ticket válido por 30 s y para una sola conexión, y lo pasa en GET /panel/events (ADR-0060).
-        El ticket no autoriza ninguna otra operación y no se registra en los logs.
+        cliente pide un ticket y lo pasa en GET /panel/events (ADR-0060). El ticket está firmado por la puerta de
+        entrada, empieza con el prefijo de la región (para que la entrada global lo enrute sin token), lleva el
+        userId y vence a los 30 s. Se valida sin estado compartido; no se controla el uso único: reusarlo dentro de
+        los 30 s solo abre otra conexión de avisos del mismo usuario, sin datos de reservas. No autoriza ninguna
+        otra operación y no se registra en los logs.
       operationId: createPanelEventsTicket
       responses:
         "201":
@@ -96,18 +99,21 @@ paths:
         - name: ticket
           in: query
           required: true
-          description: Ticket de un solo uso emitido por POST /panel/events/ticket (ADR-0060)
+          description: Ticket emitido por POST /panel/events/ticket (ADR-0060)
           schema:
             type: string
       responses:
         "200":
-          description: Flujo de eventos `ready` (sin cuerpo) y `panel-changed` con cuerpo {"panelVersion":<entero>}
+          description: >
+            Flujo de eventos `ready` (sin cuerpo) y `panel-changed` con cuerpo
+            {"panelVersion":<entero>,"correlationIds":[...]}; correlationIds es opcional y sirve para informar
+            POST /telemetry/panel-shown (ADR-0067)
           content:
             text/event-stream:
               schema:
                 type: string
         "401":
-          description: Ticket inválido, vencido o ya usado
+          description: Ticket inválido o vencido
   /trips/archived:
     get:
       summary: Viajes anteriores (archivados) del usuario
@@ -305,28 +311,35 @@ paths:
       summary: Revocar un permiso o cancelar una invitación
       description: >
         Tiene efecto en la siguiente lectura de la persona, porque el permiso se verifica siempre (ADR-0061). Borra
-        el email del invitado. Se registra en la auditoría. Solo el dueño. Prioridad alta, igual que el panel: revocar
+        el email del invitado. Se registra en la auditoría. Solo el dueño. Prioridad alta, igual que el panel: quitar
         un acceso no debe esperar a que pase una sobrecarga.
       operationId: revokeTripShare
       responses:
         "204":
-          description: Permiso revocado
+          description: Permiso quitado
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+        "503":
+          description: No se pudo registrar la operación en la auditoría; el permiso no se quitó y el cliente reintenta
+          headers:
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
   /shares/{shareId}/accept:
     parameters:
       - $ref: "#/components/parameters/ShareId"
     post:
       summary: Aceptar una invitación con la cuenta propia
       description: >
-        La persona invitada, con sesión iniciada, envía el secreto recibido por email. El permiso queda atado a su
-        userId; el enlace deja de servir para cualquier otra cuenta. Aceptar otra vez con la misma cuenta no tiene
-        efecto. Si el viaje es de otra región, la puerta de entrada reenvía la solicitud (ADR-0062) y, al aceptarse,
-        la región de quien acepta guarda solo la referencia al viaje. Se registra en la auditoría. Prioridad media.
+        La persona invitada, con sesión iniciada, envía el secreto recibido por email. Se acepta solo si el
+        emailHmac de su token (email verificado) coincide con el de la invitación, así que otra cuenta no puede
+        aceptarla aunque tenga el enlace (ADR-0061). Desde ese momento el permiso queda atado a su userId. Aceptar
+        otra vez con la misma cuenta no tiene efecto. Si el viaje es de otra región, la puerta de entrada reenvía la
+        solicitud (ADR-0062). Después de aceptar, la app registra la referencia en su región con POST /shared/trips.
+        Cada intento, aceptado o no, se registra en la auditoría. Prioridad media.
       operationId: acceptShare
       requestBody:
         required: true
@@ -349,7 +362,9 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
-          description: La invitación no existe, venció, fue revocada o ya la aceptó otra cuenta
+          description: >
+            La invitación no existe, venció, fue cancelada, el secreto no coincide o el email de la cuenta no es el
+            invitado
         "429":
           $ref: "#/components/responses/TooManyRequests"
         "503":
@@ -358,8 +373,8 @@ paths:
     get:
       summary: Viajes que otras personas compartieron conmigo
       description: >
-        Devuelve solo las referencias guardadas en la partición del usuario al aceptar (ADR-0062); cada viaje se lee
-        con GET /shared/trips/{tripId}. Prioridad baja.
+        Devuelve solo las referencias guardadas en la partición del usuario (ADR-0062); cada viaje se lee con
+        GET /shared/trips/{tripId}. Prioridad baja.
       operationId: listSharedTrips
       responses:
         "200":
@@ -380,16 +395,59 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
         "503":
           $ref: "#/components/responses/Overloaded"
+    post:
+      summary: Registrar en mi región la referencia a un viaje que acepté
+      description: >
+        Lo llama la app después de aceptar una invitación. El módulo usuarios guarda en la partición del usuario solo
+        el identificador del viaje y la fecha (ADR-0062). Es idempotente y reintentable. La referencia no da permiso:
+        el permiso se verifica en la región del dueño en cada lectura. Prioridad media.
+      operationId: addSharedTripRef
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SharedTripRef"
+      responses:
+        "200":
+          description: Referencia registrada (o ya existía)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedTripRef"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
   /shared/trips/{tripId}:
     parameters:
       - $ref: "#/components/parameters/TripId"
+    delete:
+      summary: Quitar de mi lista la referencia a un viaje compartido
+      description: >
+        La app la borra cuando la lectura del viaje devuelve 404 (permiso quitado o viaje eliminado) o cuando el
+        usuario lo pide. Solo afecta a la lista del usuario, en su región; no cambia el permiso. Idempotente.
+      operationId: removeSharedTripRef
+      responses:
+        "204":
+          description: Referencia borrada (o no existía)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
     get:
       summary: Ver un viaje compartido (RF-08, QA-7)
       description: >
         El módulo comparticion de la región del dueño verifica que el usuario del token tenga un permiso vigente y
         registra el acceso, permitido o rechazado, antes de responder (ADR-0061). Si el viaje es de otra región, la
         puerta de entrada reenvía la solicitud a esa región (ADR-0062). Sin permiso responde 404, igual que si el
-        viaje no existiera. Si no se puede registrar el acceso o la región del dueño no responde, 503. Prioridad alta.
+        viaje no existiera. Si no se puede registrar el acceso o la región del dueño no responde, 503. Los rechazos
+        que ocurren en la puerta de entrada (sin token, región inexistente, región del dueño sin respuesta) los
+        registra la puerta en la auditoría de su región. Prioridad alta.
       operationId: getSharedTrip
       responses:
         "200":
@@ -448,7 +506,10 @@ paths:
       summary: Página pública de la tarjeta (vista previa en redes)
       description: >
         Página HTML con metadatos Open Graph (título, descripción e imagen) que las redes usan para la vista previa
-        (ADR-0063). No requiere autenticación y no contiene ni enlaza datos del itinerario.
+        (ADR-0063). No requiere autenticación y no contiene ni enlaza datos del itinerario. Es la única página HTML
+        que sirve el núcleo, con una plantilla fija y el texto armado al crear la tarjeta en el idioma del dueño
+        (excepción acotada a ADR-0004 y ADR-0065). cardId lleva el prefijo de región para que la entrada global la
+        enrute sin token.
       operationId: getPublicSocialCard
       security: []
       parameters:
@@ -457,6 +518,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: "^[a-z]+-[a-z]+:[A-Za-z0-9-]+$"
       responses:
         "200":
           description: Página de la tarjeta
@@ -466,6 +528,43 @@ paths:
                 type: string
         "404":
           description: La tarjeta no existe o fue borrada
+  /telemetry/panel-shown:
+    post:
+      summary: La app informa cuándo mostró una versión del panel (CRN-2, QA-1)
+      description: >
+        Cierra la medición de punta a punta de QA-1 (ADR-0067): la app informa la versión del panel que mostró, los
+        correlationIds que recibió en el evento panel-changed y el instante. Solo datos técnicos, sin datos de
+        reservas. Prioridad baja: ante sobrecarga se descarta (ADR-0047).
+      operationId: reportPanelShown
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [panelVersion, shownAt]
+              properties:
+                panelVersion:
+                  type: integer
+                  minimum: 0
+                correlationIds:
+                  type: array
+                  maxItems: 50
+                  items:
+                    type: string
+                shownAt:
+                  type: string
+                  format: date-time
+      responses:
+        "202":
+          description: Recibido
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
   /bookings:
     post:
       summary: Agregar una reserva manualmente (RF-04)
@@ -569,8 +668,12 @@ components:
       description: >
         Token de acceso de 15 minutos emitido por el proveedor de identidad (OpenID Connect) de la región de origen
         del usuario, con userId y homeRegion. La puerta de entrada valida firma y vencimiento sin consultar al
-        proveedor; si homeRegion no es su región, rechaza (401). El cliente lo renueva con su token de renovación
-        directamente ante el proveedor de identidad (ADR-0060).
+        proveedor. Si homeRegion no es su región, rechaza (401), salvo que la solicitud llegue por el canal mTLS
+        desde la puerta de entrada de otra región y se refiera a un viaje o invitación con el prefijo de su región
+        (ADR-0062): en ese caso valida la firma con las claves del proveedor de la región del token. Además de userId
+        y homeRegion, el token lleva emailHmac (HMAC del email verificado), que se usa al aceptar invitaciones
+        (ADR-0061). El cliente lo renueva con su token de renovación directamente ante el proveedor de identidad
+        (ADR-0060).
   parameters:
     TripId:
       name: tripId
@@ -628,7 +731,9 @@ components:
     Unauthorized:
       description: No autenticado
     NotFound:
-      description: No existe o no pertenece al usuario
+      description: >
+        No existe o no pertenece al usuario. Un pedido sobre un viaje ajeno pasa por el módulo comparticion y se
+        registra en la auditoría (ADR-0061)
     TooManyRequests:
       description: El cliente superó su límite de solicitudes (ADR-0047)
       headers:
@@ -736,12 +841,17 @@ components:
         startsAt:
           type: string
           format: date-time
+          description: ISO 8601 con el desfase horario del lugar
         endsAt:
           type: string
           format: date-time
+        timeZone:
+          $ref: "#/components/schemas/TimeZone"
+        arrivalTimeZone:
+          $ref: "#/components/schemas/TimeZone"
         location:
           type: string
-          description: Lugar de la reserva (hotel, auto) o de partida (traslados)
+          description: Lugar de la reserva (hotel, auto) o de partida (traslados; código de aeropuerto o estación)
         arrivalLocation:
           type: string
           description: Lugar de llegada en los traslados
@@ -803,10 +913,20 @@ components:
         endsAt:
           type: string
           format: date-time
+        timeZone:
+          $ref: "#/components/schemas/TimeZone"
+        arrivalTimeZone:
+          $ref: "#/components/schemas/TimeZone"
         location:
+          type: string
+        arrivalLocation:
           type: string
         displayName:
           type: string
+        price:
+          $ref: "#/components/schemas/Money"
+        details:
+          $ref: "#/components/schemas/BookingDetails"
         notes:
           type: string
     BookingType:
@@ -822,7 +942,8 @@ components:
       description: >
         Datos propios del tipo de reserva. schema identifica el esquema (por ejemplo train.v1), que está en
         specs/schemas/details-<tipo>.v<n>.json; el resto de las propiedades sigue ese esquema. El núcleo valida el
-        bloque y lo guarda sin interpretarlo; un schema desconocido se rechaza con 400 (ADR-0066).
+        bloque y lo guarda sin interpretarlo; un schema desconocido o un bloque que no lo cumple se rechaza con 400.
+        Ningún esquema puede incluir códigos de reserva ni datos personales (ADR-0066).
       properties:
         schema:
           type: string
@@ -833,6 +954,10 @@ components:
         trainNumber: "AVE 3172"
         coach: "5"
         seat: "12A"
+    TimeZone:
+      type: string
+      description: Zona horaria IANA del lugar (por ejemplo Asia/Tokyo); el cliente la muestra junto a la hora (ADR-0065)
+      example: America/Argentina/Buenos_Aires
     Money:
       type: object
       required: [amount, currency]
@@ -913,6 +1038,10 @@ components:
         endsAt:
           type: string
           format: date-time
+        timeZone:
+          $ref: "#/components/schemas/TimeZone"
+        arrivalTimeZone:
+          $ref: "#/components/schemas/TimeZone"
         location:
           type: string
         arrivalLocation:
