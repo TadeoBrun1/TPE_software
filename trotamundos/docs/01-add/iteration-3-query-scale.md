@@ -2,8 +2,8 @@
 
 **Responsable:** Tadeo Brun (integrante B)
 **Fecha:** 2026-10-28
-**Estado:** En revisión. Las ADRs 0040 a 0048 están en `proposed` hasta la revisión cruzada. Revisada con una
-auditoría independiente (ver el final del documento).
+**Estado:** Decisiones confirmadas por ambos integrantes (2026-10-28). Las ADRs 0040 a 0048 quedan en `proposed`
+hasta el merge a `main`. Revisada con una auditoría independiente (ver el final del documento).
 **Rango de ADRs:** 0040 a 0059 (ver [CONTRIBUTING](../../CONTRIBUTING.md))
 
 > Las decisiones se tomaron eligiendo entre alternativas planteadas para cada punto; las descartadas y sus razones
@@ -42,7 +42,7 @@ mantiene el ciclo de vida de los viajes.
 
 | Tema | Decisión |
 |---|---|
-| QA-1 a escala con avisos perdidos (conflicto abierto de la iteración 2) | **Riesgo aceptado.** Se registra en el Paso 7; su mitigación queda para una iteración 5 si hay tiempo. Falta la confirmación de Tomas Lateana, responsable de la iteración 2 |
+| QA-1 a escala con avisos perdidos (conflicto abierto de la iteración 2) | **Riesgo aceptado.** Se registra en el Paso 7; su mitigación queda para una iteración 5 si hay tiempo. Confirmado por ambos integrantes (2026-10-28) |
 | Falla de una región completa | Sigue siendo un riesgo aceptado (ADR-0003); esta iteración no diseña recuperación entre regiones |
 | Autenticación del viajero y compartición | Iteración 4 |
 
@@ -199,7 +199,7 @@ mediciones: las cifras de carga son suposiciones que el prototipo y las pruebas 
 
 | Riesgo | Driver | Tratamiento |
 |---|---|---|
-| QA-1 a escala: si se pierde un aviso del proveedor de correo, las cuentas con reconciliación de 15 min o 6 h superan los 5 minutos (de la iteración 2). No se estimó qué fracción de las actualizaciones afecta frente al 1 % que permite el percentil 99 | QA-1 | **Aceptado**, pendiente de confirmación de Tomas Lateana. Mitigación posible: detectar buzones que dejaron de recibir avisos y adelantar su reconciliación. Para una iteración 5 si hay tiempo |
+| QA-1 a escala: si se pierde un aviso del proveedor de correo, las cuentas con reconciliación de 15 min o 6 h superan los 5 minutos (de la iteración 2). No se estimó qué fracción de las actualizaciones afecta frente al 1 % que permite el percentil 99 | QA-1 | **Aceptado** por ambos integrantes (2026-10-28). Mitigación posible: detectar buzones que dejaron de recibir avisos y adelantar su reconciliación. Para una iteración 5 si hay tiempo |
 | Un escalón de carga mayor a 1,67 veces durante el arranque de instancias | QA-2, QA-5 | Aceptado por CON-5: los días de pico del enunciado son una expectativa, no una garantía. Mitigado con priorización. Si en operación hay picos regulares, se agrega escalado programado con datos reales |
 | Las cifras de carga son suposiciones | QA-5 | Validar con pruebas de carga del prototipo |
 | Falla de una región completa | QA-4 | Aceptado desde la iteración 1 |

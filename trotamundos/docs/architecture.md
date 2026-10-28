@@ -2,7 +2,7 @@
 
 **Mantienen:** Tadeo Brun y Tomas Lateana.
 
-**Estado:** iteraciones 1 y 2 integradas; iteración 3 documentada (pasos 2 a 7) y revisada con una auditoría independiente, pendiente de revisión cruzada. QA-1 a escala queda como riesgo aceptado. Prototipo y aceptación conjunta pendientes.
+**Estado:** iteraciones 1 y 2 integradas; iteración 3 documentada (pasos 2 a 7), revisada con una auditoría independiente y confirmada por ambos integrantes. QA-1 a escala queda como riesgo aceptado. Prototipo y aceptación conjunta pendientes.
 
 Este documento resume la arquitectura y enlaza al detalle de requisitos, iteraciones, decisiones, vistas y contratos.
 
@@ -18,7 +18,7 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 |---|---|---|
 | [1 — Estructura general](01-add/iteration-1-structure.md) | En revisión; ADRs propuestas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
 | [2 — Ingesta](01-add/iteration-2-ingestion.md) | Pasos 2–7 revisados; viabilidad de QA-1 y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
-| [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; revisión cruzada pendiente | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
+| [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; decisiones confirmadas por ambos | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
 | [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pendiente | Compartición, autenticación, internacionalización, analítica y evolución. |
 
 La incorporación de al menos un módulo avanzado —recomendaciones o chatbot— es obligatoria para la segunda entrega. Su elección continúa pendiente.
