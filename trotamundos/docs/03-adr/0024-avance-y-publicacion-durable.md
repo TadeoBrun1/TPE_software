@@ -2,7 +2,7 @@
 status: "accepted"
 date: 2026-10-27
 decision-makers: "Tomas Lateana"
-consulted: "Asistencia de ChatGPT/Codex"
+consulted: "Asistencia de IA"
 informed: "Revisión cruzada mediante el PR de iteración 2"
 ---
 

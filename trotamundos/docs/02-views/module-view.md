@@ -177,7 +177,7 @@ Leyenda: la flecha significa "puede usar".
 | Asignación a viajes en `viajes` | [0048](../03-adr/0048-asignacion-de-reservas-a-viajes.md) |
 | Notificador como proceso aparte | [0046](../03-adr/0046-notificador-de-cambios-del-panel.md) |
 | Compartición y auditoría en el núcleo | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) |
-| Analítica con seudonimización al entrar | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
+| Analítica con seudonimización al entrar | [0064](../03-adr/0064-analitica-regional-seudonimizada.md) |
 | Idioma en el perfil, textos en los clientes | [0065](../03-adr/0065-internacionalizacion-en-el-cliente.md) |
 | Esquemas de detalles por tipo | [0066](../03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) |
 | Biblioteca de observabilidad | [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |

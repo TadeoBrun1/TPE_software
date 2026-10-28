@@ -141,7 +141,7 @@ partición. Cualquier cambio sobre ellos se anota en [impact-log.md](../01-add/i
 | Compartición y auditoría | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) |
 | Reenvío entre regiones | [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) |
 | Tarjeta para redes sociales | [0063](../03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) |
-| Analítica regional seudonimizada | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
+| Analítica regional seudonimizada | [0064](../03-adr/0064-analitica-regional-seudonimizada.md) |
 | Observabilidad | [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |
 
 ## 7. Drivers que sustenta

@@ -1,7 +1,7 @@
 # Escenarios de atributos de calidad (SEI, 6 partes)
 
 **Qué es:** los atributos de calidad del enunciado refinados como escenarios de 6 partes.
-**Mantiene:** ambos. **Estado:** COMPLETADO (revisado con la skill `/test-QAs`). Cambios solo por PR de ambos: son
+**Mantiene:** ambos. **Estado:** COMPLETADO (revisado con la skill `/test-qas`). Cambios solo por PR de ambos: son
 drivers inmutables durante ADD.
 
 Regla de este documento: los valores que vienen **del enunciado** se usan tal cual. Los que se inventaron para poder

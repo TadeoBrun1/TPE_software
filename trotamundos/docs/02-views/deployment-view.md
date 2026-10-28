@@ -99,7 +99,7 @@ flowchart TB
 | Identidad por región y directorio global | [0060](../03-adr/0060-identidad-por-region-con-tokens.md) |
 | Auditoría por región | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) |
 | Canal entre regiones | [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) |
-| Analítica solo regional | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
+| Analítica solo regional | [0064](../03-adr/0064-analitica-regional-seudonimizada.md) |
 | Colector por región | [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |
 
 ## 5. Drivers que sustenta
