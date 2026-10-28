@@ -1,0 +1,229 @@
+asyncapi: 2.6.0
+info:
+  title: Novedades de reservas detectadas — propuesta de iteración 2
+  version: 0.1.0
+  description: Productor ingesta, consumidor núcleo; contrato de diseño iteración
+    2. RabbitMQ AMQP 0-9-1 sobre TLS, vhost por región, exchange travel.ingestion,
+    routing booking.change.detected.v1.s0 a .s7. ADR-0028 y specs/ingestion-operations.md.
+    El nombre lógico del evento no es la routing key. Payload 0.1.0 sujeto a revisión.
+defaultContentType: application/json
+channels:
+  booking.change.detected.v1.s{shard}:
+    description: Routing key del exchange topic travel.ingestion; shard estable por
+      homeRegion/userId.
+    publish:
+      operationId: publishDetectedBookingChange
+      message:
+        $ref: '#/components/messages/BookingChangeDetected'
+    parameters:
+      shard:
+        description: Shard fijo; algoritmo en ingestion-operations.md.
+        schema:
+          type: string
+          enum:
+          - '0'
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+          - '6'
+          - '7'
+components:
+  messages:
+    BookingChangeDetected:
+      name: BookingChangeDetected
+      title: Novedad externa de reserva
+      correlationId:
+        location: $message.payload#/correlationId
+      payload:
+        type: object
+        additionalProperties: false
+        required:
+        - eventId
+        - schemaVersion
+        - correlationId
+        - userId
+        - connectionId
+        - providerId
+        - source
+        - detectedAt
+        - changeType
+        - requiresResolution
+        - reservation
+        - homeRegion
+        properties:
+          eventId:
+            type: string
+            minLength: 1
+            description: Estable al reintentar una misma publicación.
+          schemaVersion:
+            type: string
+            enum:
+            - '1'
+          correlationId:
+            type: string
+            minLength: 1
+          userId:
+            type: string
+            minLength: 1
+            description: El núcleo valida correspondencia con connectionId.
+          connectionId:
+            type: string
+            minLength: 1
+          providerId:
+            type: string
+            minLength: 1
+          source:
+            type: string
+            enum:
+            - email
+            - provider
+          externalReservationId:
+            type: string
+            minLength: 1
+          sourceMessageId:
+            type: string
+            minLength: 1
+          sourceVersion:
+            type: string
+            minLength: 1
+            description: 'Opaca: orden solo según contrato de la fuente.'
+          occurredAt:
+            type: string
+            format: date-time
+            description: Instante externo si se conoce; no reemplazar por detectedAt.
+          detectedAt:
+            type: string
+            format: date-time
+          changeType:
+            type: string
+            enum:
+            - upsert
+            - cancel
+          requiresResolution:
+            type: boolean
+            description: Obliga al núcleo a conservar para resolución, sin aplicación
+              automática ciega.
+          reservation:
+            type: object
+            additionalProperties: false
+            required:
+            - type
+            - status
+            properties:
+              type:
+                type: string
+                enum:
+                - hotel
+                - flight
+                - car
+                - train
+                - bus
+                - unknown
+              status:
+                type: string
+                enum:
+                - confirmed
+                - pending
+                - cancelled
+                - unknown
+              startAt:
+                type: string
+                format: date-time
+              endAt:
+                type: string
+                format: date-time
+              location:
+                type: string
+                minLength: 1
+            description: Vocabulario inicial; suficiencia por tipo y campos adicionales
+              se acuerdan antes de implementar.
+          homeRegion:
+            type: string
+            minLength: 1
+            description: Región de origen obtenida de configuración autoritativa;
+              el núcleo la verifica.
+          reservationKey:
+            type: string
+            minLength: 1
+            description: Identidad de reserva dentro del ámbito usuario/región/vinculación;
+              orden por esta clave.
+          businessChangeKey:
+            type: string
+            minLength: 1
+            description: Identidad de la novedad por referencia estable de fuente
+              o huella normalizada; codificación canónica a acordar.
+        allOf:
+        - oneOf:
+          - properties:
+              source:
+                enum:
+                - email
+            required:
+            - sourceMessageId
+          - properties:
+              source:
+                enum:
+                - provider
+            required:
+            - externalReservationId
+        - anyOf:
+          - required:
+            - externalReservationId
+          - properties:
+              requiresResolution:
+                enum:
+                - true
+        - oneOf:
+          - properties:
+              changeType:
+                enum:
+                - upsert
+          - properties:
+              changeType:
+                enum:
+                - cancel
+              reservation:
+                properties:
+                  status:
+                    enum:
+                    - cancelled
+        - oneOf:
+          - properties:
+              requiresResolution:
+                enum:
+                - true
+          - properties:
+              requiresResolution:
+                enum:
+                - false
+            required:
+            - externalReservationId
+            - reservationKey
+            - businessChangeKey
+      examples:
+      - name: hotel-desde-correo-sin-version
+        payload:
+          eventId: evt-demo-001
+          schemaVersion: '1'
+          correlationId: corr-demo-001
+          userId: user-demo
+          connectionId: mail-demo
+          providerId: hotel-demo
+          source: email
+          sourceMessageId: message-demo-001
+          externalReservationId: reservation-demo-001
+          occurredAt: '2026-10-27T12:00:00Z'
+          detectedAt: '2026-10-27T12:00:30Z'
+          changeType: upsert
+          requiresResolution: false
+          reservation:
+            type: hotel
+            status: confirmed
+            startAt: '2026-11-10T14:00:00-03:00'
+            endAt: '2026-11-12T10:00:00-03:00'
+            location: Destino de demostración
+          homeRegion: region-demo
+          reservationKey: demo-reservation-key
+          businessChangeKey: demo-message-reservation-change

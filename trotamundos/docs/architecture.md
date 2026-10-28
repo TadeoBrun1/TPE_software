@@ -1,108 +1,305 @@
 # Arquitectura de Trotamundos — documento central
 
-**Qué es:** punto de entrada y resumen de toda la arquitectura. No repite el detalle: lo resume y enlaza a la vista,
-iteración, ADR o spec que lo contiene.
-**Mantiene:** ambos. Se actualiza **al cerrar cada iteración** (y la revisa la otra persona).
-**Estado:** completo hasta la iteración 1 (en revisión). Las secciones restantes se completan con las iteraciones 2 a 4.
+**Mantienen:** Tadeo Brun y Tomas Lateana.
 
-Las secciones siguen la estructura sugerida por el paper adjunto al TPE (introducción, contexto, drivers, dominio,
-contenedores, componentes, secuencias, interfaces y decisiones).
+**Estado:** base de la primera iteración integrada; segunda iteración revisada para PR #4, con decisiones propuestas y análisis del paso 7. QA-1 a escala conserva un conflicto de viabilidad de recuperación de correo a escala. Prototipo y aceptación conjunta pendientes.
 
----
+Este documento resume la arquitectura y enlaza al detalle de requisitos, iteraciones, decisiones, vistas y contratos.
 
 ## 1. Introducción
 
-Trotamundos es un panel de gestión de viajes para web y móvil que reúne en un único lugar todas las reservas de un
-viajero (vuelos, hoteles, autos, trenes y autobuses), organizadas por viaje. Las reservas llegan solas desde el correo
-del usuario y desde sistemas de terceros. El sistema es global: 15 millones de cuentas, 2 millones de usuarios activos
-por semana y picos fuertes ante disrupciones.
+Trotamundos es un panel de gestión de viajes para web y dispositivos móviles. Reúne las reservas de un viajero y las organiza por viaje, evitando que deba consultar múltiples aplicaciones y correos.
 
-Este documento resume la arquitectura y enlaza al detalle. Está dirigido a los docentes y a quien tenga que evolucionar
-el diseño.
+Las reservas pueden incorporarse desde correos autorizados, integraciones con proveedores externos y carga manual.
 
-| Iteración | Estado | Qué aportó a este documento |
+El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos semanales y picos de tráfico. Estas cifras son objetivos del sistema; no representan capacidad demostrada por el prototipo.
+
+| Iteración | Estado | Aporte |
 |---|---|---|
-| 1 | En revisión | Arquitectura de referencia, contenedores, despliegue multirregión y primeras ADRs |
-| 2 | Pendiente |  |
-| 3 | Pendiente |  |
-| 4 | Pendiente |  |
+| [1 — Estructura general](01-add/iteration-1-structure.md) | En revisión; ADRs propuestas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
+| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Pasos 2–7 revisados; viabilidad de QA-1 y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
+| [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pendiente | Consulta, gestión, rendimiento, disponibilidad y escalabilidad. |
+| [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pendiente | Compartición, autenticación, internacionalización, analítica y evolución. |
 
-## 2. Contexto
+La incorporación de al menos un módulo avanzado —recomendaciones o chatbot— es obligatoria para la segunda entrega. Su elección continúa pendiente.
 
-Ver [diagrama de contexto](00-requirements/context-diagram.md).
+## 2. Contexto y alcance
 
-<!-- Pegar el diagrama y un párrafo que explique qué muestra. -->
+Ver el [diagrama de contexto](00-requirements/context-diagram.md).
 
-## 3. Drivers arquitectónicos
+### Responsabilidades principales
 
-Resumen en [architectural-drivers.md](00-requirements/architectural-drivers.md).
+- Consultar reservas organizadas por viaje desde web y móvil.
+- Incorporar reservas desde correos autorizados.
+- Aplicar filtros y listas de remitentes seguros.
+- Obtener detalles, actualizaciones y cancelaciones desde proveedores.
+- Permitir agregar, actualizar y eliminar reservas manualmente.
+- Gestionar el ciclo de vida y archivado de viajes.
+- Integrarse con la agencia preferida para facilitar asistencia.
+- Compartir itinerarios con personas designadas.
+- Proporcionar datos para análisis.
 
-| Tipo | Detalle |
+La compra, emisión y pago de reservas no se incluyen en el alcance inicial propuesto.
+
+Obtener información sobre una cancelación no equivale a ejecutar una cancelación ante el proveedor.
+
+## 3. Entradas del diseño
+
+| Entrada | Documento |
 |---|---|
 | Requerimientos funcionales | [functional-rqmts.md](00-requirements/functional-rqmts.md) |
 | Escenarios de calidad | [quality-attribute-scenarios.md](00-requirements/quality-attribute-scenarios.md) |
 | Árbol de utilidad | [utility-tree.md](00-requirements/utility-tree.md) |
 | Restricciones y concerns | [constraints-concerns.md](00-requirements/constraints-concerns.md) |
+| Drivers arquitectónicos | [architectural-drivers.md](00-requirements/architectural-drivers.md) |
+
+Los percentiles, el pico de tráfico 5× y otras medidas identificadas como supuestos deben validarse. No se presentan como valores textuales de la consigna.
+
+CON-3, relacionada con políticas regionales de datos, continúa como suposición a validar.
+
+Las modificaciones de entradas compartidas deben revisarse entre ambos integrantes y registrarse.
 
 ## 4. Modelo de dominio
 
 Ver [domain-model.md](02-views/domain-model.md).
 
-## 5. Vista de contenedores
+Los conceptos principales son usuario, viaje, reserva, cuenta vinculada, proveedor y compartición.
 
-Ver [cc-view.md](02-views/cc-view.md) y [deployment-view.md](02-views/deployment-view.md).
+El núcleo administra el estado oficial de viajes y reservas. La ingesta interpreta información externa, pero no decide unilateralmente la asociación de una reserva con un viaje.
 
-| Contenedor | Responsabilidad |
+La identificación de reservas externas, su conciliación entre correo y API y el tratamiento de casos incompletos se refinan entre las iteraciones 2 y 3.
+
+## 5. Organización general
+
+La arquitectura separa tres clases de trabajo:
+
+| Elemento | Responsabilidad |
 |---|---|
-| Aplicación web y app móvil | Clientes ricos; la app móvil es nativa y usa GPS (CON-4) |
-| Entrada global | Dirige cada solicitud a la región de origen del usuario |
-| Puerta de entrada | Único punto de entrada a cada región; valida, balancea y limita el tráfico |
-| Núcleo | Monolito modular sin estado; único dueño de viajes y reservas |
-| Ingesta | Sondea correos, recibe notificaciones y consulta a terceros; un adaptador por proveedor |
-| Intermediario de mensajes | Temas de novedades de reservas y de eventos de dominio |
-| Base operativa | Datos de la región, particionados por usuario |
-| Analítica | Proceso separado; su almacén se decide en la iteración 4 |
+| Núcleo modular | Consultar y gestionar viajes, reservas, usuarios y permisos. Es el único dueño del estado oficial. |
+| Ingesta | Obtener información externa autorizada, normalizarla y publicar novedades. |
+| Analítica | Ejecutar procesamiento analítico separado de las operaciones habituales. Su almacenamiento se decide en la iteración 4. |
 
-## 6. Vista de componentes
+El núcleo es inicialmente un único desplegable con módulos internos.
 
-Ver [module-view.md](02-views/module-view.md): módulos del núcleo y de la ingesta. Se refina en las iteraciones 2 y 3.
+La posible separación entre lectura y escritura del núcleo se analiza en la iteración 3; no se considera una decisión ya tomada.
 
-## 7. Vistas de secuencia
+Ver la [vista de módulos](02-views/module-view.md).
 
-Ver [sequence-views.md](02-views/sequence-views.md).
+## 6. Elementos de ejecución y conectores
 
-## 8. Interfaces
+Ver la [vista de componentes y conectores](02-views/cc-view.md).
+
+| Elemento | Responsabilidad |
+|---|---|
+| Aplicación web y app móvil | Presentar viajes y permitir las operaciones del usuario. |
+| Entrada global | Enrutar hacia la región de origen correspondiente. |
+| Puerta de entrada regional | Recibir tráfico externo, validar su origen o identidad según corresponda, limitar tráfico y dirigir solicitudes. |
+| Núcleo | Aplicar reglas y permisos, consultar datos y confirmar modificaciones. |
+| Ingesta | Sondear correos, consultar APIs y procesar notificaciones externas. |
+| Intermediario persistente | Conservar y entregar mensajes entre productores y consumidores. |
+| Base operativa | Conservar los datos oficiales de los usuarios de la región. |
+| Analítica | Consumir cambios confirmados para preparar análisis. |
+
+### Dos flujos de mensajes
+
+| Flujo | Productor | Consumidor | Significado |
+|---|---|---|---|
+| Novedad externa detectada | Ingesta | Núcleo | Información externa que debe validarse y evaluarse. |
+| Cambio confirmado | Núcleo | Analítica y otros consumidores autorizados | Modificación ya confirmada sobre el estado oficial. |
+
+El núcleo publica cambios confirmados provenientes tanto de la ingesta como de operaciones manuales.
+
+La ingesta no escribe directamente en las tablas operativas del núcleo.
+
+Una confirmación de recepción del intermediario no equivale a la aplicación de una reserva.
+
+## 7. Despliegue regional
+
+Ver la [vista de despliegue](02-views/deployment-view.md).
+
+La propuesta de la primera iteración establece:
+
+- Región de origen por usuario.
+- Procesos y mensajería distribuidos entre varias zonas dentro de cada región.
+- Base primaria y réplica sincrónica en otra zona.
+- Entrada global y puertas de entrada regionales redundantes.
+- Partición de los datos según usuario y región de origen.
+
+La región de origen no se obtiene de la ubicación momentánea del viajero.
+
+### Límites pendientes
+
+- Atender desde la región de origen no garantiza atender desde la región físicamente más cercana.
+- El comportamiento para usuarios que viajan se refina en las iteraciones 3 y 4.
+- La compartición entre regiones se diseña en la iteración 4.
+- La identificación de la región correspondiente a una notificación externa se resuelve en la iteración 2.
+- La recuperación ante caída de una región completa no está diseñada en esta base.
+- No se afirma cumplimiento de políticas regionales de datos sin definir y validar sus criterios.
+
+Los tiempos de detección y redirección agregados a QA-4 son supuestos de diseño a validar. No sustituyen el límite de cinco minutos mensuales de inactividad no planificada.
+
+## 8. Refinamiento propuesto de ingesta
+
+Ver [iteration-2-ingestion.md](01-add/iteration-2-ingestion.md).
+
+### Componentes
+
+- Planificador de sincronización.
+- Coordinador de consultas.
+- Gestor de vinculaciones.
+- Adaptadores de acceso.
+- Receptor de notificaciones.
+- Procesador de selección, extracción, normalización y validación.
+- Registro de sincronización.
+- Publicador de novedades.
+
+Son componentes lógicos de la ingesta, no microservicios obligatoriamente independientes.
+
+| Artefacto | Documento |
+|---|---|
+| Componentes y conectores detallados | [ingestion-view.md](02-views/ingestion-view.md) |
+| Secuencias de procesamiento y recuperación | [ingestion-sequences.md](02-views/ingestion-sequences.md) |
+| Semántica del intercambio | [ingestion-contract.md](../specs/ingestion-contract.md) |
+| AsyncAPI propuesto | [booking-change-detected.v1.yaml](../specs/asyncapi/booking-change-detected.v1.yaml) |
+
+### Alineación documental de ingesta
+
+Se actualizaron receptor por Gateway, referencias ADR-0003/0004, versión externa opcional, propiedad de
+vinculaciones, asistencia de agencia y publicación confirmada. Ver ADR-0020 a 0028 y contratos de ingesta.
+Son decisiones propuestas; broker y parámetros se definen en ADR-0028 y el paso 7 está analizado; ejecución del prototipo pendiente.
+
+
+## 9. Interfaces y secuencias
 
 Ver [interfaces.md](02-views/interfaces.md) y [specs/](../specs/).
 
-## 9. Decisiones de diseño
+Los contratos usados por ambas iteraciones deben revisarse entre productor y consumidor antes de implementar.
 
-Ver [índice de ADRs](03-adr/README.md).
+El contrato de novedades debe distinguir:
 
-| Iteración | Decisiones principales |
-|---|---|
-| 1 | Clientes ricos y API Gateway ([0004](03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md)); núcleo modular con ingesta y analítica separadas ([0001](03-adr/0001-nucleo-modular-con-procesos-separados.md)); publicación y suscripción ([0002](03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md)); multirregión con región de origen ([0003](03-adr/0003-despliegue-por-regiones-con-region-de-origen.md)) |
-| 2 |  |
-| 3 |  |
-| 4 |  |
+- Identificador del evento.
+- Identidad de la reserva.
+- Identidad del cambio.
+- Versión del esquema.
+- Versión externa, cuando exista.
 
-## 10. Trazabilidad
+No debe inventar referencias o versiones ausentes.
 
-| Driver | Iteración | ADRs | Vista(s) | Spec(s) | Prototipo |
-|---|---|---|---|---|---|
-| QA-1 | 1, 2 | 0001, 0002 | C&C | asyncapi | Ingesta y broker |
-| QA-2 |  |  |  |  |  |
-| QA-4 | 1, 3 | 0001, 0003, 0004 | C&C, despliegue | — | Consulta con la ingesta caída |
-| QA-5 | 1, 3 | 0001, 0003, 0004 | Despliegue | — | — |
-| QA-6 |  |  |  |  |  |
-| QA-8 |  |  |  |  |  |
+Ver también las [secuencias generales](02-views/sequence-views.md) y las [secuencias de ingesta](02-views/ingestion-sequences.md).
 
-## 11. Riesgos y deuda arquitectónica
+Los archivos `*.example.yaml` son ejemplos de formato y no demuestran que una interfaz esté implementada.
 
-| Riesgo o deuda | Origen | Mitigación | Estado |
+## 10. Decisiones arquitectónicas
+
+Ver el [índice completo de ADRs](03-adr/README.md).
+
+### Primera iteración
+
+| ADR | Decisión | Estado |
+|---|---|---|
+| [0001](03-adr/0001-nucleo-modular-con-procesos-separados.md) | Núcleo modular con ingesta y analítica separadas. | proposed |
+| [0002](03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) | Comunicación asincrónica con publicación y suscripción. | proposed |
+| [0003](03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) | Despliegue regional con región de origen por usuario. | proposed |
+| [0004](03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) | Clientes ricos y puerta de entrada única por región. | proposed |
+
+### Segunda iteración
+
+| ADR | Decisión propuesta | Estado |
+|---|---|---|
+| [0020](03-adr/0020-obtener-novedades.md) | Avisos principales y reconciliación adaptable de correo. | proposed |
+| [0021](03-adr/0021-autorizacion-correo.md) | Autorización delegada del correo y mínimo privilegio. | proposed |
+| [0022](03-adr/0022-tuberia-ingesta.md) | Procesamiento mediante etapas internas. | proposed |
+| [0023](03-adr/0023-adaptadores-proveedores.md) | Adaptadores para contratos y formatos externos. | proposed |
+| [0024](03-adr/0024-avance-y-publicacion-durable.md) | Avance de sincronización y publicación durable coordinados. | proposed |
+| [0025](03-adr/0025-enrutamiento-de-avisos.md) | Directorio mínimo y enrutamiento regional. | proposed |
+| [0026](03-adr/0026-integracion-agencia.md) | Asistencia saliente del núcleo. | proposed |
+| [0027](03-adr/0027-publicacion-del-nucleo.md) | Outbox de cambios confirmados del núcleo. | proposed |
+| [0028](03-adr/0028-rabbitmq-y-politicas.md) | RabbitMQ con colas quorum y políticas. | proposed |
+
+Las decisiones de la segunda iteración se revisan conjuntamente antes de aceptarse.
+
+## 11. Trazabilidad inicial
+
+| Driver | Iteraciones | Decisiones relacionadas | Validación pendiente |
 |---|---|---|---|
-| Sondear millones de buzones puede no entrar en los 5 minutos (QA-1) | Iteración 1 | Notificaciones del proveedor de correo, sondeo como respaldo | Abierto (iteración 2) |
-| La conmutación ante fallas puede consumir el presupuesto de QA-4 | Iteración 1 | Heartbeat y conmutación automática con tiempos medibles | Abierto (iteración 3) |
-| Notificaciones de terceros sin región conocida | Iteración 1 | Ubicar la región a partir de la reserva | Abierto (iteración 2) |
-| Itinerarios compartidos entre regiones | Iteración 1 | Leer desde la región de origen del dueño | Abierto (iteración 4) |
-| CON-3 es una suposición sin normativa concreta | Requerimientos | Validarla | Abierto |
+| QA-1 | 1 y 2, coordinadas con 3 | 0001, 0002, 0020, 0024 | Tiempo completo desde generación externa hasta visualización. |
+| QA-2 y QA-3 | 3 | Base estructural 0001 y 0004 | Consulta web y primer contenido móvil bajo condiciones definidas. |
+| QA-4 | 1 y 3 | 0001, 0002, 0003, 0004 | Recuperación ante fallos y presupuesto mensual. |
+| QA-5 | 1 y 3 | 0001, 0003, 0004 | Capacidad y respuesta ante carga y picos acordados. |
+| QA-6 | 2 y 3 | 0022, 0023, 0024 | Normalización, duplicaciones, desorden y conciliación. |
+| QA-8 | 2 | 0021 | Autorización, renovación, revocación y datos conservados. |
+| QA-9 | 1, 2 y 4 | 0001, 0002, 0023 | Incorporar una integración y evaluar impacto. |
+| QA-7 y QA-10 | 3 y 4, sobre la base de 1 | 0003 y 0004 como base | Compartición, idiomas, formatos y atención regional. |
+| RF-06 | 2, implementación coordinada con 3 | 0026: asistencia saliente del núcleo | Solicitud de asistencia a la agencia preferida. |
+| RF-07 | 4 | Proceso separado por 0001 | Almacenamiento, transferencia y análisis sin degradar operaciones. |
+
+Esta tabla expresa relaciones de diseño, no resultados de pruebas.
+
+## 12. Riesgos y deuda arquitectónica
+
+| Riesgo | Tratamiento pendiente | Responsable |
+|---|---|---|
+| Sondear muchos buzones puede exceder el presupuesto de frescura o las cuotas externas. | Planificación, consultas incrementales, avisos cuando existan y medición. | Iteración 2 |
+| Un correo puede no incluir versión o referencia suficiente. | Separar incorporación automática segura de conciliación o resolución pendiente. | Iteraciones 2 y 3 |
+| Novedades duplicadas o desordenadas pueden alterar incorrectamente una reserva. | Idempotencia y reglas de aplicación, sin depender únicamente del orden del intermediario. | Iteraciones 2 y 3 |
+| Una notificación externa puede no indicar usuario ni región. | Resolver y verificar su vinculación antes del enrutamiento. | Iteración 2 |
+| La caída de una zona puede consumir el presupuesto mensual. | Detección, conmutación y pruebas con tiempos definidos. | Iteración 3 |
+| La caída de una región completa no tiene recuperación diseñada. | Precisar alcance y necesidad de recuperación regional. | Iteración 3 |
+| Región de origen y región más cercana pueden diferir. | Evaluar atención de viajeros y acceso compartido entre regiones. | Iteraciones 3 y 4 |
+| Un cambio confirmado puede no publicarse si el proceso falla. | Persistencia y publicación recuperable coordinadas. | Iteraciones 2 y 3 |
+| Dos componentes pueden mantener estados contradictorios de una autorización. | Definir fuente autoritativa y coordinación de revocación. | Iteraciones 2 y 3 |
+| Los análisis pueden competir por recursos con las operaciones. | Definir almacenamiento, transferencia y aislamiento analíticos. | Iteración 4 |
+| CON-3 carece de un criterio concreto validado. | Precisar la política regional de datos y sus consecuencias. | Ambos integrantes |
+
+## 13. Prototipo y evidencia
+
+Ver [prototype/README.md](../prototype/README.md).
+
+El prototipo debe demostrar recorridos acotados y trazables a contratos y decisiones. Los objetivos incluyen:
+
+- Incorporar una novedad externa y consultar su resultado.
+- Tolerar reentregas sin duplicar efectos.
+- Recuperar publicación pendiente tras una caída.
+- Verificar autorización y revocación del correo.
+- Mantener consultas mientras la ingesta está detenida.
+
+Son objetivos de validación, no pruebas ejecutadas.
+
+Una ejecución local no demuestra capacidad para millones de usuarios, independencia real entre zonas ni disponibilidad global mensual.
+
+El plazo del trabajo práctico y los recursos del grupo acotan el prototipo; no se utilizan como justificación de las decisiones de la arquitectura objetivo.
+
+## 14. Coordinación y revisión
+
+Los impactos se registran en [impact-log.md](01-add/impact-log.md).
+
+Para aceptar el diseño revisado de la segunda iteración, deben revisarse conjuntamente:
+
+- Su alineación con la primera iteración actualizada.
+- El contrato ingesta-núcleo.
+- La propiedad de datos y autorizaciones.
+- La integración con la agencia.
+- Las garantías y límites de publicación.
+- Los riesgos y criterios de evaluación del paso 7.
+
+Los aportes y revisiones reales se registran en [TEAM-LOG.md](../TEAM-LOG.md). La asistencia de IA se documenta en [ai/prompts.md](../ai/prompts.md).
+
+## Actualización documental de alineación
+
+La revisión incorpora los acuerdos de la primera iteración sin decidir perfiles de lectura/escritura, almacén
+analítico ni recuperación regional. El contrato de correo ya no exige versión externa para toda incorporación.
+Agencia, enrutamiento y outbox del núcleo tienen contratos semánticos propuestos. RabbitMQ y el paso 7 se completan en ADR-0028; pruebas de carga/seguridad siguen pendientes, sin afirmar implementación o cumplimiento de QAs.
+
+## Cierre de diseño de la iteración 2
+
+Pasos 2 a 7 documentados, con RabbitMQ, políticas operativas y recorrido analítico de escenarios. Ver
+[ADR-0028](03-adr/0028-rabbitmq-y-politicas.md), [políticas](../specs/ingestion-operations.md),
+[autorización](../specs/ingestion-authorization.md) y [validación futura](../prototype/ingestion-validation.md).
+Los ADR permanecen proposed hasta revisión real; prototipo y aceptación del equipo no se inventan.
+
+## Refinamiento posterior a revisión de iteración 2
+
+El correo usa avisos como vía principal y sondeo incremental para reconciliación. Las políticas calculan consultas
+y renovaciones además de novedades: el perfil adaptable no garantiza QA-1 si se pierde un aviso en cuentas de baja
+frecuencia. Asistencia es un módulo saliente del núcleo, fuera de ingesta. El broker objetivo usa tres miembros en
+tres zonas; esto refina el mínimo general de ADR-0003. Ver el estado actual en [impactos](01-add/impact-log.md).

@@ -12,5 +12,7 @@ Una fila por aporte relevante. Sirve para que la evolución del trabajo y la lab
 | 2026-10-27 | `Tadeo Brun` | Revision y correccion de requerimientos funcionales | `functional-rqmts.md` |
 | 2026-10-27 | `Tadeo Brun` + `Tomas Lateana` | Iteracion 1 de ADD y ADRs 0001 a 0004 | `iteration-1-structure.md`, `docs/03-adr/` |
 | 2026-10-27 | `Tadeo Brun` | Revisión de la iteración 1: arquitectura de referencia, patrones y tácticas, se elimina la ADR del almacén analítico y se renumeran las ADRs (0001 a 0004), vistas C&C, despliegue y módulos | `iteration-1-structure.md`, `docs/03-adr/`, `docs/02-views/` |
+| 2026-10-27 | `Tomas Lateana` | Iteración 2 (ingesta): pasos 2 a 7, ADRs 0020 a 0028, vista y secuencias de ingesta, contratos en `specs/` y plan de validación del prototipo. Preparado con asistencia de ChatGPT/Codex (ver `ai/prompts.md`) | `iteration-2-ingestion.md`, `docs/03-adr/0020` a `0028`, `specs/` |
 | 2026-10-28 | `Tadeo Brun` | Revisión de coherencia de los requerimientos: estados actualizados a COMPLETADO, QA-10 alineado con la región de origen, tabla de restricciones corregida | `docs/00-requirements/` |
+| 2026-10-28 | `Tomas Lateana` | Corrección de la iteración 2 según la revisión cruzada: avisos como vía principal y cálculo de carga de sondeo (ADR-0020), ADRs 0025 a 0027 completas, asistencia como módulo del núcleo (ADR-0026), patrones y tácticas en el paso 4, impact-log, vistas de módulos y dominio, diagramas de secuencia y nombres de tácticas | `iteration-2-ingestion.md`, `docs/03-adr/`, `docs/02-views/`, `impact-log.md` |
 |  |  |  |  |

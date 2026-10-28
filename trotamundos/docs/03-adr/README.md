@@ -31,5 +31,14 @@ Plantilla: [adr-template.md](adr-template.md).
 | [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md) | Comunicación asincrónica con intermediario de publicación y suscripción | proposed | 1 | QA-4, QA-1, QA-9, CON-2 |
 | [0003](0003-despliegue-por-regiones-con-region-de-origen.md) | Despliegue multirregión con región de origen por usuario | proposed | 1 | QA-10 (multirregión), QA-4, CON-3 (suposición) |
 | [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) | Arquitectura de referencia: clientes ricos y puerta de entrada única | proposed | 1 | CRN-1, CON-4, QA-4, QA-5 |
+| [0020](0020-obtener-novedades.md) | Avisos principales y reconciliación adaptable | proposed | 2 | RF-01/03, QA-1/5/6/8 |
+| [0021](0021-autorizacion-correo.md) | Autorización delegada y mínimo privilegio | proposed | 2 | QA-8, CRN-4 |
+| [0022](0022-tuberia-ingesta.md) | Pipes and Filters internos | proposed | 2 | RF-01/02/03, QA-6/8 |
+| [0023](0023-adaptadores-proveedores.md) | Ports and Adapters por fuente | proposed | 2 | QA-6/9, CON-1/2 |
+| [0024](0024-avance-y-publicacion-durable.md) | Outbox de ingesta y avance coordinado | proposed | 2 | QA-1/6, CRN-3/4 |
+| [0025](0025-enrutamiento-de-avisos.md) | Directorio mínimo y enrutamiento regional | proposed | 2 | RF-03, QA-1/6/8 |
+| [0026](0026-integracion-agencia.md) | Asistencia saliente del núcleo | proposed | 2 | RF-06, QA-6/9, CRN-3 |
+| [0027](0027-publicacion-del-nucleo.md) | Outbox de cambios confirmados del núcleo | proposed | 2 | QA-6, CRN-3, RF-07 |
+| [0028](0028-rabbitmq-y-politicas.md) | RabbitMQ con colas quorum y políticas | proposed | 2 | QA-1/6/8, CRN-3/4 |
 
-Mantener esta tabla actualizada al crear una ADR nueva o cambiar su estado.
+Mantener esta tabla actualizada al crear una ADR o cambiar su estado. La revisión cruzada y las pruebas se registran por separado.

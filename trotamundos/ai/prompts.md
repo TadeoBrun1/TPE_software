@@ -67,3 +67,31 @@ Incluí al menos dos alternativas descartadas con sus pros y contras y la trazab
 | Fecha | Quién | Prompt (número o texto) | Artefacto generado | Qué se corrigió a mano |
 |---|---|---|---|---|
 |  |  |  |  |  |
+
+## Registro de preparación — iteración 2
+
+| Fecha | Herramienta | Solicitud resumida | Artefactos | Revisión humana |
+|---|---|---|---|---|
+| 2026-10-27 | ChatGPT/Codex | Continuar por pasos la iteración 2 y documentar vistas/ADRs (paso 6) | Iteración, vistas de ingesta, ADR-0020 a 0024 y contrato propuesto | Revisión cruzada y paso 7 pendientes |
+
+Base inicial: `a5cf3ca379324426b493cee10a78953ab0a7ab30`; actualizada antes del PR a
+`5e3c0c377280046e934fad1d1e13c0d31711c5c5` para conservar la primera iteración publicada por el otro integrante.
+Se refinó el contrato con región de origen, clave de negocio y orden por reserva. No se atribuyen pruebas o
+aprobaciones inexistentes.
+
+## Alineación asistida de la iteración 2
+
+2026-10-27: ChatGPT/Codex prepara correcciones de integración solicitadas por Tomas tras revisar las correcciones
+de la primera iteración. Script local con respaldo; no se registran aprobación conjunta, pruebas de sistema ni
+publicación en GitHub. Revisar el diff y documentar los aportes humanos reales antes de integrar.
+
+## Preparación asistida del cierre de diseño
+
+2026-10-27: solicitud de completar iteración 2; ChatGPT/Codex consulta documentación oficial de RabbitMQ/Kafka, redacta decisiones/políticas y evalúa escenarios sin ejecutar sistema. No atribuye aprobación o pruebas a los integrantes.
+
+## 2026-10-28 — Preparación de correcciones de revisión de iteración 2
+
+Solicitud de Tomas: analizar las correcciones de Tadeo para PR #4 y preparar una aplicación rápida.
+Asistencia: revisión de avisos y coste de sondeo, ADR-0025 a 0027, patrones y tácticas, asistencia saliente del núcleo,
+vistas, índice e impactos. Fuentes primarias: Gmail, Microsoft Graph, RabbitMQ y SEI. Se mantiene explícito el
+conflicto de QA-1 ante avisos perdidos con reconciliación lenta. Revisión humana y ejecución del prototipo pendientes.

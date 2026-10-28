@@ -34,3 +34,22 @@ definan en las iteraciones.
 npx @redocly/cli lint specs/openapi/*.yaml
 npx @asyncapi/cli validate specs/asyncapi/*.yaml
 ```
+
+## Contrato propuesto de iteración 2
+
+* [Semántica, errores y coordinación con el núcleo](ingestion-contract.md).
+* [AsyncAPI de novedad detectada](asyncapi/booking-change-detected.v1.yaml), borrador 0.1.0.
+
+No reemplaza con el mismo significado al ejemplo `booking-events.example.yaml`: distingue detectar una novedad
+de confirmar un cambio. Revisión con la iteración 3 pendiente. RabbitMQ/AMQP y políticas se fijan en ADR-0028; contratos de APIs reales por proveedor se concretan al implementar. Validar sintaxis/esquemas no demuestra comportamiento ni cumplimiento temporal.
+
+## Alineación de contratos de ingesta
+
+[Enrutamiento y configuración](notification-routing.md), [agencia](agency-assistance.md),
+[publicación del núcleo](core-publication.md). El esquema de novedades permite correo sin versión externa si los
+datos son suficientes. RabbitMQ y políticas definidos en ADR-0028; pruebas del sistema pendientes.
+
+## Operación y cierre de diseño de ingesta
+
+[RabbitMQ y políticas](ingestion-operations.md), [autorización coordinada](ingestion-authorization.md),
+[eventos confirmados](asyncapi/booking-confirmed.v1.yaml). Paso 7 analizado; [prototipo y evidencia futura](../prototype/ingestion-validation.md).

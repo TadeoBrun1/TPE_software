@@ -31,9 +31,13 @@ flowchart TB
             B2["Broker (nodo)"]
             D2[("Réplica sincrónica")]
         end
+        subgraph Z3["Zona de falla C (broker)"]
+            B3["Broker (tercer miembro quorum)"]
+        end
         A1["Analítica"]
         D1 -. "replicación sincrónica" .- D2
-        B1 -. "replicación" .- B2
+        B1 -. "replicación quorum" .- B2
+        B2 -. "replicación quorum" .- B3
     end
 
     subgraph R2["Región 2 (celda completa)"]
@@ -79,3 +83,11 @@ las zonas se documentan acá, pero no se simulan.
 ## 7. Vistas relacionadas
 
 [Componentes y conectores](cc-view.md) · [Módulos](module-view.md)
+
+## Refinamiento de broker de la iteración 2
+
+ADR-0028 elige RabbitMQ con tres miembros quorum en tres zonas distintas por región. La tercera zona del dibujo
+aloja el tercer miembro; el mínimo inicial de dos zonas para procesos generales no se interpreta como quorum
+suficiente en un cluster de dos nodos. Perder una zona conserva dos de tres miembros. Si la infraestructura no
+ofrece esas tres zonas, registrar limitación y no afirmar tolerancia a la caída de cualquiera de ellas.
+[Políticas](../../specs/ingestion-operations.md). El prototipo funcional de un nodo no valida disponibilidad zonal.
