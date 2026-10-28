@@ -24,7 +24,7 @@ sequenceDiagram
         Q-->>I: Confirmación de recepción durable
         I->>R: Registra mensaje enviado
     else Permiso revocado o renovación inválida
-        V-->>I: Rechazo; requiere revinculación
+        V-->>I: Rechazo, requiere revinculación
         I->>R: Registra estado sin consultar buzón
     end
 ```
@@ -43,7 +43,7 @@ sequenceDiagram
     participant Q as Canal regional
     participant N as Núcleo
     E->>G: Aviso con referencia de suscripción
-    G->>G: Resuelve vinculación y región; comprueba contexto de origen
+    G->>G: Resuelve vinculación y región, comprueba contexto de origen
     G->>I: Deriva aviso al receptor interno
     I->>I: Valida proveedor/suscripción y guarda trabajo durable
     I-->>G: Confirma recepción durable
