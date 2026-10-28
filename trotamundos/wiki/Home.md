@@ -21,9 +21,14 @@ El sistema Trotamundos es un panel de gestión de viajes en línea para permitir
 
 ### Iteraciones ADD
 
-La explicación del método y el documento de cada iteración están en una misma carpeta.
+Todo el proceso está en una sola página: el método y los links a cada iteración (1 a 4), con su objetivo, su
+responsable y sus ADRs.
 
-- [Proceso ADD e iteraciones](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/docs/01-add)
+| Página | Qué contiene |
+|---|---|
+| [Proceso ADD e iteraciones](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/ADD.md) | Método, tabla de iteraciones y links a cada una |
+| [Plan de iteraciones](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-plan.md) | Qué drivers ataca cada iteración y los cambios al plan |
+| [Registro de impactos](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/impact-log.md) | Decisiones de una iteración que afectan a otra |
 
 ### Documentación derivada de las iteraciones
 
@@ -35,6 +40,6 @@ La explicación del método y el documento de cada iteración están en una mism
 
 ### Código y seguimiento
 
-- [Contratos (specs)](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/specs): OpenAPI y AsyncAPI
+- [Contratos (specs)](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/specs): OpenAPI (API de itinerarios) y AsyncAPI (novedades, cambios confirmados y avisos del panel)
 - [Prototipo](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/prototype)
-- [Registro de trabajo del equipo](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/TEAM-LOG.md)
+- [Registro de trabajo del equipo](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/TEAM-LOG.md): qué hizo cada integrante y cuándo; ahí se sigue el avance del trabajo

@@ -22,27 +22,22 @@ trabajo y la labor de cada integrante, que es lo que pide el enunciado.
    git clone https://github.com/<usuario>/trotamundos.wiki.git
    ```
 
-## Lo que no está claro del enunciado
+## Cómo la usamos
 
-El texto dice "en formato de Wiki (por ej., Github)". Puede significar la pestaña Wiki o simplemente documentación
-en Markdown dentro de GitHub. **Conviene preguntárselo a los docentes antes de la primera entrega.**
+La Wiki está activa en https://github.com/TadeoBrun1/TPE_software/wiki.
 
-## Cómo está preparado este repo para ambas lecturas
-
-- **La fuente de verdad es `docs/`**, dentro del repo principal. Ahí está todo versionado junto al código y las specs,
-  y se revisa con Pull Requests.
-- La carpeta [`wiki/`](../wiki/) contiene `Home.md` y `_Sidebar.md` listos para copiar a la Wiki. Esas páginas
-  funcionan como portada e índice y apuntan a `docs/` en el repo.
-- Si los docentes exigen que el contenido viva en la pestaña Wiki, se copian ahí también las páginas de `docs/`
-  (los diagramas Mermaid se ven igual).
-
-## Pasos para publicar la portada en la Wiki
+- **La fuente de verdad es `docs/`**, dentro del repo principal: ahí está todo versionado junto a las specs y se
+  revisa con Pull Requests.
+- La Wiki es la portada e índice: `Home.md` (descripción breve e índices por sección) y `_Sidebar.md` (menú lateral).
+  Sus links apuntan a la rama `main` del repo, así que muestran lo ya integrado.
+- El proceso ADD está centralizado en una sola página, [01-add/ADD.md](01-add/ADD.md), con links a cada iteración.
+- El estado del trabajo no va en la portada: se sigue en el [TEAM-LOG](../TEAM-LOG.md).
+- La carpeta [`wiki/`](../wiki/) del repo guarda la versión vigente de `Home.md` y `_Sidebar.md`. Si cambian, se
+  publican en la Wiki con:
 
 ```bash
-git clone https://github.com/<usuario>/trotamundos.wiki.git
-cp trotamundos/wiki/Home.md trotamundos/wiki/_Sidebar.md trotamundos.wiki/
-cd trotamundos.wiki
-git add . && git commit -m "docs: portada de la wiki" && git push
+git clone https://github.com/TadeoBrun1/TPE_software.wiki.git
+cp TPE_software/trotamundos/wiki/Home.md TPE_software/trotamundos/wiki/_Sidebar.md TPE_software.wiki/
+cd TPE_software.wiki
+git add . && git commit -m "docs: actualiza portada y menú de la wiki" && git push
 ```
-
-Antes de publicar, reemplazar `<usuario>` por el usuario u organización real en los links de esas dos páginas.

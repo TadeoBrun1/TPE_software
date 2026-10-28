@@ -4,6 +4,24 @@
 archivo que se le entrega a la IA cuando se usa (ver [ai/prompts.md](../../ai/prompts.md)).
 **Base:** ADD 3.0 (Bass, Clements y Kazman, cap. 20) y el enfoque del paper adjunto al TPE.
 
+## Iteraciones
+
+Esta página centraliza el proceso: el método está abajo y cada iteración tiene su documento con los pasos 2 a 7. El
+avance de cada una se registra en el [registro de trabajo del equipo](../../TEAM-LOG.md).
+
+| # | Objetivo | Responsable | Documento | ADRs |
+|---|---|---|---|---|
+| 1 | Arquitectura de referencia, estructura general y despliegue multirregión | Ambos | [Iteración 1](iteration-1-structure.md) | 0001 a 0004 |
+| 2 | Ingesta de reservas desde correo y terceros: frescura, interoperabilidad y acceso seguro a correos | Tomas Lateana | [Iteración 2](iteration-2-ingestion.md) | 0020 a 0028 |
+| 3 | Consulta del panel, latencia, disponibilidad, escala, aplicación de novedades y ciclo de vida del viaje | Tadeo Brun | [Iteración 3](iteration-3-query-scale.md) | 0040 a 0048 |
+| 4 | Seguridad de compartición, internacionalización, analítica y evolucionabilidad | Ambos | [Iteración 4](iteration-4-security-evolvability.md) | 0060 en adelante |
+
+Documentos que acompañan a las iteraciones:
+
+* [Plan de iteraciones](iteration-plan.md): qué drivers ataca cada una y los cambios al plan.
+* [Registro de impactos](impact-log.md): decisiones de una iteración que afectan a otra.
+* [Índice de ADRs](../03-adr/README.md) y [documento central de la arquitectura](../architecture.md).
+
 ## Preparación (una sola vez)
 
 1. **Revisar entradas (paso 1 de ADD):** propósito del diseño, funcionalidad primaria, QAs, restricciones y concerns,
