@@ -1,15 +1,21 @@
 openapi: 3.0.3
 info:
   title: API de itinerarios de Trotamundos
-  version: 0.1.0
+  version: 0.2.0
   description: >
-    Contrato propuesto de la iteración 3 (consulta y gestión de viajes). Lo produce el núcleo y lo consumen la
+    Contrato propuesto de la iteración 3 (consulta y gestión de viajes), ampliado en la iteración 4 (autenticación,
+    compartición, tarjeta para redes sociales, detalles por tipo de reserva y datos neutros para la
+    internacionalización). Lo produce el núcleo y lo consumen la
     aplicación web y la app móvil a través de la puerta de entrada regional (ADR-0004).
     ADRs relacionadas: ADR-0040 (modelo de lectura del panel), ADR-0041 (caché local), ADR-0046 (notificador),
     ADR-0047 (límites y prioridades), ADR-0044 (novedades y cambios manuales), ADR-0048 (asignación a viajes),
-    ADR-0045 (archivado y reactivación). Respuestas ante carga: 429 = el cliente superó su límite;
-    503 con Retry-After = sobrecarga, operación de prioridad media o baja rechazada. La autenticación del viajero se decide en la iteración 4; aquí se modela como
-    bearerAuth genérico.
+    ADR-0045 (archivado y reactivación), ADR-0060 (identidad y tokens), ADR-0061 (compartición y auditoría),
+    ADR-0062 (lectura entre regiones), ADR-0063 (tarjeta para redes), ADR-0065 (datos neutros), ADR-0066 (detalles
+    por tipo). Respuestas ante carga: 429 = el cliente superó su límite; 503 con Retry-After = sobrecarga, operación
+    de prioridad media o baja rechazada. Fechas y horas en ISO 8601 con zona horaria; monedas en ISO 4217; estados y
+    tipos como códigos, sin textos traducidos (ADR-0065). Los identificadores de viajes e invitaciones empiezan con la
+    región del dueño (por ejemplo sa-east:7f3c...), para que la puerta de entrada pueda reenviar a esa región
+    (ADR-0062).
 servers:
   - url: https://{region}.api.trotamundos.example/v1
     variables:
@@ -47,6 +53,32 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+  /panel/events/ticket:
+    post:
+      summary: Ticket de un solo uso para abrir la conexión SSE
+      description: >
+        El navegador no puede enviar el encabezado Authorization en una conexión SSE. Con el token de acceso, el
+        cliente pide un ticket válido por 30 s y para una sola conexión, y lo pasa en GET /panel/events (ADR-0060).
+        El ticket no autoriza ninguna otra operación y no se registra en los logs.
+      operationId: createPanelEventsTicket
+      responses:
+        "201":
+          description: Ticket emitido
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ticket, expiresAt]
+                properties:
+                  ticket:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
   /panel/events:
     get:
       summary: Avisos de cambio del panel (Server-Sent Events)
@@ -56,8 +88,17 @@ paths:
         ocurridos antes de la suscripción o durante una desconexión. Luego cada evento `panel-changed` informa solo
         la nueva versión del panel; si es mayor que la del cliente, este pide GET /panel. El servidor no guarda
         avisos de conexiones caídas: reconectar no los recupera, la revalidación sí. Mientras la conexión está caída,
-        el cliente revalida cada 60 s. No transporta datos de reservas.
+        el cliente revalida cada 60 s. No transporta datos de reservas. Se autentica con un ticket de un solo uso
+        (POST /panel/events/ticket); cada reconexión pide un ticket nuevo.
       operationId: streamPanelChanges
+      security: []
+      parameters:
+        - name: ticket
+          in: query
+          required: true
+          description: Ticket de un solo uso emitido por POST /panel/events/ticket (ADR-0060)
+          schema:
+            type: string
       responses:
         "200":
           description: Flujo de eventos `ready` (sin cuerpo) y `panel-changed` con cuerpo {"panelVersion":<entero>}
@@ -66,7 +107,7 @@ paths:
               schema:
                 type: string
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Ticket inválido, vencido o ya usado
   /trips/archived:
     get:
       summary: Viajes anteriores (archivados) del usuario
@@ -191,6 +232,240 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
         "503":
           $ref: "#/components/responses/Overloaded"
+  /trips/{tripId}/shares:
+    parameters:
+      - $ref: "#/components/parameters/TripId"
+    get:
+      summary: Personas con las que el dueño compartió el viaje
+      description: Invitaciones pendientes y aceptadas del viaje (ADR-0061). Solo el dueño. Prioridad baja.
+      operationId: listTripShares
+      responses:
+        "200":
+          description: Invitaciones del viaje
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [shares]
+                properties:
+                  shares:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Share"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+    post:
+      summary: Invitar a una persona a ver el viaje (RF-08)
+      description: >
+        Crea una invitación pendiente y envía al email un enlace con un secreto de un solo uso que vence en 7 días.
+        La invitación se registra en la auditoría (ADR-0061). Solo el dueño. Prioridad media.
+      operationId: createTripShare
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "201":
+          description: Invitación creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Share"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+  /trips/{tripId}/shares/{shareId}:
+    parameters:
+      - $ref: "#/components/parameters/TripId"
+      - $ref: "#/components/parameters/ShareId"
+    delete:
+      summary: Revocar un permiso o cancelar una invitación
+      description: >
+        Tiene efecto en la siguiente lectura de la persona, porque el permiso se verifica siempre (ADR-0061). Borra
+        el email del invitado. Se registra en la auditoría. Solo el dueño. Prioridad alta, igual que el panel: revocar
+        un acceso no debe esperar a que pase una sobrecarga.
+      operationId: revokeTripShare
+      responses:
+        "204":
+          description: Permiso revocado
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /shares/{shareId}/accept:
+    parameters:
+      - $ref: "#/components/parameters/ShareId"
+    post:
+      summary: Aceptar una invitación con la cuenta propia
+      description: >
+        La persona invitada, con sesión iniciada, envía el secreto recibido por email. El permiso queda atado a su
+        userId; el enlace deja de servir para cualquier otra cuenta. Aceptar otra vez con la misma cuenta no tiene
+        efecto. Si el viaje es de otra región, la puerta de entrada reenvía la solicitud (ADR-0062) y, al aceptarse,
+        la región de quien acepta guarda solo la referencia al viaje. Se registra en la auditoría. Prioridad media.
+      operationId: acceptShare
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [secret]
+              properties:
+                secret:
+                  type: string
+      responses:
+        "200":
+          description: Invitación aceptada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedTripRef"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: La invitación no existe, venció, fue revocada o ya la aceptó otra cuenta
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+  /shared/trips:
+    get:
+      summary: Viajes que otras personas compartieron conmigo
+      description: >
+        Devuelve solo las referencias guardadas en la partición del usuario al aceptar (ADR-0062); cada viaje se lee
+        con GET /shared/trips/{tripId}. Prioridad baja.
+      operationId: listSharedTrips
+      responses:
+        "200":
+          description: Referencias a viajes compartidos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [trips]
+                properties:
+                  trips:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SharedTripRef"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+  /shared/trips/{tripId}:
+    parameters:
+      - $ref: "#/components/parameters/TripId"
+    get:
+      summary: Ver un viaje compartido (RF-08, QA-7)
+      description: >
+        El módulo comparticion de la región del dueño verifica que el usuario del token tenga un permiso vigente y
+        registra el acceso, permitido o rechazado, antes de responder (ADR-0061). Si el viaje es de otra región, la
+        puerta de entrada reenvía la solicitud a esa región (ADR-0062). Sin permiso responde 404, igual que si el
+        viaje no existiera. Si no se puede registrar el acceso o la región del dueño no responde, 503. Prioridad alta.
+      operationId: getSharedTrip
+      responses:
+        "200":
+          description: Viaje en solo lectura, sin notas ni códigos de reserva
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedTrip"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          description: No se pudo registrar el acceso o la región del dueño no responde; el acceso se rechaza
+          headers:
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
+  /trips/{tripId}/social-card:
+    parameters:
+      - $ref: "#/components/parameters/TripId"
+    post:
+      summary: Crear la tarjeta de resumen para redes sociales
+      description: >
+        Genera una tarjeta pública con destino, mes y cantidad de días, sin datos de reservas, y devuelve su enlace
+        (ADR-0063). El enlace no da acceso al viaje. Si ya existe, devuelve la misma. Solo el dueño. Prioridad baja.
+      operationId: createSocialCard
+      responses:
+        "201":
+          description: Tarjeta creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialCard"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+    delete:
+      summary: Borrar la tarjeta; su enlace deja de funcionar
+      operationId: deleteSocialCard
+      responses:
+        "204":
+          description: Tarjeta borrada
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /cards/{cardId}:
+    get:
+      summary: Página pública de la tarjeta (vista previa en redes)
+      description: >
+        Página HTML con metadatos Open Graph (título, descripción e imagen) que las redes usan para la vista previa
+        (ADR-0063). No requiere autenticación y no contiene ni enlaza datos del itinerario.
+      operationId: getPublicSocialCard
+      security: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Página de la tarjeta
+          content:
+            text/html:
+              schema:
+                type: string
+        "404":
+          description: La tarjeta no existe o fue borrada
   /bookings:
     post:
       summary: Agregar una reserva manualmente (RF-04)
@@ -290,7 +565,29 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Token de acceso de 15 minutos emitido por el proveedor de identidad (OpenID Connect) de la región de origen
+        del usuario, con userId y homeRegion. La puerta de entrada valida firma y vencimiento sin consultar al
+        proveedor; si homeRegion no es su región, rechaza (401). El cliente lo renueva con su token de renovación
+        directamente ante el proveedor de identidad (ADR-0060).
   parameters:
+    TripId:
+      name: tripId
+      in: path
+      required: true
+      description: Identificador del viaje, con la región del dueño como prefijo
+      schema:
+        type: string
+        pattern: "^[a-z]+-[a-z]+:[A-Za-z0-9-]+$"
+    ShareId:
+      name: shareId
+      in: path
+      required: true
+      description: Identificador de la invitación, con la región del dueño como prefijo
+      schema:
+        type: string
+        pattern: "^[a-z]+-[a-z]+:[A-Za-z0-9-]+$"
     IfNoneMatch:
       name: If-None-Match
       in: header
@@ -425,8 +722,7 @@ components:
         tripId:
           type: string
         type:
-          type: string
-          enum: [flight, hotel, car, train, bus]
+          $ref: "#/components/schemas/BookingType"
         status:
           type: string
           enum: [confirmed, modified, cancelled, pending]
@@ -445,8 +741,16 @@ components:
           format: date-time
         location:
           type: string
+          description: Lugar de la reserva (hotel, auto) o de partida (traslados)
+        arrivalLocation:
+          type: string
+          description: Lugar de llegada en los traslados
         displayName:
           type: string
+        price:
+          $ref: "#/components/schemas/Money"
+        details:
+          $ref: "#/components/schemas/BookingDetails"
         notes:
           type: string
         userEditedFields:
@@ -464,8 +768,7 @@ components:
         tripId:
           type: string
         type:
-          type: string
-          enum: [flight, hotel, car, train, bus]
+          $ref: "#/components/schemas/BookingType"
         provider:
           type: string
         providerReference:
@@ -478,8 +781,14 @@ components:
           format: date-time
         location:
           type: string
+        arrivalLocation:
+          type: string
         displayName:
           type: string
+        price:
+          $ref: "#/components/schemas/Money"
+        details:
+          $ref: "#/components/schemas/BookingDetails"
         notes:
           type: string
     BookingPatch:
@@ -500,6 +809,136 @@ components:
           type: string
         notes:
           type: string
+    BookingType:
+      type: string
+      pattern: "^[a-z][a-z0-9_]*$"
+      description: >
+        Código abierto de tipo de reserva (ADR-0066). Conocidos: flight, hotel, car, train, bus. Un cliente que recibe
+        un código que no conoce muestra la reserva con la vista genérica a partir de los campos comunes.
+      example: train
+    BookingDetails:
+      type: object
+      required: [schema]
+      description: >
+        Datos propios del tipo de reserva. schema identifica el esquema (por ejemplo train.v1), que está en
+        specs/schemas/details-<tipo>.v<n>.json; el resto de las propiedades sigue ese esquema. El núcleo valida el
+        bloque y lo guarda sin interpretarlo; un schema desconocido se rechaza con 400 (ADR-0066).
+      properties:
+        schema:
+          type: string
+          pattern: "^[a-z][a-z0-9_]*\\.v[0-9]+$"
+      additionalProperties: true
+      example:
+        schema: train.v1
+        trainNumber: "AVE 3172"
+        coach: "5"
+        seat: "12A"
+    Money:
+      type: object
+      required: [amount, currency]
+      description: Monto numérico y moneda ISO 4217; el cliente lo formatea según el idioma del usuario (ADR-0065)
+      properties:
+        amount:
+          type: number
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+    Share:
+      type: object
+      required: [id, tripId, status, createdAt]
+      properties:
+        id:
+          type: string
+        tripId:
+          type: string
+        email:
+          type: string
+          format: email
+          description: Email al que se envió la invitación (solo lo ve el dueño)
+        status:
+          type: string
+          enum: [pending, accepted, expired]
+        createdAt:
+          type: string
+          format: date-time
+        acceptedAt:
+          type: string
+          format: date-time
+    SharedTripRef:
+      type: object
+      required: [tripId, acceptedAt]
+      description: Referencia guardada en la partición de quien aceptó; no contiene datos del itinerario (ADR-0062)
+      properties:
+        tripId:
+          type: string
+        acceptedAt:
+          type: string
+          format: date-time
+    SharedTrip:
+      type: object
+      required: [id, name, status, bookings]
+      description: Vista de solo lectura para una persona designada; sin notas ni códigos de reserva (ADR-0061)
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, archived]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        bookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/SharedBooking"
+    SharedBooking:
+      type: object
+      required: [id, type, status]
+      properties:
+        id:
+          type: string
+        type:
+          $ref: "#/components/schemas/BookingType"
+        status:
+          type: string
+          enum: [confirmed, modified, cancelled, pending]
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        location:
+          type: string
+        arrivalLocation:
+          type: string
+        displayName:
+          type: string
+        details:
+          $ref: "#/components/schemas/BookingDetails"
+    SocialCard:
+      type: object
+      required: [id, url, destination, month, days]
+      description: Tarjeta pública sin datos de reservas (ADR-0063)
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        destination:
+          type: string
+        month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+        days:
+          type: integer
+          minimum: 1
     Error:
       type: object
       required: [code, message]

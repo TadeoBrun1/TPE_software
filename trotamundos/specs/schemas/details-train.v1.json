@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trotamundos.example/specs/schemas/details-train.v1.json",
+  "title": "Detalles de una reserva de tren (train.v1)",
+  "description": "Bloque details de una reserva de tipo train (ADR-0066). Los campos comunes (fechas, lugares, estado, proveedor) no se repiten acá.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema"],
+  "properties": {
+    "schema": { "const": "train.v1" },
+    "trainNumber": { "type": "string", "minLength": 1 },
+    "coach": { "type": "string" },
+    "seat": { "type": "string" },
+    "departureStation": { "type": "string" },
+    "arrivalStation": { "type": "string" },
+    "platform": { "type": "string", "description": "Suele conocerse poco antes de la salida" },
+    "fareClass": { "type": "string" }
+  }
+}

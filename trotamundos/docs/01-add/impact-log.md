@@ -9,8 +9,8 @@ Este documento registra las decisiones que afectan elementos compartidos entre i
 | 2026-10-27 | 1 | La idempotencia, su clave y el tratamiento de mensajes desordenados quedan por diseñar. Los correos pueden no incluir una versión externa. | 2 | Resolver mediante decisiones del rango 0020–0039. | ADR-0002 |
 | 2026-10-27 | 1 | La publicación confiable de cambios confirmados del núcleo, la cola de errores, los datos personales en mensajes y la tecnología del broker quedan pendientes. | 2 | Definir contratos y mecanismos, coordinando con el responsable del núcleo. | ADR-0002 |
 | 2026-10-27 | 1 | La separación entre lectura y escritura dentro del núcleo no está decidida. | 3 | Evaluar su necesidad al diseñar para QA-2. | ADR-0001 |
-| 2026-10-27 | 1 | La analítica queda separada como proceso, pero su almacenamiento todavía no está decidido. | 4 | Elegir almacenamiento y transferencia mediante una ADR del rango 0060–0079. | ADR-0001 |
-| 2026-10-27 | 1 | La puerta de entrada valida la identidad, pero el mecanismo concreto de autenticación sigue pendiente. | 4 | Diseñar el mecanismo con QA-7. El acceso delegado al correo se trata por separado en la iteración 2. | ADR-0004 |
+| 2026-10-27 | 1 | La analítica queda separada como proceso, pero su almacenamiento todavía no está decidido. | 4 | Elegir almacenamiento y transferencia mediante una ADR del rango 0060–0079. Resuelto: ADR-0064. | ADR-0001 |
+| 2026-10-27 | 1 | La puerta de entrada valida la identidad, pero el mecanismo concreto de autenticación sigue pendiente. | 4 | Diseñar el mecanismo con QA-7. El acceso delegado al correo se trata por separado en la iteración 2. Resuelto: ADR-0060. | ADR-0004 |
 | 2026-10-27 | 1 | Las notificaciones externas pasan por la entrada global y la puerta de entrada regional antes de llegar a la ingesta. Puede desconocerse la región de la reserva notificada. | 2 | Definir cómo identificar la región de origen sin confiar en datos de enrutamiento no verificados. | ADR-0003 y ADR-0004 |
 | 2026-10-27 | 1 | El almacenamiento propio de ingesta no está definido. | 2 | Definir persistencia de cursores, resultados, autorizaciones y publicaciones pendientes, aclarando la propiedad de cada dato. | ADR-0001 |
 | 2026-10-27 | 1 | RF-06, integración con la agencia de viajes preferida, se asigna a la iteración 2. | 2 | Incorporar su diseño como integración externa y acordar su relación con el núcleo. | Plan de iteraciones |
@@ -56,7 +56,7 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 | 2, ADR-0024/0027 | Outboxes distintas, control de entrada y resultado atómicos | 3 y 4 | Implementar contratos sin compartir tablas | Propuesto para revisión |
 | 2, ADR-0021 | Autoridad y barrera de revocación | 3 y 4 | Aplicar protocolo de autorización y probar carreras | Propuesto para revisión |
 | 2, ADR-0028 | Consumo por usuario y presupuesto de aplicación y cliente | 3 | La iteración 3 mantiene 8 shards con un consumidor activo cada uno (no escala con el núcleo, ADR-0043); cada novedad se aplica en una transacción de la partición del usuario, así que shards y particiones no necesitan alinearse (ADR-0042); acepta 40 s de espera, 30 s de aplicación y 30 s de cliente | Coordinado (2026-10-28) |
-| 2, ADR-0023 | QA-9 se evalúa incorporando trenes | 3 y 4 | Registrar esfuerzo ≤10 días-persona y verificar medios existentes sin cambios | Validación pendiente |
+| 2, ADR-0023 | QA-9 se evalúa incorporando trenes | 3 y 4 | Registrar esfuerzo ≤10 días-persona y verificar medios existentes sin cambios. La iteración 4 usa un medio que no existe (ferry), porque `train` ya está en el vocabulario, y agrega esquemas de detalles por tipo (ADR-0066) | Validación pendiente |
 
 ## Impactos de la iteración 3
 
@@ -69,10 +69,22 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 | 2026-10-28 | 3, ADR-0042 | La zona C del broker también aloja una instancia del monitor de base y las réplicas de la base que se reconstruyen si cae una zona | 2 | Comparten zona, no recursos | Aceptado por ambos (2026-10-28) |
 | 2026-10-28 | 3, ADR-0043 | Se agrega CON-5 (startup con recursos limitados) a las restricciones | 1, 2 y 4 | Restricción de negocio, en estado de suposición | Aceptado por ambos (2026-10-28) |
 | 2026-10-28 | 3, ADR-0040 | La transacción del núcleo incluye además el documento del panel | 2 | No cambia el contrato; la etapa "aplicación" (30 s) incluye actualizar el panel | Compatible |
-| 2026-10-28 | 3, ADR-0042 | Todo lo de un usuario vive en su partición; ninguna transacción cruza particiones | 4 | La lectura de un itinerario compartido se hace en la partición del dueño del viaje | Para la iteración 4 |
-| 2026-10-28 | 3, ADR-0045 | Los viajes archivados se eliminan al año | 4 | La analítica decide cómo anonimizar los eventos que ya recibió | Para la iteración 4 |
-| 2026-10-28 | 3 | `bearerAuth` y la autenticación de la conexión SSE quedan genéricas en la API | 4 | Se definen con QA-7 | Para la iteración 4 |
+| 2026-10-28 | 3, ADR-0042 | Todo lo de un usuario vive en su partición; ninguna transacción cruza particiones | 4 | La lectura de un itinerario compartido se hace en la partición del dueño del viaje | Resuelto en la iteración 4 (ADR-0061, ADR-0062) |
+| 2026-10-28 | 3, ADR-0045 | Los viajes archivados se eliminan al año | 4 | La analítica decide cómo anonimizar los eventos que ya recibió | Resuelto en la iteración 4: anonimización al entrar con clave anual (ADR-0064) |
+| 2026-10-28 | 3 | `bearerAuth` y la autenticación de la conexión SSE quedan genéricas en la API | 4 | Se definen con QA-7 | Resuelto en la iteración 4: token de 15 min y ticket SSE (ADR-0060) |
 | 2026-10-28 | 3, ADR-0046 | Colas del notificador: las de avisos por instancia son *classic*, exclusivas y temporales (única excepción a las colas quorum); `notifier.push` es quorum y durable | 2 | Agregado a `specs/ingestion-operations.md` a pedido de Tomas Lateana (revisión cruzada) | Aceptado por ambos (2026-10-28) |
+
+## Impactos de la iteración 4
+
+| Fecha | Origen | Cambio o decisión | Afecta | Tratamiento | Estado |
+|---|---|---|---|---|---|
+| 2026-10-28 | 4, ADR-0060 | La entrada global usa `homeRegion` del token para enrutar y un directorio global `hash(email) → región` para el login | 1 | Refina ADR-0003 y ADR-0004 sin cambiarlas; el directorio sigue el criterio del de suscripciones (ADR-0025) | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0062 | La puerta de entrada reenvía por mTLS a otra región los recursos con su prefijo; los identificadores de viajes e invitaciones llevan la región del dueño | 1 y 3 | Nuevo conector entre regiones; no se copian datos | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0066 | `booking.change.detected.v1` pasa a 0.2.0: tipo abierto, `arrivalLocation` y `details` según `specs/schemas/` | 2 | Contrato de diseño 0.x sin consumidores en producción; los adaptadores producen `details` y el núcleo lo valida | Propuesto para revisión con 2 |
+| 2026-10-28 | 4, ADR-0064 | El núcleo publica `booking.facts.v1` desde su outbox; la analítica consume además `trip.changed.v1`. `booking.changed.v1` queda sin consumidores en la primera entrega | 2 y 3 | Nueva cola quorum de la analítica en `travel.domain` (ADR-0028) | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0067 | Además del `correlationId`, los mensajes llevan el contexto de traza (`traceparent`) en sus encabezados | 2 y 3 | Todos los productores y consumidores propagan el contexto con la biblioteca `observabilidad` | Propuesto para revisión con 2 |
+| 2026-10-28 | 4, ADR-0045 | ADR-0045 remitía a la iteración 4 la anonimización de los eventos de viajes eliminados | 3 | Nota agregada en ADR-0045 que remite a ADR-0064 | Compatible |
+| 2026-10-28 | 4, ADR-0064 | **Segunda entrega (opción A, recomendación):** el almacén analítico no tiene datos por usuario | 2da entrega | Un sistema de recomendación tendrá que guardar su propio perfil resumido por usuario (métricas comprimidas), calculado desde los datos operativos, en la región del usuario y eliminado junto con su cuenta | Para la segunda entrega |
 
 ## Criterio para resolver un impacto
 

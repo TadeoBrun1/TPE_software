@@ -18,7 +18,8 @@ a exponer AMQP en Internet. TLS y credenciales por servicio se mantienen fuera d
 | Exchange durable | Routing keys | Colas / consumidor |
 |---|---|---|
 | `travel.ingestion` | `booking.change.detected.v1.s0` a `.s7` | `core.bookings.s0` a `.s7`, una por shard de usuario |
-| `travel.domain` | `booking.changed.v1`, `trip.changed.v1` | Cola independiente por consumidor autorizado, inicialmente analítica |
+| `travel.domain` | `booking.changed.v1`, `trip.changed.v1` | Cola independiente por consumidor autorizado. En la primera entrega solo la analítica consume `trip.changed.v1` |
+| `travel.domain` | `booking.facts.v1` | Cola quorum `analytics.facts` de la analítica de la región (iteración 4, ADR-0064); también recibe `trip.changed.v1` |
 | `travel.domain` | `panel.changed.v1` | Una cola por instancia del notificador (ver abajo) y la cola compartida `notifier.push` (iteración 3, ADR-0046) |
 | `travel.assistance` | `assistance.requested.v1`, `assistance.result.v1` | Solicitudes para trabajador de asistencia del núcleo; resultados para seguimiento |
 | `travel.errors` | `ingestion.error.v1` | Operación/revisión con acceso restringido, referencia mínima al caso durable |

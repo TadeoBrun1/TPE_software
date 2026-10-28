@@ -29,7 +29,7 @@ Trabajo Práctico Especial · Diseño de Sistemas de Software · UNICEN
 | 1 | Estructura general del sistema | Ambos | En revisión (ADRs propuestas) | [iteration-1](docs/01-add/iteration-1-structure.md) |
 | 2 | Ingesta de reservas (correo + terceros) | Tomas | Pasos 2–7 revisados; viabilidad de QA-1 pendiente | [iteration-2](docs/01-add/iteration-2-ingestion.md) |
 | 3 | Consulta, latencia, disponibilidad y escala | Tadeo | Pasos 2–7 documentados; decisiones confirmadas | [iteration-3](docs/01-add/iteration-3-query-scale.md) |
-| 4 | Seguridad, compartición, i18n y analítica | Ambos | Pendiente | [iteration-4](docs/01-add/iteration-4-security-evolvability.md) |
+| 4 | Seguridad, compartición, i18n y analítica | Ambos | Pasos 2–7 documentados; revisión cruzada pendiente | [iteration-4](docs/01-add/iteration-4-security-evolvability.md) |
 
 Las iteraciones adicionales (opción avanzada A/B de la 2da entrega, refinamientos) se agregan a
 [iteration-plan.md](docs/01-add/iteration-plan.md).
