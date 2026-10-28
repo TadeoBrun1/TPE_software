@@ -1,7 +1,7 @@
 # Modelo de dominio
 
 **Tipo:** Soporte (vocabulario)
-**Actualizada en la iteración:** 1
+**Actualizada en la iteración:** 2 (vocabulario refinado)
 **Mantiene:** Ambos. **Estado:** BORRADOR (propuesta inicial a discutir)
 
 ## 1. Propósito
@@ -48,6 +48,32 @@ classDiagram
         tipoDeTransporte
     }
 
+    class Vinculacion {
+        id
+        estadoAutorizacion
+        version
+        regionDeOrigen
+    }
+    class Suscripcion {
+        idExterno
+        proveedor
+        vencimiento
+        estado
+    }
+    class CursorSincronizacion {
+        valorOpaco
+        version
+    }
+    class CasoPendiente {
+        id
+        motivo
+        estado
+    }
+    Usuario "1" --> "*" Vinculacion : autoriza
+    Vinculacion "1" --> "0..1" CuentaDeCorreo : correo opcional
+    Vinculacion "1" --> "0..*" Suscripcion : tiene avisos
+    Vinculacion "1" --> "0..*" CursorSincronizacion : avance por flujo
+    Vinculacion "1" --> "0..*" CasoPendiente : genera
     Usuario "1" --> "*" Viaje : tiene
     Viaje "1" --> "*" Reserva : agrupa
     Usuario "1" --> "*" CuentaDeCorreo : vincula
@@ -68,6 +94,14 @@ classDiagram
 | Remitente | Remitente de una whitelist |
 | Comparticion | Permiso de un viaje para una persona designada |
 | Proveedor | Aerolínea, hotel, rentadora u otro |
+| Vinculacion | Relación autorizada entre usuario y cuenta o proveedor. Estado y versión autoritativos en el núcleo; ingesta conserva referencias técnicas |
+| Suscripcion | Registro técnico de avisos, con identificador externo, vencimiento y estado. Ingesta administra su ciclo; entrada global tiene una proyección mínima de región |
+| CursorSincronizacion | Posición opaca por flujo o carpeta, confirmada junto con resultados y outbox en ingesta; no es una versión de reserva |
+| CasoPendiente | Novedad o fallo que necesita resolución; conserva motivo y evidencia mínima. Una ambigüedad de dominio pertenece al núcleo y un fallo de extracción a ingesta |
+
+Vinculación forma parte del vocabulario funcional; suscripción, cursor y caso técnico son conceptos de soporte de
+integración, no nuevos agregados obligatorios del dominio de viajes. `eventId` identifica un mensaje y no sustituye
+la identidad de reserva ni del caso. Ver [contrato de ingesta](../../specs/ingestion-contract.md).
 
 ## 4. Preguntas abiertas
 

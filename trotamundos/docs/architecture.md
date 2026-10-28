@@ -2,7 +2,7 @@
 
 **Mantienen:** Tadeo Brun y Tomas Lateana.
 
-**Estado:** primera iteración en revisión; segunda iteración documentada como propuesta y pendiente de alinear con las últimas correcciones de la primera. No hay evidencia de implementación o cumplimiento de atributos de calidad registrada en este documento.
+**Estado:** base de la primera iteración integrada; segunda iteración revisada para PR #4, con decisiones propuestas y análisis del paso 7. QA-1 a escala conserva un conflicto de viabilidad de recuperación de correo a escala. Prototipo y aceptación conjunta pendientes.
 
 Este documento resume la arquitectura y enlaza al detalle de requisitos, iteraciones, decisiones, vistas y contratos.
 
@@ -17,7 +17,7 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 | Iteración | Estado | Aporte |
 |---|---|---|
 | [1 — Estructura general](01-add/iteration-1-structure.md) | En revisión; ADRs propuestas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
-| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Diseño 2–7 completo; revisión cruzada y prototipo pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
+| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Pasos 2–7 revisados; viabilidad de QA-1 y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
 | [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pendiente | Consulta, gestión, rendimiento, disponibilidad y escalabilidad. |
 | [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pendiente | Compartición, autenticación, internacionalización, analítica y evolución. |
 
@@ -206,13 +206,17 @@ Ver el [índice completo de ADRs](03-adr/README.md).
 
 | ADR | Decisión propuesta | Estado |
 |---|---|---|
-| [0020](03-adr/0020-obtener-novedades.md) | Sondeo configurable y avisos donde estén disponibles. | proposed |
+| [0020](03-adr/0020-obtener-novedades.md) | Avisos principales y reconciliación adaptable de correo. | proposed |
 | [0021](03-adr/0021-autorizacion-correo.md) | Autorización delegada del correo y mínimo privilegio. | proposed |
 | [0022](03-adr/0022-tuberia-ingesta.md) | Procesamiento mediante etapas internas. | proposed |
 | [0023](03-adr/0023-adaptadores-proveedores.md) | Adaptadores para contratos y formatos externos. | proposed |
 | [0024](03-adr/0024-avance-y-publicacion-durable.md) | Avance de sincronización y publicación durable coordinados. | proposed |
+| [0025](03-adr/0025-enrutamiento-de-avisos.md) | Directorio mínimo y enrutamiento regional. | proposed |
+| [0026](03-adr/0026-integracion-agencia.md) | Asistencia saliente del núcleo. | proposed |
+| [0027](03-adr/0027-publicacion-del-nucleo.md) | Outbox de cambios confirmados del núcleo. | proposed |
+| [0028](03-adr/0028-rabbitmq-y-politicas.md) | RabbitMQ con colas quorum y políticas. | proposed |
 
-Las decisiones de la segunda iteración deben actualizarse donde corresponda para reflejar los ajustes indicados. No se registra aceptación conjunta por el solo hecho de integrar documentación.
+Las decisiones de la segunda iteración se revisan conjuntamente antes de aceptarse.
 
 ## 11. Trazabilidad inicial
 
@@ -226,7 +230,7 @@ Las decisiones de la segunda iteración deben actualizarse donde corresponda par
 | QA-8 | 2 | 0021 | Autorización, renovación, revocación y datos conservados. |
 | QA-9 | 1, 2 y 4 | 0001, 0002, 0023 | Incorporar una integración y evaluar impacto. |
 | QA-7 y QA-10 | 3 y 4, sobre la base de 1 | 0003 y 0004 como base | Compartición, idiomas, formatos y atención regional. |
-| RF-06 | 2 | Decisión de integración pendiente | Solicitud de asistencia a la agencia preferida. |
+| RF-06 | 2, implementación coordinada con 3 | 0026: asistencia saliente del núcleo | Solicitud de asistencia a la agencia preferida. |
 | RF-07 | 4 | Proceso separado por 0001 | Almacenamiento, transferencia y análisis sin degradar operaciones. |
 
 Esta tabla expresa relaciones de diseño, no resultados de pruebas.
@@ -269,7 +273,7 @@ El plazo del trabajo práctico y los recursos del grupo acotan el prototipo; no 
 
 Los impactos se registran en [impact-log.md](01-add/impact-log.md).
 
-Para aceptar el diseño completado de la segunda iteración, deben revisarse conjuntamente:
+Para aceptar el diseño revisado de la segunda iteración, deben revisarse conjuntamente:
 
 - Su alineación con la primera iteración actualizada.
 - El contrato ingesta-núcleo.
@@ -292,3 +296,10 @@ Pasos 2 a 7 documentados, con RabbitMQ, políticas operativas y recorrido analí
 [ADR-0028](03-adr/0028-rabbitmq-y-politicas.md), [políticas](../specs/ingestion-operations.md),
 [autorización](../specs/ingestion-authorization.md) y [validación futura](../prototype/ingestion-validation.md).
 Los ADR permanecen proposed hasta revisión real; prototipo y aceptación del equipo no se inventan.
+
+## Refinamiento posterior a revisión de iteración 2
+
+El correo usa avisos como vía principal y sondeo incremental para reconciliación. Las políticas calculan consultas
+y renovaciones además de novedades: el perfil adaptable no garantiza QA-1 si se pierde un aviso en cuentas de baja
+frecuencia. Asistencia es un módulo saliente del núcleo, fuera de ingesta. El broker objetivo usa tres miembros en
+tres zonas; esto refina el mínimo general de ADR-0003. Ver el estado actual en [impactos](01-add/impact-log.md).

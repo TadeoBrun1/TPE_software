@@ -15,7 +15,11 @@ Hay que elegir broker y concretar las hipótesis operativas, no mantener esta de
 
 ## Decision Drivers
 
-QA-1 (frescura), QA-6 (intercambio/deduplicación), QA-8 (acceso restringido), CRN-3/4 y límites de ADR-0001/0002/0003.
+* QA-1: frescura de extremo a extremo.
+* QA-6: 99,9 % de mensajes válidos sin pérdida ni duplicación.
+* QA-8: acceso restringido.
+* CRN-3 y CRN-4: recuperación, configuración y secretos.
+* ADR-0001, ADR-0002 y ADR-0003: límites de procesos y despliegue.
 
 ## Considered Options
 
@@ -34,6 +38,11 @@ ser incapaz de satisfacer estos flujos. Aquí se priorizan enrutamiento a colas 
 Una cola en base requeriría diseñar reparto pub/sub, entrega, seguridad y operación del intermediario, en vez de
 utilizar un broker que ya ofrece esas piezas. No se elige RabbitMQ por el tamaño/plazo del grupo del TPE.
 
+### Patrones y tácticas
+
+* Patrón o mecanismo: Dead Letter Channel mediante casos aparcados y avisos mínimos; cola replicada.
+* Tácticas: Retry y Exception handling; redundancia de estado con líder y seguidores, sin equiparar quorum a ejecución activa de negocio en todas las réplicas.
+
 ### Consequences
 
 * A favor: enrutamiento a colas independientes por consumidor y confirmación explícita de recepción/procesamiento.
@@ -44,7 +53,7 @@ utilizar un broker que ya ofrece esas piezas. No se elige RabbitMQ por el tamañ
 
 ### Confirmation
 
-El paso 7 analiza escenarios y registra riesgos. El prototipo debe comprobar publish/confirm/ACK, reentrega,
+El paso 7 analiza escenarios y registra riesgos. El prototipo debe comprobar publicación, confirmación del broker y ACK del consumidor, reentrega,
 reinicio y mensajes no enrutados; se declara pendiente de ejecución. Seleccionar release y digest al implementar,
 verificar compatibilidad y no usar una etiqueta móvil `latest`. Los ADR permanecen proposed hasta revisión cruzada;
 la elección y el análisis ya están documentados, no falta elegir el producto.

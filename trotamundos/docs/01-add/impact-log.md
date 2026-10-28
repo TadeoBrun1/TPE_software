@@ -27,58 +27,44 @@ Este documento registra las decisiones que afectan elementos compartidos entre i
 | Módulos del núcleo | Iteración 1 | Cambios con aviso y revisión de sus consumidores. |
 | Puerta de entrada y entrada global | Iteración 1 | Coordinar cambios entre las iteraciones 2, 3 y 4. |
 
-## Propuestas de la iteración 2
+## Refinamiento de iteración 2 — estado al 2026-10-28
 
-Estas propuestas están documentadas para revisión. No implican aprobación conjunta ni validación mediante un prototipo.
+Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa el estado documental actual;
+"Propuesto para revisión" significa que existe decisión concreta, sin atribuir aceptación conjunta.
 
-| Cambio propuesto | Afecta | Resolución o acuerdo pendiente | Estado |
-|---|---|---|---|
-| Evento `booking.change.detected.v1` como interfaz de ingesta | 1 y 3 | Revisar el contrato contra la estructura actual. Representa una novedad detectada, no un cambio confirmado. | Propuesto |
-| El núcleo conserva la propiedad del estado oficial | 2 y 3 | Ingesta publica novedades; el núcleo valida, concilia, asocia a un viaje y aplica los cambios. | Compatible con la primera iteración |
-| `tripId` no obligatorio en la novedad | 3 | El núcleo determina la asociación o conserva el caso pendiente de resolución. | Revisión pendiente |
-| Outbox de ingesta coordinada con cursores y resultados | 3 y 4 | Revisar persistencia, confirmaciones y recuperación; distinguirla de la publicación de eventos del núcleo. | Propuesto |
-| Presupuesto completo de cinco minutos | 2 y 3 | Distribuir detección, espera en mensajes, aplicación y visualización; conocer cuotas y carga. | Sin cifras acordadas |
-| Revocación del acceso al correo | 3 y 4 | Coordinar nuevos accesos y publicaciones pendientes; definir mensajes en tránsito y conservación de reservas. | Revisión pendiente |
-
-## Ajustes necesarios tras las correcciones de la iteración 1
-
-La rama de ingesta se preparó originalmente sobre una versión anterior de la primera iteración. Sus documentos deben alinearse con la revisión incorporada a `main` en el commit `05a8fd737847cecc89722ccde9cd0824e5ffbd0f`.
-
-| Tema | Ajuste necesario en la iteración 2 | Estado |
+| Tema | Resolución documental actual | Estado |
 |---|---|---|
-| Numeración de ADRs | ADR-0003 ahora corresponde al despliegue regional. ADR-0004 corresponde a clientes ricos y puerta de entrada. Corregir las referencias anteriores. | Pendiente |
-| Entrada de notificaciones | Mostrar entrada global, puerta de entrada regional y receptor de ingesta. No exponer el receptor directamente a Internet. | Pendiente |
-| Identificación de región | Definir cómo obtener la región antes de enrutar una notificación externa. Incluir `homeRegion` en el evento no resuelve por sí solo esa búsqueda. | Pendiente |
-| Idempotencia sin versión externa | El contrato actual exige `sourceVersion` para procesamiento automático. Revisarlo para admitir correos con datos suficientes aunque no incluyan versión externa. | Pendiente |
-| Identidad del mensaje y de la reserva | Distinguir `eventId`, referencia externa, clave de negocio y ámbito de usuario o vinculación. No confundir versión de esquema con versión externa. | Revisión pendiente |
-| Mensajes desordenados | El orden del canal no corrige novedades que ya llegan desordenadas. Definir conciliación y tratamiento de cancelaciones anteriores al alta. | Revisión pendiente |
-| Configuración de vinculaciones | Acordar qué datos administra el módulo de usuarios del núcleo y qué estado técnico conserva la ingesta. Evitar dos fuentes autoritativas contradictorias. | Pendiente |
-| Agencia de viajes | Incorporar RF-06 al objetivo, drivers, componentes e interfaces de la iteración 2. | Pendiente |
-| Eventos confirmados del núcleo | Completar el mecanismo de publicación confiable, coordinando con la iteración 3 y manteniendo al núcleo como dueño de sus transacciones. | Pendiente |
-| Analítica | Conservar el flujo de cambios confirmados, pero dejar la decisión de almacenamiento para la iteración 4. | Pendiente |
-| Tecnología del broker | Seleccionar y justificar la tecnología según durabilidad, consumo, recuperación y carga. | Pendiente |
+| Numeración | Despliegue ADR-0003 y puerta de entrada ADR-0004; referencias corregidas | Actualizado |
+| Entrada de avisos | Entrada global, Gateway y receptor interno; ADR-0025 | Propuesto para revisión |
+| Identificación de región | Directorio mínimo de suscripción y vigencia; ADR-0025 y contrato regional | Propuesto para revisión |
+| Correo sin versión | Versión externa opcional; datos insuficientes van a resolución | Propuesto para revisión |
+| Identidad | eventId, identidad de reserva y versión de esquema separados en contrato | Propuesto para revisión |
+| Desorden | Núcleo compara versión si existe y conserva conflictos o cancelaciones pendientes | Propuesto para revisión con 3 |
+| Vinculaciones | Núcleo es autoridad; ingesta conserva cursor, suscripción y estado técnico | Propuesto para revisión con 3 |
+| Agencia | Módulo de asistencia saliente del núcleo con trabajador acotado; ADR-0026 | Propuesto para revisión con 3 |
+| Eventos confirmados | Outbox transaccional del núcleo y contrato; ADR-0027 | Propuesto para revisión con 3 |
+| Analítica | Flujo de cambios confirmados disponible; almacenamiento sigue en iteración 4 | Delimitado; diseño de almacén fuera de 2 |
+| Broker | RabbitMQ, topología y políticas; ADR-0028 | Propuesto para revisión |
+
+## Impactos que requieren coordinación
+
+| Origen | Cambio | Afecta | Tratamiento | Estado |
+|---|---|---|---|---|
+| 2, ADR-0028 | Tres miembros del broker en tres zonas por región | 1 y 3 | Refina el mínimo general de al menos dos zonas de ADR-0003; no lo contradice. No modifica despliegue de otros elementos ni agrega recuperación regional | Revisión con 3 pendiente |
+| 2, ADR-0026 | Asistencia pertenece al núcleo; ingesta conserva función entrante | 1 y 3 | Módulo con trabajador acotado y contrato separado; medir competencia por recursos | Revisión con 3 pendiente |
+| 2, ADR-0020 | Avisos de correo principales y reconciliación por cuotas | 1, 3 y QA-1/5 | Modelo de consultas y renovaciones documentado. Perfil lento incumple cinco minutos al perder avisos | Viabilidad universal de QA-1 abierta |
+| 2, ADR-0024/0027 | Outboxes distintas, control de entrada y resultado atómicos | 3 y 4 | Implementar contratos sin compartir tablas | Propuesto para revisión |
+| 2, ADR-0021 | Autoridad y barrera de revocación | 3 y 4 | Aplicar protocolo de autorización y probar carreras | Propuesto para revisión |
+| 2, ADR-0028 | Consumo por usuario y presupuesto de aplicación y cliente | 3 | Coordinar shards, transacciones y tiempos antes de dimensionar | Propuesto para revisión |
+| 2, ADR-0023 | QA-9 se evalúa incorporando trenes | 3 y 4 | Registrar esfuerzo ≤10 días-persona y verificar medios existentes sin cambios | Validación pendiente |
 
 ## Criterio para resolver un impacto
 
-1. Identificar los documentos, contratos y responsables afectados.
-2. Proponer la modificación y registrar su justificación.
-3. Revisarla con el otro integrante mediante el Pull Request.
-4. Actualizar las vistas, contratos y ADR correspondientes.
-5. Registrar la resolución real antes de cerrar la iteración.
+1. Identificar documentos, contratos y responsables afectados.
+2. Registrar la propuesta y su justificación.
+3. Revisar con el otro integrante mediante el PR antes del merge.
+4. Actualizar vistas, contratos y ADR afectados.
+5. Registrar aceptación real y evidencia de las pruebas cuando existan.
 
-La documentación de un impacto no equivale a una aprobación ni a una prueba ejecutada. Las decisiones y verificaciones pendientes deben permanecer identificadas como tales.
-
-## Resolución documental de alineación de ingesta
-
-Se proponen los ajustes antes identificados: avisos por Gateway, ADR-0003 para región y ADR-0004 para entrada,
-correo sin versión externa obligatoria, autoridad de configuración en núcleo, RF-06 con adaptador de agencia y
-outbox propia del núcleo. Ver ADR-0025 a 0027. La revisión cruzada queda pendiente; no se atribuye aprobación.
-Broker, políticas iniciales y paso 7 se completan en ADR-0028. Validación de cuotas/capacidad y recuperación regional (iteración 3) siguen abiertas como riesgos.
-
-## Cierre analítico de iteración 2 — 2026-10-27
-
-Se elige RabbitMQ y se fijan carga/presupuesto/reintentos/retención, en ADR-0028. Las menciones anteriores de broker
-pendiente describen el estado previo, reemplazado por esta decisión. Paso 7 completado por recorrido de escenarios;
-prototipo sin ejecutar. Impacto a revisar con 3: tres zonas para quorum del broker (mínimo anterior dos), consumo
-por shard/usuario, aplicación transaccional, presupuesto del núcleo/cliente y barrera de autorización. Se conserva
-el dominio de 1 y no se impone separación lectura/escritura ni almacén analítico. La revisión cruzada sigue pendiente.
+El paso 7 contiene análisis de escenarios. La implementación y el cumplimiento medido quedan diferenciados del
+estado documental. QA-1 a escala permanece abierto hasta resolver la recuperación dentro del presupuesto a escala.

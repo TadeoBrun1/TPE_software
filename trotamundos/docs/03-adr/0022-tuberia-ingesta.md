@@ -26,15 +26,19 @@ Obtener un mensaje no significa tener una reserva válida. Selección, interpret
 
 ## Decision Outcome
 
-Opción propuesta: **Tubería de etapas internas**. Selección → extracción → normalización → validación → registro durable/publicación, como componentes internos de ingesta, sin un microservicio por etapa.
+Chosen option: **Tubería de etapas internas**. Selección → extracción → normalización → validación → registro durable/publicación, como componentes internos de ingesta, sin un microservicio por etapa.
 
 El procesamiento entrega un evento válido, descarte justificado o caso pendiente. Solo almacenar contenido necesario con permisos/retención. Correo usa reglas de remitentes y pertinencia; APIs usan su contrato de origen. No confundir remitente permitido con contenido auténtico o seguro.
+
+### Patrones y tácticas
+
+* Patrón o mecanismo: Pipes and Filters.
+* Tácticas: Increase cohesion: selección, extracción, normalización y validación como responsabilidades separadas.
 
 ### Consequences
 
 * Favorable: Permite cambiar/probar etapas y clasificar resultados.
 * Desfavorable: Exige acordar entradas, salidas y errores.
-* Las comprobaciones de cumplimiento se realizan en el paso 7/prototipo, no se declaran ejecutadas.
 
 ### Confirmation
 

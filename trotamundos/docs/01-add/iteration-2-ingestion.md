@@ -2,7 +2,7 @@
 
 **Responsable de la iteración:** Tomas Lateana (integrante A).
 **Preparación documental:** 2026-10-27, con asistencia de ChatGPT/Codex.
-**Estado:** pasos 2 a 7 completados al nivel de diseño; listo para revisión cruzada en PR #4. Pruebas de prototipo pendientes.
+**Estado:** pasos 2 a 7 documentados y revisados; viabilidad de QA-1 a escala abierta para revisión en PR #4. Pruebas de prototipo pendientes.
 **ADRs:** 0020 a 0028, dentro del bloque 0020–0039.
 
 ## Base y alcance
@@ -29,8 +29,10 @@ revocación y el plazo de actualización, sin bloquear las consultas de viajeros
 | RF-03 | Detalles, cambios y cancelaciones desde terceros |
 | RF-06 | Integración con la agencia preferida para asistencia |
 | QA-1 (H,H) | Frescura: cinco minutos desde generación externa hasta visualización |
-| QA-6 (H,M) | Interpretación correcta de las interfaces externas |
+| QA-6 (H,M) | El 99,9 % de los mensajes válidos se procesa sin pérdida ni duplicación |
 | QA-8 (H,M) | Acceso autorizado y tratamiento limitado de correos |
+| QA-5 | Escalabilidad: dimensionar consultas de detección además de novedades |
+| QA-9 | Agregar un medio como trenes en 10 días-persona o menos, sin modificar el código de los medios existentes |
 | CRN-3 | Errores y reintentos externos |
 | CRN-4 | Configuración y secretos; ID vigente en el repo |
 
@@ -47,19 +49,23 @@ no se fija un intervalo universal sin conocer esas condiciones.
 | Estado de ingesta | Vinculaciones, cursores, resultados y publicación pendiente |
 | Interfaz ingesta-núcleo | Acordar qué se entrega y cómo se toleran errores/reentregas |
 
-## Paso 4 — Conceptos elegidos como propuesta
+## Paso 4 — Patrones y tácticas elegidos
 
-| Concepto | Justificación | Alternativas | ADR |
-|---|---|---|---|
-| Sondeo configurable y notificaciones donde existan | Mantener sondeo exigido sin asumir capacidades iguales en terceros | Solo sondeo; solo notificaciones | [0020](../03-adr/0020-obtener-novedades.md) |
-| Autorización delegada y mínimo privilegio | No custodiar contraseña del buzón; manejar permisos y revocación | Contraseña; reenvío manual | [0021](../03-adr/0021-autorizacion-correo.md) |
-| Tubería de etapas internas | Separar selección, extracción, normalización y validación | Rutina única; servicio por etapa | [0022](../03-adr/0022-tuberia-ingesta.md) |
-| Puertos y adaptadores | Aislar acceso al buzón, formatos de emisores y APIs de viajes | Condicionales dispersos; formato externo como modelo interno | [0023](../03-adr/0023-adaptadores-proveedores.md) |
-| Outbox y avance coordinados; reintentos por categoría | Recuperar publicación sin saltar novedades | Avanzar cursor antes de publicar; no persistir y reprocesar todo | [0024](../03-adr/0024-avance-y-publicacion-durable.md) |
-| Enrutamiento por vinculación de suscripción | Encontrar región sin confiar en datos no autenticados | Difusión a regiones; confiar en región enviada por tercero | [0025](../03-adr/0025-enrutamiento-de-avisos.md) |
-| Adaptador de agencia e interfaz de asistencia | Cubrir RF-06 conservando reglas en el núcleo | Integración desde clientes; asistencia mezclada con reservas | [0026](../03-adr/0026-integracion-agencia.md) |
-| Outbox de cambios confirmados en el núcleo | No perder eventos entre guardar y publicar | Publicar antes o después sin registro atómico | [0027](../03-adr/0027-publicacion-del-nucleo.md) |
-| RabbitMQ con topic exchanges y colas quorum | Entrega persistente y confirmaciones con políticas explícitas | Kafka; cola sobre base relacional | [0028](../03-adr/0028-rabbitmq-y-politicas.md) |
+| Concepto y justificación | Patrón | Táctica y aplicación | Alternativas | ADR |
+|---|---|---|---|---|
+| Avisos principales y reconciliación adaptable; evitar sondeo uniforme masivo | Event-Driven Consumer; consumo periódico de reconciliación | Manage sampling rate y Bound resource usage: frecuencia y concurrencia por cuota; QA-1 sigue condicionado | Solo sondeo; solo avisos | [0020](../03-adr/0020-obtener-novedades.md) |
+| Autorización delegada del buzón | OAuth 2.0 es protocolo de autorización, no patrón arquitectónico | Authorize actors, Limit access y Revoke access: permisos mínimos y revocación coordinada | Contraseña; reenvío manual | [0021](../03-adr/0021-autorizacion-correo.md) |
+| Etapas internas separadas | Pipes and Filters | Increase cohesion: cada etapa tiene una transformación definida | Rutina única; servicio por etapa | [0022](../03-adr/0022-tuberia-ingesta.md) |
+| Aislar contratos de proveedores | Ports and Adapters; Adapter; Canonical Data Model | Tailor interface y Adhere to standards: mapeos específicos a contratos estables | Condicionales dispersos; modelo de un proveedor | [0023](../03-adr/0023-adaptadores-proveedores.md) |
+| Resultados, cursor y publicación recuperables | Transactional Outbox; Idempotent Receiver | Retry y Exception handling: reintentos limitados y clasificación | Avanzar antes de persistir; publicar sin recuperación | [0024](../03-adr/0024-avance-y-publicacion-durable.md) |
+| Resolver una región antes de recibir trabajo | Message Router | Limit access y Restrict dependencies: directorio mínimo y entrada controlada | Ingesta pública; difusión global | [0025](../03-adr/0025-enrutamiento-de-avisos.md) |
+| Asistencia saliente del núcleo | Ports and Adapters; Transactional Outbox | Tailor interface y Bound resource usage: trabajador acotado separado de atención HTTP | Cliente directo; ingesta; proceso independiente | [0026](../03-adr/0026-integracion-agencia.md) |
+| Publicar cambios oficiales recuperables | Transactional Outbox; Idempotent Receiver | Retry y Exception handling: publicación tras commit y reentrega segura | Publicar antes; guardar y enviar sin recuperación | [0027](../03-adr/0027-publicacion-del-nucleo.md) |
+| Aislar mensajes que no se pueden aplicar | Dead Letter Channel, realizado mediante caso aparcado y aviso mínimo | Exception handling: registrar fallo durable antes del ACK, sin bucle infinito | Descartar; reintentar sin límite | [0028](../03-adr/0028-rabbitmq-y-politicas.md) |
+| Broker replicado con mayoría | Cola durable replicada con líder y seguidores | Redundancia con réplica de estado y elección de líder; no se equipara a ejecución activa de negocio en todos los nodos | Kafka; cola en base | [0028](../03-adr/0028-rabbitmq-y-politicas.md) |
+
+El canal de errores se implementa en aplicación y outbox, no se presupone un DLX automático de RabbitMQ. Los nombres
+son una trazabilidad de mecanismos concretos; no sustituyen la evaluación de escenarios ni las medidas de calidad.
 
 ## Paso 5 — Componentes e interfaces
 
@@ -71,12 +77,13 @@ no se fija un intervalo universal sin conocer esas condiciones.
 | Adaptadores de acceso | Obtener correos o datos de APIs con paginación y límites |
 | Receptor de avisos | Recibir desde el Gateway, verificar origen/repetición y registrar trabajo durable antes de confirmar recepción |
 | Resolución regional | Usar la vinculación de suscripción a región; tratar avisos sin región como pendientes, sin difusión global |
-| Adaptador de agencia | Enviar solicitudes autorizadas por el núcleo y normalizar respuestas de asistencia; no modifica reservas |
+| Asistencia saliente del núcleo (fuera de ingesta) | Autorizar solicitudes, ejecutarlas con trabajadores acotados y aplicar resultados de agencia |
 | Procesador | Seleccionar, extraer, normalizar y validar; distinguir descarte de fallo |
 | Registro de sincronización | Persistir cursores, resultados, casos pendientes y outbox |
 | Publicador | Entregar mensajes de outbox y marcar envío tras confirmación del canal |
 
-Son componentes lógicos que pueden compartir proceso y código. No requieren un microservicio por componente.
+Los componentes de ingesta pueden compartir proceso y código. Asistencia es un módulo del desplegable del núcleo,
+con un trabajador asíncrono; no se añade un proceso saliente ni se amplía la responsabilidad de ingesta.
 
 | Interfaz interna | Entrada → salida |
 |---|---|
@@ -105,7 +112,7 @@ Identidad del mensaje e identidad de la reserva son diferentes; conciliación co
 | ADR-0020 a 0028 | Contexto, drivers, alternativas, consecuencias y confirmación futura |
 | [Impactos](impact-log.md) | Cambios que deben revisar los responsables de 1 y 3 |
 
-Todas las ADR de esta iteración quedan `proposed`: no se inventa revisión cruzada ni aprobación del otro integrante.
+Todas las ADR de esta iteración quedan `proposed` hasta su aceptación mediante revisión cruzada.
 Se preservan la primera iteración y sus ADR; la propuesta de ingesta debe revisarse con la tercera.
 
 ## Paso 7 — Análisis del diseño y cierre de la iteración
@@ -118,6 +125,8 @@ El análisis distingue resultados del razonamiento y evidencia que deberá produ
 
 | Caso analizado | Recorrido y resultado esperado por diseño | Límite o riesgo |
 |---|---|---|
+| Aviso perdido o suscripción vencida | Reconciliar desde cursor y renovar; prioridades distribuyen consultas | Una cuenta con respaldo de 15 min o 6 h puede incumplir QA-1; el sondeo adaptativo no resuelve el requisito a escala |
+| Nuevo transporte: trenes | Implementar adaptador y mapeo contra puertos comunes; ejecutar regresión de medios existentes | QA-9 exige registrar esfuerzo real ≤10 días-persona y ausencia de cambios en medios existentes |
 | Correo nuevo sin versión externa | Autorizar, filtrar, extraer identidad, deduplicar fuente, guardar outbox/cursor, publicar; núcleo puede crear reserva si datos suficientes | No se inventa versión; cambios contradictorios requieren conciliación |
 | Cancelación de tercero | Entrada global resuelve suscripción, Gateway valida, ingesta normaliza; núcleo aplica o conserva cancelación pendiente hasta identificar reserva | Un aviso sin región válida no se difunde globalmente; directorio protegido es dependencia |
 | Duplicado o caída tras publicar | Outbox conserva eventId; consumidor guarda control y resultado antes del ACK | Igual reserva desde dos fuentes requiere conciliación de negocio, no solo dedupe de mensaje |
@@ -134,7 +143,9 @@ El análisis distingue resultados del razonamiento y evidencia que deberá produ
 |---|---|---|
 | RF-01/02/03 | Recorrido de correo/APIs, filtros, adaptadores y contratos definidos | Abordados en diseño; validar con al menos dos fuentes simuladas y un correo sin versión |
 | RF-06 | Contrato de asistencia y adaptador con autorización/seguimiento definidos | Abordado en diseño; agencia real/API y ensayo de fallos antes de producción |
-| QA-1 | Presupuesto de 300 s, alertas y carga hipotética definidos | Parcial/condicionado a cuotas y capacidad. No demostrado para millones de cuentas ni todos los proveedores |
+| QA-1 | Avisos principales, recuperación y presupuesto de 300 s | Conflicto abierto: respaldo de 15 min o 6 h incumple si falta un aviso; no hay demostración universal de cuotas ni recuperación acotada |
+| QA-5 | Modelo de consultas, renovaciones y carga de novedades separado | Parcial: validar distribución de buzones y cuotas por proveedor, además de carga regional del broker |
+| QA-9 | Adaptadores y puertos aíslan un nuevo transporte | Agregar trenes sin editar medios existentes y registrar esfuerzo; objetivo de 10 días-persona aún sin medir |
 | QA-6 | Identidad separada, normalización, dedupe durable, conciliación y outboxes definidos | Parcial hasta pruebas de contrato/reentrega/desorden; no prometer exactly-once |
 | QA-8 | OAuth delegado, mínimo privilegio, propiedad y protocolo de revocación definidos | Parcial hasta pruebas de carrera, integración real, seguridad y conservación de datos |
 | CRN-3 | Reintentos clasificados, pendientes y recuperación definidos | Resuelto al nivel de diseño; falta ejercitar fallos |
@@ -142,8 +153,9 @@ El análisis distingue resultados del razonamiento y evidencia que deberá produ
 
 ### Riesgos aceptados como pendientes de validación
 
-1. Cuotas del proveedor y número de vinculaciones: pueden impedir detectar cambios en 120 s. Requisito QA-1 no
-   se relaja; se valida antes de habilitar cada integración y se informa bloqueo si no es viable.
+1. QA-1 a escala sigue abierto: priorizar viajes reduce solicitudes, pero reconciliar cuentas cada 15 min o 6 h
+   no recupera un aviso perdido dentro de cinco minutos. Hace falta recuperación acotada para todas las cuentas
+   y cuotas verificadas, u otro diseño revisado. No se reduce el alcance por actividad del usuario.
 2. Capacidad: 50/s normal, 250/s pico y 20 ms de servicio son hipótesis, no resultados. Pruebas de carga deben
    demostrar cola ≤40 s, publicación ≤10 s y recorrido ≤300 s bajo el escenario acordado con 3.
 3. Política regional y secreto/token: CON-3 sigue como supuesto; los plazos operativos no prueban cumplimiento legal.
@@ -152,7 +164,7 @@ El análisis distingue resultados del razonamiento y evidencia que deberá produ
 5. Casos ambiguos entre correo y API: conservar y resolver evita corrupción, pero puede requerir intervención y
    no produce itinerario automáticamente hasta contar con evidencia suficiente.
 
-### Dependencias de implementación, no decisiones omitidas
+### Dependencias de implementación y refinamientos pendientes
 
 La iteración 3 implementa autorización por viaje, persistencia y consumidor con este contrato; elige actualización
 visible del cliente dentro del presupuesto y demuestra latencia web. La 4 define autenticación del viajero,
@@ -168,8 +180,9 @@ concurrente, agencia con resultado incierto y carga de referencia. Resultados a�
 
 ### ¿Se sigue iterando?
 
-**Se finaliza el diseño de la iteración 2 y se entrega para revisión cruzada en PR #4.** No queda pendiente elegir
-broker ni redactar el paso 7. Los ADR-0020 a 0028 mantienen `proposed` hasta aceptación real por ambos; el cierre
+**Se entrega el diseño revisado y el paso 7 para revisión cruzada en PR #4. QA-1 a escala conserva un conflicto
+de viabilidad abierto; la iteración no se presenta como cumplimiento demostrado ni como cierre sin riesgos.**
+Broker y análisis están definidos; la recuperación de correo a escala requiere el refinamiento señalado. Los ADR-0020 a 0028 mantienen `proposed` hasta aceptación real por ambos; el cierre
 administrativo se registra al aprobar. Si pruebas o cuotas invalidan las hipótesis, se crea un refinamiento/ADR,
 no se afirma que el requisito estaba cumplido. Se continúa con implementación y las iteraciones 3/4.
 
@@ -178,7 +191,7 @@ no se afirma que el requisito estaba cumplido. Se continúa con implementación 
 * [Contrato regional](../../specs/notification-routing.md): suscripción/vinculación y región se registran antes de
   recibir avisos. Entrada global y Gateway regional son los accesos de Internet; ingesta no se expone directamente.
 * [Contrato de asistencia](../../specs/agency-assistance.md): solicitud creada y autorizada por el núcleo; adaptador
-  de ingesta comunica con la agencia y devuelve resultado. No agrega reservas ni implementa el chatbot avanzado.
+  saliente del módulo de asistencia del núcleo comunica con la agencia y devuelve resultado. No agrega reservas ni implementa el chatbot avanzado.
 * [Publicación del núcleo](../../specs/core-publication.md): cambio, control de aplicación y evento pendiente en una
   transacción; el núcleo conserva propiedad y el publicador debe tolerar reentregas.
 * [Configuración y propiedad](../../specs/notification-routing.md): el núcleo administra región, vinculación, filtros

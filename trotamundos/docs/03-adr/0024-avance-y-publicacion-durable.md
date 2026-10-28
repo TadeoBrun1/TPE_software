@@ -27,15 +27,19 @@ Avanzar el cursor antes de conservar/publicar resultados puede saltar novedades.
 
 ## Decision Outcome
 
-Opción propuesta: **Outbox y avance coordinados en almacenamiento durable**. Guardar resultados de la página, casos pendientes, outbox y avance/versionado juntos antes de adelantar la sincronización. Publicar con ID estable y marcar enviado después de confirmación durable. El núcleo aplica efecto idempotente.
+Chosen option: **Outbox y avance coordinados en almacenamiento durable**. Guardar resultados de la página, casos pendientes, outbox y avance/versionado juntos antes de adelantar la sincronización. Publicar con ID estable y marcar enviado después de confirmación durable. El núcleo aplica efecto idempotente.
 
 Evitar dos confirmaciones concurrentes del mismo cursor usando versión/lease con control al guardar. Si se procesa por página, registrar todos sus elementos antes de avanzar. Reintentar solo fallos transitorios con esperas crecientes/variación; cuota según proveedor; autorización revocada se detiene; datos inválidos a resolución. Fijar límites/retención y vigilar acumulación antes de implementar. No afirmar atomicidad entre fuente, broker y base ni exactly-once.
+
+### Patrones y tácticas
+
+* Patrón o mecanismo: Transactional Outbox e Idempotent Receiver.
+* Tácticas: Retry y Exception handling: reintentar fallos temporales y clasificar resultados.
 
 ### Consequences
 
 * Favorable: Permite reanudar y no adelantar avance sin representar sus resultados.
 * Desfavorable: Costo transaccional, limpieza, retención y control de concurrencia; no evita reentregas.
-* Las comprobaciones de cumplimiento se realizan en el paso 7/prototipo, no se declaran ejecutadas.
 
 ### Confirmation
 

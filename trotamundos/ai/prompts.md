@@ -88,3 +88,10 @@ publicación en GitHub. Revisar el diff y documentar los aportes humanos reales 
 ## Preparación asistida del cierre de diseño
 
 2026-10-27: solicitud de completar iteración 2; ChatGPT/Codex consulta documentación oficial de RabbitMQ/Kafka, redacta decisiones/políticas y evalúa escenarios sin ejecutar sistema. No atribuye aprobación o pruebas a los integrantes.
+
+## 2026-10-28 — Preparación de correcciones de revisión de iteración 2
+
+Solicitud de Tomas: analizar las correcciones de Tadeo para PR #4 y preparar una aplicación rápida.
+Asistencia: revisión de avisos y coste de sondeo, ADR-0025 a 0027, patrones y tácticas, asistencia saliente del núcleo,
+vistas, índice e impactos. Fuentes primarias: Gmail, Microsoft Graph, RabbitMQ y SEI. Se mantiene explícito el
+conflicto de QA-1 ante avisos perdidos con reconciliación lenta. Revisión humana y ejecución del prototipo pendientes.

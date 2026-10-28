@@ -10,8 +10,8 @@ Productores usan mensajes persistentes, publisher confirms y `mandatory=true`; u
 fallo aunque llegue confirm. No marcar outbox enviada sin confirmación y sin retorno de mensaje no enrutado.
 Consumidores usan ACK manual posterior a resultado durable. La reentrega es normal; no hay exactly-once.
 
-Cada región tiene su vhost y usuarios técnicos con permisos por exchange/cola. Ingesta publica novedades y
-resultados de asistencia; núcleo publica eventos confirmados y solicitudes de asistencia. Consumidores reciben
+Cada región tiene su vhost y usuarios técnicos con permisos por exchange/cola. Ingesta publica novedades; el núcleo publica eventos confirmados y solicitudes de asistencia. El trabajador de
+asistencia del núcleo publica sus resultados y tiene credenciales separadas de la atención HTTP. Consumidores reciben
 solo las colas necesarias. Broker/management no son endpoints públicos; acceso externo por Gateway no equivale
 a exponer AMQP en Internet. TLS y credenciales por servicio se mantienen fuera de código y payloads.
 
@@ -19,7 +19,7 @@ a exponer AMQP en Internet. TLS y credenciales por servicio se mantienen fuera d
 |---|---|---|
 | `travel.ingestion` | `booking.change.detected.v1.s0` a `.s7` | `core.bookings.s0` a `.s7`, una por shard de usuario |
 | `travel.domain` | `booking.changed.v1` | Cola independiente por consumidor autorizado, inicialmente analítica |
-| `travel.assistance` | `assistance.requested.v1`, `assistance.result.v1` | Solicitudes para adaptador de agencia; resultados para núcleo |
+| `travel.assistance` | `assistance.requested.v1`, `assistance.result.v1` | Solicitudes para trabajador de asistencia del núcleo; resultados para seguimiento |
 | `travel.errors` | `ingestion.error.v1` | Operación/revisión con acceso restringido, referencia mínima al caso durable |
 
 El nombre lógico del evento y su routing key no son lo mismo. Shard del usuario: interpretar los primeros 16
@@ -73,11 +73,63 @@ La latencia web de 800 ms se comprueba con el responsable de 3, no queda validad
 | Margen compartido para variación/reintentos | 40 s |
 | **Total** | **300 s** |
 
-Planificador inicial: consulta cada 60 s con dispersión hasta 15 s, procurando detectar antes de 120 s contando
-colas y respuestas. Limitar por cuotas; eventos/consultas incrementales reducen trabajo, pero no se promete
-sondear todas las cuentas a ese ritmo si una API no lo permite. Antes de conectar un proveedor se registra su
-cuota y número de cuentas elegibles. Si la cuota no permite la frecuencia, marcar riesgo/bloqueo de QA-1 y
-negociar alternativa, no declarar cumplido ni cambiar silenciosamente los cinco minutos.
+Los avisos de correo son el mecanismo principal donde el proveedor los ofrece. Se persiste el aviso y se agrupa
+trabajo por vinculación antes de consultar cambios desde el cursor. Un aviso no contiene necesariamente el correo.
+Se renuevan suscripciones antes del vencimiento y se reconcilian huecos aunque no lleguen avisos.
+
+El escenario vigente expresa 99 % de actualizaciones visibles en cinco minutos; ese percentil está identificado
+como suposición en los requisitos. Para evaluarlo hay que medir la fracción de actualizaciones que supera 300 s,
+incluyendo avisos perdidos, cuentas de baja frecuencia y otras etapas. Si esa fracción supera el 1 %, falla la
+medida actual. Un único aviso perdido no prueba ese incumplimiento estadístico, pero demuestra que el respaldo
+lento no garantiza el plazo por actualización. No se usa el percentil para excluir clases de cuentas ni se lo
+presenta como una relajación confirmada del enunciado. El respaldo de 90 s para todas las cuentas es una condición
+suficiente a evaluar, no la única solución posible; una alternativa basada en avisos necesita evidencia de su cola
+de latencia y pérdidas recuperadas.
+
+### Coste de detección, independiente de la carga de novedades
+
+Para cada proveedor, `R_sondeo = suma(N_clase / intervalo_clase)` en consultas/s mínimas. La carga API real suma
+consultas por aviso, páginas adicionales, lectura de mensajes, renovaciones y reintentos. Una cuenta de usuario
+puede tener cero o varias vinculaciones: no se equiparan 15 millones de usuarios con buzones sin declararlo.
+Los 2 millones semanales tampoco equivalen a 2 millones de buzones conectados simultáneamente.
+
+| Hipótesis global, un buzón por cuenta | Consultas mínimas por segundo |
+|---|---:|
+| 15.000.000 de buzones cada 60 s | 250.000 |
+| 2.000.000 de buzones cada 60 s | 33.333,3 |
+| 15.000.000 de buzones cada 90 s | 166.666,7 |
+
+Un perfil adaptable ilustrativo, no derivado del enunciado, divide 15 millones de vinculaciones así:
+
+| Clase de reconciliación | Buzones hipotéticos | Intervalo | Consultas/s |
+|---|---:|---:|---:|
+| Viaje próximo o en curso | 100.000 | 90 s | 1.111,1 |
+| Actividad reciente sin viaje próximo | 500.000 | 900 s | 555,6 |
+| Inactiva, aún vinculada y autorizada | 14.400.000 | 21.600 s | 666,7 |
+| **Total** | **15.000.000** | | **2.333,3** |
+
+El perfil reduce sondeos vacíos, pero NO garantiza QA-1 para todas las cuentas si se pierde un aviso: las clases
+de 15 minutos y 6 horas pueden incumplir cinco minutos. La prioridad no cambia el requisito. Para garantizar los cinco minutos incluso ante avisos perdidos debe demostrarse una recuperación acotada para todas las vinculaciones; aun consultar cada 90 s
+requiere 166.666,7 consultas/s mínimas globales más el trabajo adicional y deja solo 30 s del presupuesto de
+detección para espera, respuestas y paginación. Si las cuotas no lo permiten, el resultado del paso 7 es un
+conflicto de viabilidad pendiente, que requiere otra solución o un cambio de requisito acordado por ambos.
+
+Como referencia del coste de suscripciones, renovar diariamente 15 millones de vigilancias supone 173,6
+renovaciones/s globales si todas usan ese plazo. Gmail recomienda renovación diaria y exige hacerlo antes de
+su vencimiento; Graph usa plazos propios. No se aplica el plazo de Gmail a todos los proveedores. Para IMAP IDLE
+se dimensionan además conexiones simultáneas, memoria, keepalives y reconexiones; no se elige una conexión por
+cuenta como solución universal.
+
+Antes de admitir producción se necesita una ficha por proveedor con número de buzones, cuotas por usuario y
+proyecto, amplificación por páginas, tasa de avisos, vencimientos y recuperación de cursores inválidos. Se limita
+concurrencia con presupuesto de solicitudes por proveedor y se distribuyen vencimientos para evitar ráfagas.
+Gmail puede entregar por Google Cloud Pub/Sub: ese transporte externo alimenta el receptor y no reemplaza al
+RabbitMQ interno. Si el histórico incremental deja de estar disponible, se ejecuta una resincronización acotada
+y se registra su impacto temporal. Un sondeo incremental vacío también consume solicitudes.
+
+Las 50–250 novedades/s anteriores solo ejercitan el broker y sus consumidores por región. No validan la detección
+global. Deben medirse por separado ambos caminos y luego el recorrido integrado. Los avisos perdidos, las cuotas
+y las cuentas inactivas son parte de la evaluación de QA-1 y QA-5.
 
 Sondeo obtiene solo cambios desde cursor donde exista; máximo inicial 100 mensajes por página. Si la página
 requiere más trabajo que el presupuesto, conservarla como trabajo durable y repartirlo sin avanzar cursor antes
@@ -137,7 +189,7 @@ confirmaciones fallidas, reentregas, pendientes, cuota y antigüedad extremo a e
 outbox >10 s; cola >30 s advertencia y >40 s crítica; recorrido >240 s advertencia y >300 s incumplimiento.
 Correlación por IDs técnicos sin cuerpos de correo/tokens en logs. Un ACK del broker no cierra el recorrido.
 
-Ingesta controla detección/extracción/publicación y agencia. Núcleo controla aplicación y su outbox (3 implementa
+Ingesta controla detección, extracción y publicación. Núcleo controla asistencia saliente, aplicación y su outbox (3 implementa
 sin cambiar contrato). Cliente debe refrescar dentro de 30 s de cambio disponible, por polling o notificación que
 3 elegirá; sin ese acuerdo no se afirma QA-1 cumplido. Alertas son respuesta operativa, no cumplimiento automático.
 
@@ -146,3 +198,7 @@ sin cambiar contrato). Cliente debe refrescar dentro de 30 s de cambio disponibl
 RabbitMQ: https://www.rabbitmq.com/docs/quorum-queues ; https://www.rabbitmq.com/docs/confirms ;
 https://www.rabbitmq.com/docs/exchanges . Kafka comparado: https://kafka.apache.org/42/getting-started/introduction/ .
 Se usan sus capacidades documentadas, no cifras de rendimiento prometidas. Ningún parámetro anterior está medido.
+
+Fuentes de detección: [Gmail push](https://developers.google.com/workspace/gmail/api/guides/push),
+[notificaciones de Graph](https://learn.microsoft.com/en-us/graph/outlook-change-notifications-overview) y
+[ciclo de vida](https://learn.microsoft.com/en-us/graph/change-notifications-lifecycle-events).

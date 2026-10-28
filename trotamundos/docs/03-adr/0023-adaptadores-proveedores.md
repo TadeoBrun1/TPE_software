@@ -26,15 +26,19 @@ Los proveedores difieren en autenticación, paginación, campos y estados. El ac
 
 ## Decision Outcome
 
-Opción propuesta: **Puertos comunes y adaptadores específicos**. Definir puertos de acceso y adaptadores por proveedor. Separar adaptador de buzón de extractores por emisor/formato. Normalizar datos, preservando referencias y versión externa cuando existan.
+Chosen option: **Puertos comunes y adaptadores específicos**. Definir puertos de acceso y adaptadores por proveedor. Separar adaptador de buzón de extractores por emisor/formato. Normalizar datos, preservando referencias y versión externa cuando existan.
 
 Errores se clasifican en temporales, cuota, autorización o datos. No inventar zonas horarias/referencias ausentes. El formato común y sus reglas mínimas se revisan con el núcleo antes de implementar. Integración futura no se considera cumplida solo por dibujar una interfaz.
+
+### Patrones y tácticas
+
+* Patrón o mecanismo: Ports and Adapters, Adapter y Canonical Data Model.
+* Tácticas: Tailor interface y Adhere to standards: traducir contratos externos sin acoplar dominio.
 
 ### Consequences
 
 * Favorable: Concentra cambios externos y permite simuladores por contrato.
 * Desfavorable: Hay que mantener correspondencias y excepciones sin ocultar diferencias importantes.
-* Las comprobaciones de cumplimiento se realizan en el paso 7/prototipo, no se declaran ejecutadas.
 
 ### Confirmation
 
@@ -71,5 +75,5 @@ Dos simuladores con campos/estados distintos deben producir el contrato común; 
 
 ### RF-06 y evolución
 
-El adaptador de agencia sigue las mismas fronteras, con un contrato de asistencia separado de novedades de reservas;
-ver [ADR-0026](0026-integracion-agencia.md). El puerto de consulta externa no es invocado directamente por el núcleo.
+El adaptador de agencia pertenece al módulo saliente de asistencia del núcleo y usa un puerto distinto del acceso
+entrante de ingesta; ver [ADR-0026](0026-integracion-agencia.md). Ningún módulo importa adaptadores del otro proceso.

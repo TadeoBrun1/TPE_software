@@ -1,7 +1,7 @@
 # Vista de componentes y conectores
 
 **Tipo:** C&C (en ejecución)
-**Actualizada en la iteración:** 1
+**Actualizada en la iteración:** 2 (refinamiento propuesto)
 **Mantiene:** Ambos
 **Estado:** Versión inicial (iteración 1). Las iteraciones 2, 3 y 4 la refinan.
 
@@ -25,7 +25,7 @@ flowchart LR
         G["Puerta de entrada<br/>(API Gateway)"]
         N["Núcleo<br/>(monolito modular, sin estado)"]
         DB[("Base operativa<br/>particionada por usuario")]
-        B{{"Intermediario de mensajes<br/>temas: novedades · eventos de dominio"}}
+        B{{"RabbitMQ regional<br/>novedades · dominio · asistencia"}}
         I["Ingesta<br/>(adaptador por proveedor)"]
         A["Analítica"]
     end
@@ -33,7 +33,10 @@ flowchart LR
     EC["Proveedores de correo"]
     ET["Sistemas de terceros<br/>(aerolíneas, hoteles, rentadoras)"]
 
-    ET -- "notificaciones (API estándar)" --> G
+    AG["Agencia preferida"]
+    EC -- "avisos vía entrada global" --> G
+    ET -- "avisos vía entrada global" --> G
+    N -- "asistencia saliente asíncrona" --> AG
     G -- "deriva notificaciones" --> I
     W -- "HTTPS / REST" --> G
     M -- "HTTPS / REST" --> G
@@ -59,7 +62,7 @@ en la dirección de la solicitud o del mensaje.
 | Puerta de entrada | Único punto de entrada a la región; valida identidad, balancea y limita tráfico; deriva las notificaciones de terceros a la ingesta | 2, 3, 4 |
 | Núcleo | Único dueño del estado de viajes y reservas; aplica novedades; publica eventos de dominio; archiva viajes completados | 3 |
 | Base operativa | Datos del núcleo de los usuarios de la región, particionados por usuario | 3 |
-| Intermediario de mensajes | Conserva y entrega los mensajes de los dos temas | 2 |
+| Intermediario de mensajes | Conserva mensajes de novedades, dominio y asistencia | 2 |
 | Ingesta | Sondea correos, recibe notificaciones y consulta a terceros, traduce al modelo canónico y publica novedades | 2 |
 | Analítica | Consume eventos de dominio sin compartir recursos con la consulta | 4 |
 
@@ -69,10 +72,10 @@ en la dirección de la solicitud o del mensaje.
 |---|---|---|---|
 | Clientes | Puerta de entrada | Síncrono, HTTPS/REST | `openapi/itinerary-api.example.yaml` |
 | Puerta de entrada | Núcleo | Síncrono, REST | `openapi/itinerary-api.example.yaml` |
-| Ingesta | Intermediario (tema novedades) | Asíncrono, publicación | `asyncapi/` (a crear) |
-| Intermediario (tema novedades) | Núcleo | Asíncrono, suscripción | `asyncapi/` (a crear) |
-| Núcleo | Intermediario (tema eventos de dominio) | Asíncrono, publicación | `asyncapi/` (a crear) |
-| Intermediario (tema eventos de dominio) | Analítica | Asíncrono, suscripción | `asyncapi/` (a crear) |
+| Ingesta | Intermediario (tema novedades) | Asíncrono, publicación | `asyncapi/booking-change-detected.v1.yaml` |
+| Intermediario (tema novedades) | Núcleo | Asíncrono, suscripción | `asyncapi/booking-change-detected.v1.yaml` |
+| Núcleo | Intermediario (tema eventos de dominio) | Asíncrono, publicación | `asyncapi/booking-confirmed.v1.yaml` |
+| Intermediario (tema eventos de dominio) | Analítica | Asíncrono, suscripción | `asyncapi/booking-confirmed.v1.yaml` |
 | Ingesta | Proveedores de correo y terceros | Síncrono, API del proveedor (sondeo y consulta) | Externo (CON-1, CON-2) |
 | Terceros | Puerta de entrada → Ingesta | Síncrono, notificaciones por API estándar | Externo; se detalla en la iteración 2 |
 
@@ -105,3 +108,9 @@ partición. Cualquier cambio sobre ellos se anota en [impact-log.md](../01-add/i
 ## Detalle de ingesta alineado
 
 Ver [ingestion-view.md](ingestion-view.md). Se conserva la vista general de la primera iteración: avisos por entrada global y Gateway, núcleo único dueño de reservas y dos flujos de mensajes.
+
+## Asistencia saliente y correo por avisos
+
+El núcleo contiene el módulo saliente de asistencia (ADR-0026), con trabajo persistente, adaptador y recursos
+acotados. No es una función de ingesta. Los avisos de correo y terceros pasan por entrada global y Gateway;
+el sondeo de reconciliación permanece como respaldo. Ver [operación](../../specs/ingestion-operations.md).

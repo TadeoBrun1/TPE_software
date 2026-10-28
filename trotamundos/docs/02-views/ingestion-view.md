@@ -12,7 +12,7 @@ flowchart TB
     A --> E["Correo y APIs externas"]
     E -->|"Resultados"| A
     A --> T["Procesador de novedades"]
-    E -->|"Avisos si existen"| EG["Entrada global: resuelve suscripción y región"]
+    E -->|"Avisos principales de correo y terceros"| EG["Entrada global: resuelve suscripción y región"]
     EG --> GW["API Gateway regional"]
     GW --> H["Receptor de avisos"]
     H -->|"Trabajo durable"| R["Registro: avance, pendientes y outbox"]
@@ -31,12 +31,12 @@ consulta adicional al proveedor. La fuente de datos operativos y los clientes se
 
 | Elemento | Responsabilidad | Estado propio |
 |---|---|---|
-| Planificador | Frecuencia configurable y distribución de consultas | Próximos intentos, cuotas |
+| Planificador | Reconciliación adaptable, cuotas y renovación de suscripciones | Próximos intentos y vencimientos |
 | Coordinador | Comprobar vigencia y ejecutar consulta con control de concurrencia | Lease/versionado por vinculación |
 | Gestor | Vigencia de configuración del núcleo por interfaz interna; renovación de tokens | Estado técnico y referencias protegidas, sin otra autoridad de permisos |
 | Adaptadores | APIs, paginación y errores específicos | Ninguna escritura directa al núcleo |
 | Receptor | Recibir solo por Gateway y verificar proveedor/suscripción; persistir antes de confirmar | IDs de avisos y trabajo durable |
-| Adaptador de agencia | Enviar asistencia autorizada por el núcleo y obtener respuestas | Seguimiento de entrega, sin escribir reservas |
+| Asistencia del núcleo (externa a ingesta) | Módulo saliente con trabajador y adaptador de agencia | Solicitudes, seguimiento y aplicación de resultados en el núcleo |
 | Procesador | Selección, extracción, normalización y validación | Resultados con motivo; no interpretar fallos como descartes |
 | Registro | Guardar resultados/pendientes/outbox y avance de forma coordinada | Propiedad de ingesta |
 | Publicador | Enviar, esperar confirmación y registrar envío | Intentos y fecha; ID del evento estable |
@@ -71,16 +71,17 @@ permitido no prueba por sí solo autenticidad ni convierte en seguro todo su con
 
 [Contrato](../../specs/ingestion-contract.md), [AsyncAPI](../../specs/asyncapi/booking-change-detected.v1.yaml),
 [secuencias](ingestion-sequences.md). Drivers: RF-01/02/03, QA-1/6/8, CRN-3/4.
+QA-5 dimensiona detección y QA-9 se evalúa agregando trenes sin modificar medios existentes.
 ADRs: [0020](../03-adr/0020-obtener-novedades.md), [0021](../03-adr/0021-autorizacion-correo.md),
 [0022](../03-adr/0022-tuberia-ingesta.md), [0023](../03-adr/0023-adaptadores-proveedores.md),
 [0024](../03-adr/0024-avance-y-publicacion-durable.md).
 
 ## Límites
 
-No prueba capacidad, cuota ni latencia. Frecuencia por proveedor, número de trabajadores, retención, límites de
-contenido y parámetros de reintento se fijarán antes de implementar según carga y fuentes elegidas. El gestor
-autoriza el inicio de cada llamada; existe una carrera con revocación que debe coordinarse, no basta un chequeo
-lejano en el planificador.
+Las frecuencias de reconciliación y el coste de consultas se calculan en [políticas](../../specs/ingestion-operations.md).
+El respaldo adaptable reduce solicitudes, pero no garantiza QA-1 a escala si se pierde un aviso en una cuenta de
+baja frecuencia. Faltan cuotas verificadas y una recuperación acotada a escala. El gestor autoriza cada inicio de
+llamada; la revocación requiere la barrera coordinada del contrato de autorización.
 
 ## Integración con la primera iteración revisada
 

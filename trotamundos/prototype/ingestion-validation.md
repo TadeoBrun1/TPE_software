@@ -19,6 +19,8 @@
 | V12 | Nodo local reinicia con datos persistentes | Conserva trabajo; no equivale a prueba de fallo de zona |
 | V13 | Perfil adicional con tres miembros, perder uno | Se conserva mayoría y se mide elección/consumo; no afirmar independencia física con una sola máquina |
 | V14 | 50 eventos/s 10 min y 250/s 15 min por región simulada, promedio4KiB/máximo16KiB | Medir capacidad, edad cola/outbox, p99 y total≤300s; paralelamente verificar web con escenario de 3 |
+| V16 | Perder aviso, vencer suscripción y usar cursor inválido | Recuperación trazable; medir consultas y renovaciones; registrar incumplimiento si supera presupuesto, incluidas cuentas inactivas |
+| V17 | Agregar trenes contra puerto de proveedores | Contrato válido, regresión de medios existentes sin editar su código y registro de esfuerzo frente a 10 días-persona |
 | V15 | Forzar presión de espacio y fallo de destino de errores | No drop-head ni borrado silencioso; productor conserva trabajo y no avanza indebidamente |
 
 Guardar por corrida versión/digest, configuración, máquina, número de consumidores, cuotas simuladas, datos

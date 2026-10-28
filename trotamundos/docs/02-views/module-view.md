@@ -1,9 +1,9 @@
 # Vista de módulos
 
 **Tipo:** Módulos (estática)
-**Actualizada en la iteración:** 1
+**Actualizada en la iteración:** 2 (refinamiento propuesto)
 **Mantiene:** Ambos
-**Estado:** Versión inicial (iteración 1). La iteración 2 refina la ingesta y la 3 el núcleo.
+**Estado:** propuesta de refinamiento de ingesta y asistencia, para revisión con iteración 3.
 
 ## 1. Propósito
 
@@ -22,14 +22,22 @@ flowchart TD
         COM["comparticion"]
         SUS["suscriptor-novedades"]
         PUB["publicador-eventos"]
+        ASI["asistencia saliente"]
+        AGE["adaptador de agencia"]
     end
 
     subgraph Ingesta["Ingesta"]
-        COR["sondeo-correo"]
-        ADA["adaptadores<br/>(uno por proveedor)"]
-        CAN["modelo-canonico"]
-        PNV["publicador-novedades"]
+        PLA["planificador"]
+        COO["coordinador"]
+        GES["gestor de vinculaciones"]
+        ADA["adaptadores de acceso"]
+        REC["receptor de avisos"]
+        REG["registro de sincronización"]
+        PRO["procesador por etapas"]
+        PNV["publicador de novedades"]
     end
+
+    RRG["resolución regional en entrada global"]
 
     CON["contratos<br/>(generados desde specs/)"]
 
@@ -43,9 +51,20 @@ flowchart TD
     RES --> PUB
     COM --> VIA
 
-    COR --> CAN
-    ADA --> CAN
-    CAN --> PNV
+    API --> ASI
+    ASI --> AGE
+    ASI --> PUB
+    ASI --> CON
+    PLA --> COO
+    COO --> GES
+    COO --> ADA
+    COO --> REG
+    ADA --> PRO
+    PRO --> REG
+    REC --> REG
+    REC --> GES
+    PNV --> REG
+    RRG --> CON
 
     SUS --> CON
     PUB --> CON
@@ -65,10 +84,17 @@ Leyenda: la flecha significa "puede usar".
 | núcleo/comparticion | Personas designadas por viaje (iteración 4) | `nucleo/comparticion` |
 | núcleo/suscriptor-novedades | Recibe novedades del broker y las pasa a reservas | `nucleo/mensajeria` |
 | núcleo/publicador-eventos | Publica los eventos de dominio de cada cambio confirmado | `nucleo/mensajeria` |
-| ingesta/sondeo-correo | Lee los buzones autorizados y extrae reservas | `ingesta/correo` |
-| ingesta/adaptadores | Un adaptador por proveedor (aerolínea, hotel, rentadora, …) | `ingesta/adaptadores` |
-| ingesta/modelo-canonico | Representación única de una reserva, independiente del proveedor | `ingesta/canonico` |
-| ingesta/publicador-novedades | Publica las reservas canónicas en el broker | `ingesta/mensajeria` |
+| núcleo/asistencia | Autoriza asistencia, conserva seguimiento y limita trabajadores salientes | `nucleo/asistencia` |
+| núcleo/adaptador-agencia | Implementa el puerto de agencia, con resultado incierto e idempotencia | `nucleo/asistencia/adaptadores` |
+| ingesta/planificador | Reconciliación por prioridad y cuota; agenda renovación de suscripciones | `ingesta/planificacion` |
+| ingesta/coordinador | Ejecuta trabajo con exclusión por vinculación | `ingesta/coordinacion` |
+| ingesta/gestor-vinculaciones | Vigencia de autorizaciones y estado técnico de suscripciones | `ingesta/vinculaciones` |
+| ingesta/adaptadores-acceso | APIs, paginación y contratos externos por proveedor | `ingesta/adaptadores` |
+| ingesta/receptor-avisos | Persiste trabajo antes de confirmar recepción | `ingesta/avisos` |
+| ingesta/procesador | Selección, extracción, modelo canónico y validación | `ingesta/procesamiento` |
+| ingesta/registro-sincronizacion | Cursores, resultados, casos pendientes y outbox | `ingesta/persistencia` |
+| ingesta/publicador-novedades | Publica novedades con identidad estable y confirma envío | `ingesta/mensajeria` |
+| entrada/resolucion-regional | Directorio mínimo que resuelve suscripción y región antes del Gateway | `entrada/enrutamiento` |
 | contratos | Tipos generados a partir de `specs/`; único código que comparten núcleo e ingesta | `contratos/` |
 
 ## 4. Reglas de dependencia
@@ -77,7 +103,10 @@ Leyenda: la flecha significa "puede usar".
 * Un adaptador no depende de otro adaptador: agregar trenes es agregar un adaptador y un valor al tipo de reserva.
 * Los módulos de dominio del núcleo (viajes, reservas, usuarios, comparticion) no dependen de `api` ni de la
   mensajería.
-* Solo `publicador-eventos` y `publicador-novedades` conocen el broker.
+* Los adaptadores de mensajería (publicadores y consumidores) conocen el broker; los módulos de dominio usan puertos.
+* Resolución regional pertenece a entrada global, no al dominio ni al procesador de ingesta.
+* Asistencia invoca su puerto saliente con recursos acotados y no importa código de ingesta.
+* Los directorios de la tabla son organización propuesta; no afirman código ya implementado.
 
 ## 5. Rationale
 

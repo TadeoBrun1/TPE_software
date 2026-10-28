@@ -26,15 +26,19 @@ Ingesta consulta información personal. Identificarse en Trotamundos no autoriza
 
 ## Decision Outcome
 
-Opción propuesta: **Autorización delegada del proveedor**. Usar autorización delegada mediante OAuth 2.0 donde el proveedor lo admita, con el menor permiso suficiente. Seleccionar proveedores compatibles y concretar el flujo/alcances en su contrato, sin pedir contraseñas como alternativa silenciosa.
+Chosen option: **Autorización delegada del proveedor**. Usar autorización delegada mediante OAuth 2.0 donde el proveedor lo admita, con el menor permiso suficiente. Seleccionar proveedores compatibles y concretar el flujo/alcances en su contrato, sin pedir contraseñas como alternativa silenciosa.
 
 El gestor comprueba habilitación al iniciar consultas, coordina renovaciones y mantiene secretos fuera de eventos/logs. Desvincular bloquea nuevos accesos y trabajo aún no publicado según política explícita; no cancela retroactivamente solicitudes ni elimina reservas. La confirmación local de revocación debe coordinarse con el inicio de consultas/publicación, no solo cambiar una bandera leída mucho antes.
+
+### Patrones y tácticas
+
+* Patrón o mecanismo: Protocolo OAuth 2.0 (mecanismo).
+* Tácticas: Authorize actors, Limit access y Revoke access: controlar autorización, alcance y revocación.
 
 ### Consequences
 
 * Favorable: Evita recibir la contraseña y permite permisos/renovación según contrato externo.
 * Desfavorable: Requiere tokens protegidos, coordinación de renovación y revocación.
-* Las comprobaciones de cumplimiento se realizan en el paso 7/prototipo, no se declaran ejecutadas.
 
 ### Confirmation
 
