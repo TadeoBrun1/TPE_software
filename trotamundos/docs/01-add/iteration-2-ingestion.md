@@ -97,7 +97,9 @@ con un trabajador asíncrono; no se añade un proceso saliente ni se amplía la 
 ### Contrato compartido
 
 [Contrato de ingesta](../../specs/ingestion-contract.md) y
-[AsyncAPI propuesto](../../specs/asyncapi/booking-change-detected.v1.yaml).
+[AsyncAPI propuesto](../../specs/asyncapi/booking-change-detected.v1.yaml). La iteración 4 lo amplió a 0.2.0 con
+campos opcionales (tipo abierto, `arrivalLocation`, zonas horarias y `details`) y agregó el contexto de traza en los
+encabezados de los mensajes; ver [cambios de la versión 0.2.0](../../specs/ingestion-contract.md#cambios-de-la-versión-020).
 El evento `booking.change.detected.v1` no afirma que la reserva ya cambió. No exige `tripId`.
 El consumidor valida vinculación/usuario, aplica reglas e idempotencia y confirma después del resultado durable.
 Identidad del mensaje e identidad de la reserva son diferentes; conciliación correo/API se acuerda con iteración 3.
