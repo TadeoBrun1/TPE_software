@@ -13,7 +13,7 @@ sistema, y las siguientes atacan los drivers de mayor prioridad, empezando por l
 | 1 | Arquitectura de referencia, estructura general y despliegue de alto nivel | CRN-1, RF-01, RF-03, RF-05, QA-1, QA-4, QA-5, QA-9, QA-10 (parte multirregión), a nivel de estructura; aplican CON-1, CON-2, CON-3, CON-4 | Ambos |
 | 2 | Ingesta de reservas desde correo y terceros: frescura, interoperabilidad y acceso seguro a correos | RF-01, RF-02, RF-03, RF-06, QA-1, QA-6, QA-8, CRN-3, CRN-4 | Tomas Lateana |
 | 3 | Consulta de itinerarios: latencia, disponibilidad y escala ante picos; aplicación de novedades en el núcleo | RF-04, RF-05, QA-2, QA-3, QA-4, QA-5; etapas de núcleo y cliente de QA-1; QA-6 del lado consumidor | Tadeo Brun |
-| 4 | Seguridad de compartición, internacionalización, analítica sin afectar a los usuarios y evolucionabilidad | RF-07, RF-08, QA-7, QA-9, QA-10, CRN-2 | Ambos |
+| 4 | Seguridad de compartición, internacionalización, analítica sin afectar a los usuarios y evolucionabilidad | RF-07, RF-08, QA-7, QA-9, QA-10, CRN-2, interoperabilidad con redes sociales | Ambos |
 | 5 (opcional) | Opción avanzada (A o B) y refinamientos si sobra tiempo; candidato: mitigar el riesgo de QA-1 a escala | A definir | A definir |
 
 Cada fila enlaza a su documento:
@@ -28,7 +28,7 @@ Cada fila enlaza a su documento:
 |---|---|---|
 | 2 y 3 | La ingesta escribe lo que la consulta lee: el modelo de datos de reservas es compartido | Se define en la iteración 1 y se cambia solo con aviso (ver [impact-log.md](impact-log.md)) |
 | 2 y 3 | Ambas usan el bus o cola de eventos | Contrato en `specs/asyncapi/` revisado por ambos |
-| 3 y 4 | La analítica pesada puede degradar la consulta | La iteración 1 la separa como proceso (ADR-0001); el almacén se decide en la 4 |
+| 3 y 4 | La analítica pesada puede degradar la consulta | La iteración 1 la separa como proceso (ADR-0001); la 4 le da un almacén propio por región alimentado por eventos (ADR-0064) |
 
 ## Cambios al plan
 
@@ -45,3 +45,5 @@ Anotar acá cualquier cambio con fecha y razón.
 | 2026-10-28 | QA-1 a escala (avisos perdidos) se registra como riesgo aceptado; candidato para la iteración 5 | Decisión de alcance de la iteración 3 |
 | 2026-10-28 | Se agrega CON-5 (startup con recursos limitados) como suposición | La auditoría de la iteración 3 marcó que el argumento de costo de ADR-0043 no estaba en los requerimientos |
 | 2026-10-28 | Se corrigen los nombres de tácticas de disponibilidad en las iteraciones 1 y 3 según Bass, 4ta edición (*redundant spare*, *ping/echo*) | Auditoría de la iteración 3 |
+| 2026-10-28 | La iteración 4 agrega la interoperabilidad con redes sociales a sus drivers | El enunciado la pide junto con la compartición y no estaba asignada |
+| 2026-10-28 | El recorrido de QA-9 usa un medio que no existe (ferry) en lugar de trenes | `train` ya está en el vocabulario de tipos desde la iteración 2 |

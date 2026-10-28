@@ -15,6 +15,14 @@ components:
   messages:
     BookingChanged:
       name: BookingChanged
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+            description: Contexto de traza W3C (ADR-0067); lo propagan productores y consumidores.
+          tracestate:
+            type: string
       payload:
         type: object
         additionalProperties: false

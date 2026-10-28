@@ -1,9 +1,10 @@
 # Contrato propuesto de ingesta
 
-**Versión:** 0.1.0, propuesta. **Productor:** ingesta. **Consumidor:** núcleo de itinerarios.
-**Responsable de elaboración:** iteración 2; revisión de identidad/errores con iteración 3 pendiente.
+**Versión:** 0.2.0, propuesta. **Productor:** ingesta. **Consumidor:** núcleo de itinerarios.
+**Responsable de elaboración:** iteración 2; ampliado en la iteración 4 (ver [Cambios de la versión 0.2.0](#cambios-de-la-versión-020)).
 **Esquema:** [booking-change-detected.v1.yaml](asyncapi/booking-change-detected.v1.yaml).
-`v1` identifica la familia del mensaje; `0.1.0` indica borrador sin aprobación ni compatibilidad estable prometida.
+`v1` identifica la familia del mensaje; `0.x` indica un contrato de diseño, sin consumidores en producción, que se
+puede ajustar subiendo la versión y anotándolo en el registro de impactos.
 
 ## Semántica y propiedad
 
@@ -30,8 +31,9 @@ para localizar la reserva; si no existe o hay ambigüedad, conservar una resoluc
   distintas. Si no hay orden confiable, consultar estado actual o resolver conflicto según política acordada.
 * `occurredAt` se omite si no se conoce el instante externo; `detectedAt` nunca lo sustituye silenciosamente.
   Sin una marca externa confiable no se puede afirmar cumplimiento extremo a extremo de QA-1 para ese caso.
-* Fechas-horas con offset. No inferir una zona horaria ni datos ausentes sin política explícita. Se comienza con
-  vocabulario común y campos opcionales; cada adaptador tendrá reglas de suficiencia por tipo antes de implementar.
+* Fechas-horas con offset. No inferir una zona horaria ni datos ausentes sin política explícita: `timeZone` y
+  `arrivalTimeZone` (zonas IANA, desde 0.2.0) se informan solo cuando la fuente las da. Se comienza con vocabulario
+  común y campos opcionales; cada adaptador tendrá reglas de suficiencia por tipo antes de implementar.
 
 ## Publicación y persistencia
 
@@ -101,11 +103,28 @@ para concurrencia, frecuencia, tamaño, retención o reintentos; se elige y prue
 * El canal conserva el orden de publicación por reserva donde corresponda; eso no determina el orden real en
   la fuente. El núcleo controla concurrencia y estados en su transacción. No se promete exactly-once.
 
+## Cambios de la versión 0.2.0
+
+Iteración 4 (ADR-0065, ADR-0066 y ADR-0067). Todos los campos nuevos son opcionales: un mensaje válido en 0.1.0 sigue
+siendo válido en 0.2.0.
+
+| Cambio | Regla para el productor (adaptadores de ingesta) | Regla para el consumidor (núcleo) |
+|---|---|---|
+| `reservation.type` pasa de lista cerrada a código abierto (`^[a-z][a-z0-9_]*$`) | Usar los códigos conocidos (`hotel`, `flight`, `car`, `train`, `bus`); `unknown` si no se pudo determinar; un medio nuevo usa su código recién cuando su esquema está registrado en el núcleo | Aplicar la lógica de viajes solo con los campos comunes; un código sin esquema registrado se acepta si no trae `details` |
+| `reservation.arrivalLocation` | Lugar de llegada en los traslados (por ejemplo, código de aeropuerto o estación) | Campo común: lo usa la asignación a viajes como el resto de los lugares |
+| `reservation.timeZone` y `reservation.arrivalTimeZone` | Zona IANA solo si la fuente la informa; nunca inferida | Se guardan y se devuelven al cliente (ADR-0065) |
+| `reservation.details` | Bloque con `schema` (`<tipo>.v<n>`) y los campos de `specs/schemas/details-<tipo>.v<n>.json`. Sin códigos de reserva, números de billete, nombres de pasajeros ni otros datos personales | Valida el bloque contra el esquema registrado y lo guarda sin interpretarlo. Esquema desconocido o bloque inválido: la novedad no se aplica a ciegas, queda como caso de resolución con motivo (categoría "Dato inválido/formato desconocido") |
+| Encabezados `traceparent` y `tracestate` en el mensaje AMQP | Ver [ingestion-operations.md](ingestion-operations.md#5-contexto-de-traza-en-los-mensajes) | Continuar la traza; nunca rechazar un mensaje por no traerlos |
+
+El `correlationId` del cuerpo no cambia: lo genera la ingesta al detectar la novedad y el núcleo lo copia en
+`panel.changed.v1` (`correlationIds`) para medir QA-1 de punta a punta (ADR-0067). El límite de 16 KiB del payload
+normalizado incluye `details`.
+
 ## Otros contratos de integración
 
 [Asistencia con agencias](agency-assistance.md), [publicación del núcleo](core-publication.md) y
-[enrutamiento/configuración](notification-routing.md). La autenticación de usuarios de la aplicación, pendiente
-para la iteración 4, es distinta de OAuth para autorizar correo, propuesto en ADR-0021.
+[enrutamiento/configuración](notification-routing.md). La autenticación de usuarios de la aplicación, definida en la
+iteración 4 (ADR-0060), es distinta de OAuth para autorizar correo, propuesto en ADR-0021.
 
 ## Transporte y cierre de diseño
 

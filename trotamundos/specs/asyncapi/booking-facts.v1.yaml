@@ -1,0 +1,119 @@
+asyncapi: 2.6.0
+info:
+  title: Hechos de reservas para la analítica
+  version: 0.1.0
+  description: >
+    Contrato propuesto de la iteración 4 (ADR-0064). Lo publica el núcleo desde su outbox, en la misma transacción
+    que cada cambio de reserva (ADR-0027). Lo consume solo la analítica de la misma región, que reemplaza userId,
+    tripId y bookingId por códigos calculados con su clave anual y descarta correlationId antes de guardar.
+    Lleva solo los campos de la lista permitida: no incluye códigos de reserva, nombres, notas, precios ni el bloque
+    de detalles por tipo. Transporte: RabbitMQ, exchange travel.domain, routing key booking.facts.v1 (ADR-0028),
+    cola quorum propia de la analítica. El consumidor deduplica por homeRegion, tipo lógico y eventId,
+    con hecho y recepción atómicos antes del ACK. El período anual deriva de committedAt, no de la recepción;
+    ver specs/analytics-processing.md. Son datos seudonimizados con riesgo residual, no anonimato demostrado.
+defaultContentType: application/json
+channels:
+  booking.facts.v1:
+    publish:
+      operationId: publishBookingFacts
+      message:
+        $ref: '#/components/messages/BookingFacts'
+components:
+  messages:
+    BookingFacts:
+      name: BookingFacts
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+            description: Contexto de traza W3C (ADR-0067); lo propagan productores y consumidores.
+          tracestate:
+            type: string
+      payload:
+        type: object
+        additionalProperties: false
+        required:
+        - eventId
+        - schemaVersion
+        - correlationId
+        - homeRegion
+        - userId
+        - tripId
+        - bookingId
+        - changeType
+        - type
+        - status
+        - source
+        - committedAt
+        properties:
+          eventId:
+            type: string
+            minLength: 1
+          schemaVersion:
+            type: string
+            enum:
+            - '1'
+          correlationId:
+            type: string
+            minLength: 1
+            description: Solo para trazas (ADR-0067); la analítica lo descarta.
+          homeRegion:
+            type: string
+            minLength: 1
+          userId:
+            type: string
+            minLength: 1
+          tripId:
+            type: string
+            minLength: 1
+            description: Vacío no se admite; las reservas sin asignar usan el valor "unassigned".
+          bookingId:
+            type: string
+            minLength: 1
+          changeType:
+            type: string
+            enum:
+            - created
+            - updated
+            - cancelled
+            - deleted
+          type:
+            type: string
+            pattern: ^[a-z][a-z0-9_]*$
+            description: Código abierto de tipo de reserva (ADR-0066).
+          status:
+            type: string
+            enum:
+            - confirmed
+            - modified
+            - cancelled
+            - pending
+          source:
+            type: string
+            enum:
+            - email
+            - provider
+            - manual
+          provider:
+            type: string
+            description: Nombre del proveedor (aerolínea, cadena hotelera), no la referencia de la reserva.
+          createdDate:
+            type: string
+            format: date
+            description: Día en que se creó la reserva; permite medir la anticipación de una cancelación sin vincular
+              eventos (ADR-0064).
+          startDate:
+            type: string
+            format: date
+          endDate:
+            type: string
+            format: date
+          locationCity:
+            type: string
+            description: Ciudad o código de aeropuerto; nunca una dirección.
+          arrivalCity:
+            type: string
+          committedAt:
+            type: string
+            format: date-time

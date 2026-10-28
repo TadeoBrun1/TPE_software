@@ -62,7 +62,8 @@ Regla corta: **lo que es de una iteración se edita libre; lo que usa la otra pe
 
 ## 6. Uso de IA
 
-Si usamos IA para producir un artefacto, el prompt va en [ai/prompts.md](ai/prompts.md) y el resultado se revisa a
+Si usamos IA para producir un artefacto, se sigue el proceso de [ai/prompts.md](ai/prompts.md) (alternativas, decisión
+humana, auditoría independiente y revisión cruzada), se agrega la etapa a su tabla de uso y el resultado se revisa a
 mano antes del PR. Los dos integrantes entienden y pueden defender cada decisión: el paper mostró que la IA oscila
 en decisiones críticas (por ejemplo monolito modular vs. microservicios), así que esas decisiones las confirma una
 persona.

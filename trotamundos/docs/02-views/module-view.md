@@ -1,9 +1,10 @@
 # Vista de módulos
 
 **Tipo:** Módulos (estática)
-**Actualizada en la iteración:** 3
+**Actualizada en la iteración:** 4
 **Mantiene:** Ambos
-**Estado:** refinada en las iteraciones 2 (ingesta y asistencia) y 3 (panel, ruteo de particiones y notificador).
+**Estado:** refinada en las iteraciones 2 (ingesta y asistencia), 3 (panel, ruteo de particiones y notificador) y 4
+(compartición, auditoría, esquemas por tipo, analítica y observabilidad).
 
 ## 1. Propósito
 
@@ -19,7 +20,9 @@ flowchart TD
         VIA["viajes<br/>(agrupación y ciclo de vida)"]
         RES["reservas"]
         USR["usuarios<br/>(región, idioma, correos, remitentes)"]
-        COM["comparticion"]
+        COM["comparticion<br/>(invitaciones, permisos,<br/>vista compartida, tarjeta)"]
+        AUD["auditoria<br/>(puerto de solo agregado)"]
+        ESQ["esquemas-detalles<br/>(registro por configuración)"]
         SUS["suscriptor-novedades"]
         PUB["publicador-eventos"]
         PAN["panel<br/>(proyector, único escritor)"]
@@ -45,7 +48,14 @@ flowchart TD
         NPU["envio-push<br/>(cola compartida)"]
     end
 
+    subgraph Analitica["Analítica"]
+        ACO["consumidor-hechos"]
+        AAN["seudonimizador<br/>(clave anual)"]
+        AAL["almacen-analitico"]
+    end
+
     RRG["resolución regional en entrada global"]
+    OBS["observabilidad<br/>(biblioteca común: trazas,<br/>métricas, logs)"]
 
     CON["contratos<br/>(generados desde specs/)"]
 
@@ -58,6 +68,14 @@ flowchart TD
     VIA --> PUB
     RES --> PUB
     COM --> VIA
+    COM --> RES
+    COM --> AUD
+    COM --> USR
+    RES --> ESQ
+    ESQ --> CFG["configuración<br/>(esquemas registrados,<br/>cargados al arrancar)"]
+    ACO --> AAN
+    AAN --> AAL
+    ACO --> CON
     RES --> PAN
     VIA --> PAN
     API --> PAN
@@ -96,13 +114,19 @@ Leyenda: la flecha significa "puede usar".
 |---|---|---|
 | núcleo/api | Expone la API de itinerarios definida en `specs/openapi/` | `nucleo/api` |
 | núcleo/viajes | Agrupa reservas por viaje y asigna las que llegan sin viaje por fechas, o las deja sin asignar si no tienen fechas (ADR-0048); tarea diaria de archivado y eliminación; reactivación (ADR-0045) | `nucleo/viajes` |
-| núcleo/reservas | Alta, cambio y baja de reservas; aplica novedades con dueño por campo y registra campos editados por el usuario (ADR-0044); marcas de borrado; reservas pendientes de resolución | `nucleo/reservas` |
+| núcleo/reservas | Alta, cambio y baja de reservas con campos comunes y `details` validado (ADR-0066); aplica novedades con dueño por campo y registra campos editados por el usuario (ADR-0044); marcas de borrado; reservas pendientes de resolución | `nucleo/reservas` |
 | núcleo/panel | Proyector: único escritor de `panel_por_usuario`; lo actualiza en la transacción del cambio y lo regenera desde las tablas (ADR-0040) | `nucleo/panel` |
 | núcleo/ruteo-particiones | Calcula la partición de cada usuario y conoce el nodo primario; lo usan la API, el consumidor de novedades y la tarea diaria (ADR-0042) | `nucleo/datos` |
-| núcleo/usuarios | Región de origen, idioma, cuentas de correo vinculadas y remitentes permitidos | `nucleo/usuarios` |
-| núcleo/comparticion | Personas designadas por viaje (iteración 4) | `nucleo/comparticion` |
+| núcleo/usuarios | Región de origen, idioma y país (ADR-0065), cuentas de correo vinculadas, remitentes permitidos y referencias a viajes compartidos conmigo (ADR-0062). Las credenciales viven en el proveedor de identidad, no acá (ADR-0060) | `nucleo/usuarios` |
+| núcleo/comparticion | Invitaciones, aceptación, permisos por viaje y persona, revocación, vista compartida sin notas ni códigos, tarjeta para redes (ADR-0061, ADR-0063); acepta solo con el email invitado (`emailHmac`); intercepta todo pedido sobre un viaje ajeno | `nucleo/comparticion` |
+| núcleo/auditoria | Puerto de escritura de solo agregado al registro de auditoría; si falla, la operación se rechaza (ADR-0061) | `nucleo/auditoria` |
+| núcleo/esquemas-detalles | Carga al arrancar los esquemas de `details` registrados en la configuración (no se compilan) y valida cada bloque (ADR-0066) | `nucleo/esquemas` |
+| analítica/consumidor-hechos | Consume con su cola, deduplica por evento y guarda recepción y hecho atómicamente antes de ACK (ADR-0064) | `analitica/consumo` |
+| analítica/seudonimizador | Reemplaza identificadores según período committedAt, descarta campos fuera de la lista permitida; riesgo residual de reidentificación | `analitica/seudonimizacion` |
+| analítica/almacen-analitico | Escritura y consultas pesadas del almacén analítico regional | `analitica/almacen` |
+| observabilidad | Biblioteca común: propaga `correlationId` y `traceparent` (también en los mensajes), métricas por etapa y logs estructurados sin datos personales (ADR-0067) | `comun/observabilidad` |
 | núcleo/suscriptor-novedades | Recibe novedades del broker y las pasa a reservas | `nucleo/mensajeria` |
-| núcleo/publicador-eventos | Publica los eventos de dominio de cada cambio confirmado | `nucleo/mensajeria` |
+| núcleo/publicador-eventos | Publica los eventos de dominio de cada cambio confirmado, incluido `booking.facts.v1` (ADR-0064) | `nucleo/mensajeria` |
 | núcleo/asistencia | Autoriza asistencia, conserva seguimiento y limita trabajadores salientes | `nucleo/asistencia` |
 | núcleo/adaptador-agencia | Implementa el puerto de agencia, con resultado incierto e idempotencia | `nucleo/asistencia/adaptadores` |
 | ingesta/planificador | Reconciliación por prioridad y cuota; agenda renovación de suscripciones | `ingesta/planificacion` |
@@ -122,7 +146,14 @@ Leyenda: la flecha significa "puede usar".
 ## 4. Reglas de dependencia
 
 * El núcleo y la ingesta **solo comparten** el módulo `contratos`. Ninguno importa código del otro.
-* Un adaptador no depende de otro adaptador: agregar trenes es agregar un adaptador y un valor al tipo de reserva.
+* Un adaptador no depende de otro adaptador: agregar un medio es agregar un adaptador, un esquema de `details` y su
+  registro por configuración (ADR-0066).
+* `viajes`, `panel` y la lógica de `reservas` usan solo los campos comunes; ningún módulo del núcleo interpreta los
+  campos de `details` (ADR-0066).
+* Todo pedido sobre un viaje ajeno, por cualquier endpoint, pasa por `comparticion`, que siempre escribe en
+  `auditoria` antes de responder (ADR-0061).
+* La analítica no importa código del núcleo ni accede a su base: solo `contratos` (ADR-0064).
+* `observabilidad` es la única biblioteca común además de `contratos`; no contiene lógica de dominio.
 * Los módulos de dominio del núcleo (viajes, reservas, usuarios, comparticion) no dependen de `api` ni de la
   mensajería.
 * Los adaptadores de mensajería (publicadores y consumidores) conocen el broker; los módulos de dominio usan puertos.
@@ -145,12 +176,18 @@ Leyenda: la flecha significa "puede usar".
 | Reglas de novedades y cambios manuales en `reservas` | [0044](../03-adr/0044-novedades-y-cambios-manuales.md) |
 | Asignación a viajes en `viajes` | [0048](../03-adr/0048-asignacion-de-reservas-a-viajes.md) |
 | Notificador como proceso aparte | [0046](../03-adr/0046-notificador-de-cambios-del-panel.md) |
+| Compartición y auditoría en el núcleo | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) |
+| Analítica con seudonimización al entrar | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
+| Idioma en el perfil, textos en los clientes | [0065](../03-adr/0065-internacionalizacion-en-el-cliente.md) |
+| Esquemas de detalles por tipo | [0066](../03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) |
+| Biblioteca de observabilidad | [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |
 
 ## 6. Drivers que sustenta
 
 | Driver | Cómo lo sustenta |
 |---|---|
-| QA-9 Evolucionabilidad | Un medio de transporte nuevo se agrega con un adaptador nuevo, sin tocar los existentes (táctica *restringir dependencias*) |
+| QA-9 Evolucionabilidad | Un medio de transporte nuevo se agrega con un adaptador, un esquema y su registro, sin tocar los existentes ni la lógica del núcleo (tácticas *restringir dependencias*, *abstraer servicios comunes* y *diferir el enlace*) |
+| QA-7 | Un solo módulo controla el acceso a viajes ajenos y siempre audita |
 | RF-05 | El ciclo de vida del viaje vive en un solo módulo del núcleo |
 | QA-2 | Un único escritor mantiene el documento del panel coherente con las tablas |
 

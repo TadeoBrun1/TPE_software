@@ -73,6 +73,13 @@ Dos simuladores con campos/estados distintos deben producir el contrato común; 
 | ADR relacionadas | [Índice](README.md), ADR-0020 a 0024 |
 | Prototipo | [Alcance](../../prototype/README.md); implementación pendiente |
 
+### Relación con la iteración 4
+
+ADR-0066 completa el modelo canónico sin cambiar esta decisión: cada adaptador produce los campos comunes y, si su
+medio tiene esquema, el bloque `details` según `specs/schemas/`. El contrato pasa a 0.2.0 (tipo de reserva abierto,
+`arrivalLocation`, zonas horarias y `details`, ver [contrato](../../specs/ingestion-contract.md#cambios-de-la-versión-020)).
+El recorrido de QA-9 usa un medio que no existe (ferry), porque `train` ya está en el vocabulario.
+
 ### RF-06 y evolución
 
 El adaptador de agencia pertenece al módulo saliente de asistencia del núcleo y usa un puerto distinto del acceso

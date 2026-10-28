@@ -12,8 +12,12 @@ como analítica deben tolerar reentregas. No se promete atomicidad entre base y 
 
 Sobre inicial a acordar: eventId, schemaVersion, correlationId, userId/homeRegion, bookingId, bookingVersion
 interna del núcleo, tipo de cambio y committedAt. Esa versión interna no es sourceVersion externa. El payload
-mínimo para consumidores, su privacidad y almacenamiento analítico se refinan en 4. Datos incompletos no generan
+mínimo para consumidores, su privacidad y almacenamiento analítico se refinaron en la iteración 4: la analítica
+consume `booking.facts.v1`, un evento aparte con la lista de campos permitidos (ADR-0064). Datos incompletos no generan
 un evento que afirme falsamente un cambio aplicado; pueden generar un resultado de resolución separado.
+
+Cada fila de la outbox guarda también el contexto de traza (`traceparent`) que se publica como encabezado del
+mensaje ([ingestion-operations.md](ingestion-operations.md#5-contexto-de-traza-en-los-mensajes), ADR-0067).
 
 La outbox del núcleo y la de ingesta son distintas y cada proceso conserva propiedad de su almacenamiento.
 Las rutas de lectura/escritura pueden seguir dentro del mismo desplegable; no se impone CQRS ni otro servicio.
@@ -28,3 +32,8 @@ roles y confirm/mandatory/ACK según [políticas](ingestion-operations.md). Esqu
 [booking-confirmed.v1.yaml](asyncapi/booking-confirmed.v1.yaml). La versión bookingVersion es interna del núcleo,
 no sourceVersion del proveedor. El payload analítico puede ampliarse de forma compatible al refinar 4; este
 contrato mínimo no decide su almacenamiento ni autoriza copiar datos personales indiscriminadamente.
+
+## Consumidor analítico
+
+La analítica aplica recepción y hechos atómicos, ACK posterior y tratamiento de períodos con clave destruida,
+según [analytics-processing.md](analytics-processing.md). La outbox puede republicar: no se presupone entrega única.

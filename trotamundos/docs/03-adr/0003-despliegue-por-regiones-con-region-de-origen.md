@@ -64,8 +64,8 @@ Queda sin resolver, y se trata en otras iteraciones:
 
 * Usuarios que viajan fuera de su región: se siguen atendiendo desde su región de origen; si la latencia no
   alcanza, se revisa en la iteración 3.
-* Itinerarios compartidos con personas de otra región (RF-08): iteración 4.
-* La parte de idiomas y formatos de QA-10: iteración 4.
+* Itinerarios compartidos con personas de otra región (RF-08): iteración 4 (resuelto en ADR-0062).
+* La parte de idiomas y formatos de QA-10: iteración 4 (resuelto en ADR-0065).
 * Las notificaciones de terceros sobre una reserva no traen la región del usuario: hay que ubicarla a partir de la
   reserva (iteración 2).
 * La falla de una región completa: no está en el estímulo de QA-4, así que esta ADR no diseña recuperación entre
@@ -81,7 +81,8 @@ Queda sin resolver, y se trata en otras iteraciones:
 * Bad, because multiplica la infraestructura: cada región tiene todos los procesos.
 * Bad, because si cae una región completa, sus usuarios quedan sin servicio hasta que se recupere; se acepta por
   ahora porque ese evento no está en el escenario de QA-4 (ver riesgos de la iteración 1).
-* Bad, because la analítica global necesita juntar datos de todas las regiones (se decide en la iteración 4).
+* Bad, because la analítica global necesita juntar datos de todas las regiones (se decide en la iteración 4: solo
+  almacenes regionales y agregados exportados a mano, ADR-0064).
 
 ### Confirmation
 

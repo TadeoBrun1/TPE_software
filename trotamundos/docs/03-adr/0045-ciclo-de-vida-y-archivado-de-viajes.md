@@ -65,7 +65,8 @@ Reglas:
   que actualiza el estado, el panel (ADR-0040) y publica en la outbox (ADR-0027) `trip.changed.v1` con el tipo
   `archived` o `deleted` y `panel.changed.v1` (ADR-0046).
 * La tarea es idempotente: si se corta a mitad, la siguiente ejecución retoma.
-* Los eventos ya enviados a la analítica no se eliminan con el viaje; cómo se anonimizan es tema de la iteración 4.
+* Los eventos ya enviados a la analítica no se eliminan con el viaje; se anonimizan al entrar a la analítica
+  (resuelto en la iteración 4, ADR-0064).
 
 Patrones y tácticas que aplica:
 

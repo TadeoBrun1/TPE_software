@@ -18,7 +18,8 @@ a exponer AMQP en Internet. TLS y credenciales por servicio se mantienen fuera d
 | Exchange durable | Routing keys | Colas / consumidor |
 |---|---|---|
 | `travel.ingestion` | `booking.change.detected.v1.s0` a `.s7` | `core.bookings.s0` a `.s7`, una por shard de usuario |
-| `travel.domain` | `booking.changed.v1`, `trip.changed.v1` | Cola independiente por consumidor autorizado, inicialmente analítica |
+| `travel.domain` | `booking.changed.v1`, `trip.changed.v1` | Cola independiente por consumidor autorizado. En la primera entrega solo la analítica consume `trip.changed.v1` |
+| `travel.domain` | `booking.facts.v1` | Cola quorum `analytics.facts` de la analítica de la región (iteración 4, ADR-0064); también recibe `trip.changed.v1` |
 | `travel.domain` | `panel.changed.v1` | Una cola por instancia del notificador (ver abajo) y la cola compartida `notifier.push` (iteración 3, ADR-0046) |
 | `travel.assistance` | `assistance.requested.v1`, `assistance.result.v1` | Solicitudes para trabajador de asistencia del núcleo; resultados para seguimiento |
 | `travel.errors` | `ingestion.error.v1` | Operación/revisión con acceso restringido, referencia mínima al caso durable |
@@ -69,6 +70,9 @@ repartir/dimensionar exige una nueva evaluación, no aumentar consumidores a cie
 La latencia web de 800 ms se comprueba con el responsable de 3, no queda validada por esta cuenta aritmética.
 
 ## 4. Presupuesto de frescura
+
+La medición de cada etapa usa las trazas y métricas de la [sección 5](#5-contexto-de-traza-en-los-mensajes)
+(ADR-0067).
 
 | Etapa | Objetivo inicial máximo |
 |---|---:|
@@ -210,3 +214,29 @@ Se usan sus capacidades documentadas, no cifras de rendimiento prometidas. Ning�
 Fuentes de detección: [Gmail push](https://developers.google.com/workspace/gmail/api/guides/push),
 [notificaciones de Graph](https://learn.microsoft.com/en-us/graph/outlook-change-notifications-overview) y
 [ciclo de vida](https://learn.microsoft.com/en-us/graph/change-notifications-lifecycle-events).
+
+## 5. Contexto de traza en los mensajes
+
+Iteración 4, ADR-0067. Se aplica a todos los exchanges de esta topología (`travel.ingestion`, `travel.domain`,
+`travel.assistance` y `travel.errors`).
+
+| Regla | Detalle |
+|---|---|
+| Encabezados | `traceparent` y, si existe, `tracestate`, con el formato W3C Trace Context, como encabezados de aplicación del mensaje AMQP (no en el cuerpo). Están declarados en los AsyncAPI de `specs/asyncapi/` |
+| Productores | El contexto se guarda en la fila de la outbox junto con el evento, en la misma transacción. Republicar la fila reenvía el mismo contexto y el mismo `eventId` |
+| Ingesta | Abre la traza cuando detecta la novedad (al recibir un aviso o al empezar una consulta de reconciliación), con el mismo origen que el `correlationId` |
+| Consumidores | Extraen el contexto y continúan la traza antes de procesar. Si falta o es inválido, empiezan una traza nueva y registran una métrica; nunca rechazan ni apartan el mensaje por eso |
+| Reentregas | Una reentrega continúa la misma traza; cada intento queda como un tramo propio, para ver los reintentos en el presupuesto de frescura |
+| Privacidad | Los encabezados solo llevan identificadores de traza; nunca datos de reservas ni del usuario (CON-3) |
+| Biblioteca | Productores y consumidores usan la biblioteca común `observabilidad` (vista de módulos) para inyectar y extraer el contexto |
+| Prototipo | Una novedad simulada debe mostrar una sola traza desde la ingesta hasta el notificador, también tras una reentrega |
+
+## Consumidores de analítica y medición de QA
+
+La cola propia de analítica sigue el protocolo de [analytics-processing.md](analytics-processing.md): recepción
+única y hecho atómicos, ACK posterior y período estable. Su control de recepción tiene retención ligada a los
+hechos; no hereda sin revisión los 30 días del consumidor del núcleo. La seudonimización no sustituye ese control.
+
+Las sondas temporales de QA-4 y la cobertura de telemetría de QA-1 se definen en
+[quality-measurement.md](quality-measurement.md). Un reporte aceptado con 202 no se descarta; un rechazo temporal
+permite reintento del cliente. Los límites de cola local pueden producir pérdidas, que se cuentan como desconocidas.

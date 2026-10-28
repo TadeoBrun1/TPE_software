@@ -9,6 +9,7 @@ trazable, consistente con la arquitectura documentada y que respete las especifi
 |---|---|---|
 | [`openapi/`](openapi/) | APIs síncronas (REST) | OpenAPI 3 |
 | [`asyncapi/`](asyncapi/) | Eventos y mensajes asíncronos | AsyncAPI 2 |
+| [`schemas/`](schemas/README.md) | Detalles propios de cada tipo de reserva | JSON Schema 2020-12 |
 
 Los archivos `*.example.yaml` son **ejemplos de formato**. Reemplazarlos por los contratos reales cuando se
 definan en las iteraciones.
@@ -24,7 +25,8 @@ definan en las iteraciones.
 ## Convenciones
 
 - Nombre: `<servicio>.v<versión>.yaml` (por ejemplo `itinerary-api.v1.yaml`).
-- Un cambio incompatible crea una versión nueva; no se edita la anterior.
+- Un cambio incompatible crea una versión nueva; no se edita la anterior. Mientras un contrato esté en versión 0.x
+  (diseño, sin consumidores en producción) se puede ajustar subiendo `info.version` y anotándolo en el impact-log.
 - Cada operación define sus errores.
 - El campo `info.description` indica la iteración y las ADRs relacionadas.
 
@@ -60,3 +62,20 @@ datos son suficientes. RabbitMQ y políticas definidos en ADR-0028; pruebas del 
   manual. Reemplaza al ejemplo de formato `itinerary-api.example.yaml`.
 * [Cambios confirmados de viajes](asyncapi/trip-changed.v1.yaml): lo consume la analítica (iteración 4).
 * [Avisos de cambio del panel](asyncapi/panel-changed.v1.yaml): lo consume solo el notificador (ADR-0046).
+
+## Contratos de la iteración 4
+
+* [API de itinerarios](openapi/itinerary-api.v1.yaml), 0.2.0: token de acceso concreto, ticket SSE, invitaciones,
+  viajes compartidos, tarjeta para redes, tipo de reserva abierto con `details` y montos con moneda ISO 4217.
+* [Hechos de reservas para la analítica](asyncapi/booking-facts.v1.yaml): solo campos permitidos (ADR-0064).
+* [Novedades de reservas](asyncapi/booking-change-detected.v1.yaml), 0.2.0: tipo abierto, `arrivalLocation` y
+  `details` (ADR-0066).
+* [Esquemas de detalles por tipo](schemas/README.md): `flight.v1` y `train.v1`.
+* [Registro de auditoría](access-audit.md) de accesos a viajes compartidos (ADR-0061).
+
+## Refinamientos de revisión de iteración 4
+
+* [Procesamiento analítico](analytics-processing.md): deduplicación, ACK y claves anuales.
+* [Medición de calidad](quality-measurement.md): tiempo de caída, cobertura y reportes de cliente.
+* API de itinerarios pasa a borrador 0.3.0: SharedBooking omite details, respuestas compartidas no-store,
+  DELETE de referencias local, perfil completo de bearerAuth y recepción durable de telemetría.

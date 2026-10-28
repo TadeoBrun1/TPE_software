@@ -2,7 +2,7 @@
 
 **Mantienen:** Tadeo Brun y Tomas Lateana.
 
-**Estado:** iteraciones 1 y 2 integradas; iteración 3 documentada (pasos 2 a 7), revisada con una auditoría independiente y confirmada por ambos integrantes. QA-1 a escala queda como riesgo aceptado. Prototipo y aceptación conjunta pendientes.
+**Estado:** iteraciones 1, 2 y 3 integradas; iteración 4 documentada (pasos 2 a 7) por ambos integrantes y revisada con una auditoría independiente. QA-1 a escala queda como riesgo aceptado. Prototipo y aceptación conjunta pendientes.
 
 Este documento resume la arquitectura y enlaza al detalle de requisitos, iteraciones, decisiones, vistas y contratos.
 
@@ -19,7 +19,7 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 | [1 — Estructura general](01-add/iteration-1-structure.md) | En revisión; ADRs propuestas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
 | [2 — Ingesta](01-add/iteration-2-ingestion.md) | Pasos 2–7 revisados; viabilidad de QA-1 y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
 | [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; decisiones confirmadas por ambos | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
-| [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pendiente | Compartición, autenticación, internacionalización, analítica y evolución. |
+| [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pasos 2–7 documentados y auditados; decisiones de ambos integrantes | Identidad por región, compartición con cuenta y auditoría, lectura entre regiones, tarjeta para redes, analítica regional seudonimizada, internacionalización en el cliente, detalles por tipo de reserva y observabilidad. |
 
 La incorporación de al menos un módulo avanzado —recomendaciones o chatbot— es obligatoria para la segunda entrega. Su elección continúa pendiente.
 
@@ -77,7 +77,7 @@ La arquitectura separa tres clases de trabajo:
 |---|---|
 | Núcleo modular | Consultar y gestionar viajes, reservas, usuarios y permisos. Es el único dueño del estado oficial. |
 | Ingesta | Obtener información externa autorizada, normalizarla y publicar novedades. |
-| Analítica | Ejecutar procesamiento analítico separado de las operaciones habituales. Su almacenamiento se decide en la iteración 4. |
+| Analítica | Ejecutar procesamiento analítico separado de las operaciones habituales, con un almacén por región y los datos seudonimizados al entrar ([ADR-0064](03-adr/0064-analitica-regional-anonimizada.md)). |
 
 El núcleo es inicialmente un único desplegable con módulos internos.
 
@@ -131,8 +131,9 @@ La región de origen no se obtiene de la ubicación momentánea del viajero.
 ### Límites pendientes
 
 - Atender desde la región de origen no garantiza atender desde la región físicamente más cercana.
-- El comportamiento para usuarios que viajan se refina en las iteraciones 3 y 4.
-- La compartición entre regiones se diseña en la iteración 4.
+- El comportamiento para usuarios que viajan se refina en las iteraciones 3 y 4: se los atiende desde su región de
+  origen y la app formatea en su idioma y en la zona horaria de cada reserva (ADR-0065).
+- La compartición entre regiones se lee de forma remota en la región del dueño, sin persistir una réplica en la puerta del lector; la respuesta sí transita entre regiones (ADR-0062).
 - La identificación de la región correspondiente a una notificación externa se resuelve en la iteración 2.
 - La recuperación ante caída de una región completa no está diseñada en esta base.
 - No se afirma cumplimiento de políticas regionales de datos sin definir y validar sus criterios.
@@ -231,23 +232,38 @@ Ver el [índice completo de ADRs](03-adr/README.md).
 | [0047](03-adr/0047-priorizacion-y-degradacion-ante-sobrecarga.md) | Priorización y degradación ante sobrecarga. | proposed |
 | [0048](03-adr/0048-asignacion-de-reservas-a-viajes.md) | Asignación automática de reservas a viajes por fechas. | proposed |
 
-Las decisiones de la segunda y la tercera iteración se revisan conjuntamente antes de aceptarse.
+### Cuarta iteración
+
+| ADR | Decisión propuesta | Estado |
+|---|---|---|
+| [0060](03-adr/0060-identidad-por-region-con-tokens.md) | Proveedor de identidad por región y tokens de vida corta; directorio global mínimo; ticket SSE. | proposed |
+| [0061](03-adr/0061-comparticion-con-cuenta-y-auditoria.md) | Compartición con personas designadas con cuenta, control en el núcleo y auditoría. | proposed |
+| [0062](03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) | Lectura remota de viajes compartidos en la región del dueño. | proposed |
+| [0063](03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) | Tarjeta de resumen pública para redes sociales. | proposed |
+| [0064](03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales con seudonimización al entrar. | proposed |
+| [0065](03-adr/0065-internacionalizacion-en-el-cliente.md) | Catálogos de textos remotos, datos neutros del backend y formato en el cliente. | proposed |
+| [0066](03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) | Campos comunes y detalles con esquema propio por tipo de reserva. | proposed |
+| [0067](03-adr/0067-observabilidad-con-trazas-y-metricas.md) | Trazas distribuidas, métricas por etapa y logs estructurados. | proposed |
+
+Las decisiones de la segunda, la tercera y la cuarta iteración se revisan conjuntamente antes de aceptarse.
 
 ## 11. Trazabilidad inicial
 
 | Driver | Iteraciones | Decisiones relacionadas | Validación pendiente |
 |---|---|---|---|
-| QA-1 | 1, 2 y 3 | 0001, 0002, 0020, 0024, 0040, 0044, 0046 | Tiempo completo desde generación externa hasta visualización. |
+| QA-1 | 1, 2, 3 y 4 | 0001, 0002, 0020, 0024, 0040, 0044, 0046, 0067 | Tiempo completo desde generación externa hasta visualización, medido por etapa con trazas. |
 | QA-2 y QA-3 | 3 | 0040, 0041, 0043, 0047 | Prueba de carga del panel y primer contenido móvil con caché. |
-| QA-4 | 1 y 3 | 0001, 0002, 0003, 0004, 0042, 0047 | Conmutación de nodos e instancias; presupuesto mensual. |
+| QA-4 | 1, 3 y 4 | 0001, 0002, 0003, 0004, 0042, 0047, 0067 | Conmutación de nodos e instancias; presupuesto mensual medido con métricas. |
 | QA-5 | 1 y 3 | 0001, 0003, 0004, 0042, 0043 | Umbral de escalado reactivo y particiones ante picos. |
 | QA-6 | 2 y 3 | 0022, 0023, 0024, 0044 | Normalización, duplicaciones, desorden, conciliación y marcas de borrado. |
 | RF-04 y RF-05 | 3 | 0040, 0044, 0045, 0048 | Conflictos con cambios manuales, asignación a viajes, archivado y reactivación. |
 | QA-8 | 2 | 0021 | Autorización, renovación, revocación y datos conservados. |
-| QA-9 | 1, 2 y 4 | 0001, 0002, 0023 | Incorporar una integración y evaluar impacto. |
-| QA-7 y QA-10 | 3 y 4, sobre la base de 1 | 0003 y 0004 como base | Compartición, idiomas, formatos y atención regional. |
+| QA-9 | 1, 2 y 4 | 0001, 0002, 0023, 0066 | Agregar un medio nuevo (ferry) al prototipo y registrar el esfuerzo. |
+| QA-7 y RF-08 | 4, sobre la base de 1 | 0004, 0060, 0061, 0062, 0063 | Designado, no designado, revocado y enlace reenviado; auditoría de cada intento. |
+| QA-10 | 1, 3 y 4 | 0003, 0040, 0065 | Dos idiomas y zonas horarias sobre el mismo panel; latencia de QA-2 desde lejos de la región (parcial). |
+| CRN-2 | 4 | 0067 | Propagación del contexto a través del broker. |
 | RF-06 | 2, implementación coordinada con 3 | 0026: asistencia saliente del núcleo | Solicitud de asistencia a la agencia preferida. |
-| RF-07 | 4 | Proceso separado por 0001 | Almacenamiento, transferencia y análisis sin degradar operaciones. |
+| RF-07 | 1 y 4 | 0001, 0064 | Consultas del equipo de datos y seudonimización. |
 
 Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 
@@ -263,10 +279,14 @@ Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 | La caída de una región completa no tiene recuperación diseñada. | Riesgo aceptado: no está en el estímulo de QA-4; las particiones acotan a quiénes afecta. | Aceptado |
 | QA-1 a escala: avisos perdidos con reconciliación lenta. | Riesgo aceptado en la iteración 3; mitigación candidata para la iteración 5. | Aceptado |
 | Escalón de carga mayor a 1,67 veces durante el arranque de instancias. | Escalado temprano y priorización; QA-2 puede incumplirse en esos minutos; escalado programado solo si la operación muestra picos regulares (CON-5). | Iteración 3 (aceptado) |
-| Región de origen y región más cercana pueden diferir. | Evaluar atención de viajeros y acceso compartido entre regiones. | Iteraciones 3 y 4 |
+| Región de origen y región más cercana pueden diferir. | Se atiende desde la región de origen (latencia aceptada en la iteración 3); la compartición entre regiones suma la red entre regiones (ADR-0062). | Iteraciones 3 y 4 (aceptado) |
 | Un cambio confirmado puede no publicarse si el proceso falla. | Persistencia y publicación recuperable coordinadas. | Iteraciones 2 y 3 |
 | Dos componentes pueden mantener estados contradictorios de una autorización. | Definir fuente autoritativa y coordinación de revocación. | Iteraciones 2 y 3 |
-| Los análisis pueden competir por recursos con las operaciones. | Definir almacenamiento, transferencia y aislamiento analíticos. | Iteración 4 |
+| Los análisis pueden competir por recursos con las operaciones. | Almacén analítico propio por región, alimentado por eventos (ADR-0064). | Iteración 4 (diseñado) |
+| Un token de acceso robado sirve hasta 15 minutos. | Vida corta y revocación del token de renovación (ADR-0060). | Iteración 4 (aceptado) |
+| Una primera solicitud desde muy lejos de la región de origen puede superar los 800 ms de QA-2. | Se cumple con la conexión abierta; mitigación candidata: TLS en la entrada global cerca del usuario. | Iteración 4 (aceptado), candidata para la 5 |
+| Si falla la auditoría, se rechazan las lecturas de viajes compartidos. | QA-7 exige el 100 %; auditoría replicada en dos zonas (ADR-0061). | Iteración 4 (aceptado) |
+| Retención de hechos seudonimizados tras eliminar una cuenta o viaje, y cobertura de hechos tardíos sin clave. | Validar retención y riesgo de reidentificación; aplicar protocolo idempotente y período de commit (ADR-0064). | Iteración 4 (validación pendiente) |
 | CON-3 carece de un criterio concreto validado. | Precisar la política regional de datos y sus consecuencias. | Ambos integrantes |
 
 ## 13. Prototipo y evidencia
@@ -337,3 +357,30 @@ la restricción CON-5), y ante sobrecarga se prioriza el panel (ADR-0047). El n�
 novedades y cambios manuales con dueño por campo y marcas de borrado (ADR-0044) y asigna las reservas a viajes por
 fechas (ADR-0048); una tarea diaria archiva los viajes completos, permite reactivarlos y elimina los archivados al
 año (ADR-0045). Ver [iteración 3](01-add/iteration-3-query-scale.md).
+
+## Diseño de la iteración 4
+
+Cada región tiene su proveedor de identidad (OpenID Connect) y un directorio global mínimo traduce el HMAC del email,
+calculado por la entrada global, a la región para el login; la puerta de entrada valida tokens de 15 minutos sin
+consultar al proveedor y la conexión SSE se abre con un ticket firmado (ADR-0060). Un viaje se comparte con personas
+que tienen cuenta: el dueño invita por email, solo una cuenta con ese email puede aceptar y el permiso queda atado a
+ella; todo pedido sobre un viaje ajeno pasa por el módulo `comparticion`, y cada intento, permitido o rechazado, queda
+registrado antes de responder, por el núcleo o por la puerta de entrada (ADR-0061). Si la persona es de otra región,
+la puerta de entrada reenvía la solicitud a la región del dueño por un canal mTLS y la respuesta autorizada transita sin persistirse en las puertas (ADR-0062).
+En redes sociales se publica una tarjeta de resumen que no da acceso al itinerario (ADR-0063). La analítica tiene un
+almacén por región, alimentado por el evento `booking.facts.v1` y seudonimizado al entrar con una clave que se destruye
+cada año (ADR-0064). El backend devuelve datos neutros y los clientes formatean con catálogos de textos remotos
+(ADR-0065); QA-2 fuera de la región queda en riesgo para conexiones nuevas desde muy lejos. Las reservas tienen campos
+comunes y un bloque de detalles con esquema propio por tipo, para agregar medios sin tocar el núcleo (ADR-0066). Todos
+los procesos envían trazas, métricas y logs a un colector por región, con el `correlationId` de punta a punta hasta la
+app (ADR-0067). Ver [iteración 4](01-add/iteration-4-security-evolvability.md).
+
+## Correcciones propuestas de revisión de iteración 4
+
+El principal es regional y los tokens tienen validación completa de emisor, audiencia, tipo y vigencia (ADR-0060).
+La vista compartida omite details; su respuesta transita a la región del lector sin persistencia en las puertas,
+con Cache-Control no-store. Eliminar un marcador se ejecuta siempre en la región del lector (ADR-0062).
+La analítica aplica recepción idempotente y códigos por período de committedAt; no se afirma anonimato por destruir
+claves. Ver [procesamiento](../specs/analytics-processing.md). La auditoría cubre también rechazos sin token a rutas
+del dueño; [medición de calidad](../specs/quality-measurement.md) separa tiempo de caída de tasa de éxito y declara
+telemetría faltante. Las correcciones quedan propuestas para revisión conjunta, sin pruebas de prototipo ejecutadas.

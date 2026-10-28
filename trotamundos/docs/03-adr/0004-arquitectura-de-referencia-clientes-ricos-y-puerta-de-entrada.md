@@ -50,7 +50,8 @@ Responsabilidades de la **puerta de entrada**:
 
 * Ser el único punto de entrada a la región desde Internet, tanto para los clientes como para las notificaciones de
   sistemas de terceros (que deriva a la ingesta); los procesos internos no quedan expuestos.
-* Validar la identidad de quien llama (el mecanismo concreto de autenticación se decide en la iteración 4).
+* Validar la identidad de quien llama (el mecanismo concreto de autenticación se decide en la iteración 4: tokens
+  firmados de un proveedor de identidad por región, ADR-0060).
 * Repartir la carga entre las instancias sanas del núcleo.
 * Limitar el tráfico excesivo por cliente.
 
