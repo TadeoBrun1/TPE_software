@@ -1,0 +1,74 @@
+asyncapi: 2.6.0
+info:
+  title: Avisos de cambio del panel
+  version: 0.1.0
+  description: >
+    Contrato propuesto de la iteración 3 (ADR-0046). Lo publica el núcleo desde su outbox (ADR-0027) en la misma
+    transacción que cambia panel_por_usuario (ADR-0040). Lo consume solo el notificador: cada instancia con una
+    cola exclusiva (fan-out) para los avisos SSE, y una cola compartida notifier.push para los push del sistema
+    operativo de relevancia important. Transporte: RabbitMQ, exchange travel.domain, routing key panel.changed.v1
+    (ADR-0028). No lleva datos de reservas: el cliente los pide por la API autenticada.
+defaultContentType: application/json
+channels:
+  panel.changed.v1:
+    publish:
+      operationId: publishPanelChanged
+      message:
+        $ref: '#/components/messages/PanelChanged'
+components:
+  messages:
+    PanelChanged:
+      name: PanelChanged
+      payload:
+        type: object
+        additionalProperties: false
+        required:
+        - eventId
+        - schemaVersion
+        - homeRegion
+        - userId
+        - panelVersion
+        - reason
+        - relevance
+        - committedAt
+        properties:
+          eventId:
+            type: string
+            minLength: 1
+          schemaVersion:
+            type: string
+            enum:
+            - '1'
+          homeRegion:
+            type: string
+            minLength: 1
+          userId:
+            type: string
+            minLength: 1
+          panelVersion:
+            type: integer
+            minimum: 0
+            description: Versión de panel_por_usuario después del cambio
+          reason:
+            type: string
+            description: Motivo del cambio, para elegir el texto del push
+            enum:
+            - booking_added
+            - booking_updated
+            - booking_cancelled
+            - schedule_changed
+            - provider_overrode_user_edit
+            - booking_removed
+            - trip_created
+            - trip_archived
+            - trip_reactivated
+            - trip_deleted
+          relevance:
+            type: string
+            description: important genera push con la app cerrada; normal solo aviso SSE
+            enum:
+            - normal
+            - important
+          committedAt:
+            type: string
+            format: date-time

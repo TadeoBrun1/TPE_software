@@ -1,7 +1,7 @@
 # Modelo de dominio
 
 **Tipo:** Soporte (vocabulario)
-**Actualizada en la iteración:** 2 (vocabulario refinado)
+**Actualizada en la iteración:** 3
 **Mantiene:** Ambos. **Estado:** BORRADOR (propuesta inicial a discutir)
 
 ## 1. Propósito
@@ -24,6 +24,8 @@ classDiagram
         estado : activo | archivado
         fechaInicio
         fechaFin
+        archivadoEn
+        reactivadoHasta
     }
     class Reserva {
         id
@@ -31,6 +33,20 @@ classDiagram
         codigoDelProveedor
         estado : confirmada | modificada | cancelada | pendiente
         origen : correo | tercero | manual
+        camposEditadosPorUsuario
+        version
+    }
+    class PanelDeUsuario {
+        usuario
+        version
+        viajesActivos
+        reservasSinAsignar
+        avisos
+    }
+    class MarcaDeBorrado {
+        vinculacion
+        proveedor
+        referenciaExterna
     }
     class Remitente {
         direccion
@@ -74,6 +90,8 @@ classDiagram
     Vinculacion "1" --> "0..*" Suscripcion : tiene avisos
     Vinculacion "1" --> "0..*" CursorSincronizacion : avance por flujo
     Vinculacion "1" --> "0..*" CasoPendiente : genera
+    Usuario "1" --> "1" PanelDeUsuario : se lee mediante
+    Usuario "1" --> "*" MarcaDeBorrado : reservas que borró
     Usuario "1" --> "*" Viaje : tiene
     Viaje "1" --> "*" Reserva : agrupa
     Usuario "1" --> "*" CuentaDeCorreo : vincula
@@ -88,8 +106,10 @@ classDiagram
 | Elemento | Descripción |
 |---|---|
 | Usuario | Viajero con cuenta en la plataforma. Su región de origen decide dónde se guardan sus datos (ADR-0003) |
-| Viaje | Agrupación de reservas; una tarea programada del núcleo lo archiva al completarse (RF-05) |
-| Reserva | Hotel, auto, vuelo, tren o autobús; puede venir de correo, de un tercero o de carga manual. Si no se puede asociar a un viaje, queda en estado `pendiente` de resolución. Agregar un medio de transporte es agregar un valor a `tipo` y un adaptador (QA-9) |
+| Viaje | Agrupación de reservas. Está completo cuando pasó la fecha de su última reserva más 2 días; una tarea diaria lo archiva y lo elimina un año después. Se reactiva si llega una novedad con fechas futuras o si el usuario lo pide; en ese caso no se archiva antes de `reactivadoHasta` (ADR-0045) |
+| Reserva | Hotel, auto, vuelo, tren o autobús; puede venir de correo, de un tercero o de carga manual. Registra qué campos editó el usuario: las novedades cambian los del proveedor y conservan los del usuario (ADR-0044). Una reserva sin fechas, o con datos que no alcanzan para asociarla, queda en estado `pendiente` y aparece en "sin asignar" (ADR-0048). Agregar un medio de transporte es agregar un valor a `tipo` y un adaptador (QA-9) |
+| PanelDeUsuario | Vista precalculada del panel (`panel_por_usuario`), con la versión del último cambio. No es una entidad de negocio: es una copia para leer, reconstruible desde viajes y reservas (ADR-0040) |
+| MarcaDeBorrado | Recuerda que el usuario eliminó una reserva que vino de un proveedor, para que las novedades posteriores no la recreen (ADR-0044) |
 | CuentaDeCorreo | Buzón vinculado con autorización del usuario |
 | Remitente | Remitente de una whitelist |
 | Comparticion | Permiso de un viaje para una persona designada |
@@ -107,4 +127,3 @@ la identidad de reserva ni del caso. Ver [contrato de ingesta](../../specs/inges
 
 - ¿La persona con quien se comparte tiene cuenta propia?
 - ¿"Origen" de la reserva (correo, tercero, manual) se modela como atributo o como entidad? En la iteración 1 queda como atributo.
-- ¿Cuándo se considera "completo" un viaje para archivarlo (fecha de fin, última reserva)?

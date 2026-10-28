@@ -28,7 +28,7 @@ flowchart TD
 | Priorización | [utility-tree.md](00-requirements/utility-tree.md) | `/arbol-utilidad` |
 | Drivers | [architectural-drivers.md](00-requirements/architectural-drivers.md) | Bass cap. 19 (ASRs) |
 | Iteraciones | [01-add/](01-add/) | Bass cap. 20 (ADD 3.0); Keeling: diseño guiado por riesgos |
-| Elegir entre alternativas | Tabla en la iteración y en la ADR | Keeling: Decision Matrix (32) y Paths Not Taken (26) |
+| Elegir entre alternativas | Opciones consideradas y pros y contras en la ADR | Keeling: Paths Not Taken (26) |
 | Elegir tácticas y patrones | Paso 4 de cada iteración | Bass, catálogo de tácticas por QA (caps. 4 a 13) |
 | Vistas | [02-views/](02-views/) | Bass cap. 22 (Views and Beyond); Keeling caps. 10 y 11 |
 | Decisiones | [03-adr/](03-adr/) | Plantilla MADR; Keeling actividad 20 |

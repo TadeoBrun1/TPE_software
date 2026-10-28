@@ -2,7 +2,7 @@
 
 **Mantienen:** Tadeo Brun y Tomas Lateana.
 
-**Estado:** base de la primera iteración integrada; segunda iteración revisada para PR #4, con decisiones propuestas y análisis del paso 7. QA-1 a escala conserva un conflicto de viabilidad de recuperación de correo a escala. Prototipo y aceptación conjunta pendientes.
+**Estado:** iteraciones 1 y 2 integradas; iteración 3 documentada (pasos 2 a 7), revisada con una auditoría independiente y confirmada por ambos integrantes. QA-1 a escala queda como riesgo aceptado. Prototipo y aceptación conjunta pendientes.
 
 Este documento resume la arquitectura y enlaza al detalle de requisitos, iteraciones, decisiones, vistas y contratos.
 
@@ -18,7 +18,7 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 |---|---|---|
 | [1 — Estructura general](01-add/iteration-1-structure.md) | En revisión; ADRs propuestas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
 | [2 — Ingesta](01-add/iteration-2-ingestion.md) | Pasos 2–7 revisados; viabilidad de QA-1 y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
-| [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pendiente | Consulta, gestión, rendimiento, disponibilidad y escalabilidad. |
+| [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; decisiones confirmadas por ambos | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
 | [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pendiente | Compartición, autenticación, internacionalización, analítica y evolución. |
 
 La incorporación de al menos un módulo avanzado —recomendaciones o chatbot— es obligatoria para la segunda entrega. Su elección continúa pendiente.
@@ -81,7 +81,7 @@ La arquitectura separa tres clases de trabajo:
 
 El núcleo es inicialmente un único desplegable con módulos internos.
 
-La posible separación entre lectura y escritura del núcleo se analiza en la iteración 3; no se considera una decisión ya tomada.
+La iteración 3 separa la lectura del panel con un modelo de lectura por usuario dentro de la misma base, actualizado en la misma transacción que cada cambio ([ADR-0040](03-adr/0040-modelo-de-lectura-del-panel.md)).
 
 Ver la [vista de módulos](02-views/module-view.md).
 
@@ -97,7 +97,8 @@ Ver la [vista de componentes y conectores](02-views/cc-view.md).
 | Núcleo | Aplicar reglas y permisos, consultar datos y confirmar modificaciones. |
 | Ingesta | Sondear correos, consultar APIs y procesar notificaciones externas. |
 | Intermediario persistente | Conservar y entregar mensajes entre productores y consumidores. |
-| Base operativa | Conservar los datos oficiales de los usuarios de la región. |
+| Base operativa | Conservar los datos oficiales de los usuarios de la región, en particiones por usuario con réplica sincrónica (ADR-0042). |
+| Notificador | Avisar a las apps que su panel cambió, por SSE o push (ADR-0046). |
 | Analítica | Consumir cambios confirmados para preparar análisis. |
 
 ### Dos flujos de mensajes
@@ -216,17 +217,32 @@ Ver el [índice completo de ADRs](03-adr/README.md).
 | [0027](03-adr/0027-publicacion-del-nucleo.md) | Outbox de cambios confirmados del núcleo. | proposed |
 | [0028](03-adr/0028-rabbitmq-y-politicas.md) | RabbitMQ con colas quorum y políticas. | proposed |
 
-Las decisiones de la segunda iteración se revisan conjuntamente antes de aceptarse.
+### Tercera iteración
+
+| ADR | Decisión propuesta | Estado |
+|---|---|---|
+| [0040](03-adr/0040-modelo-de-lectura-del-panel.md) | Modelo de lectura del panel por usuario, actualizado en la misma transacción. | proposed |
+| [0041](03-adr/0041-cache-local-del-panel.md) | Caché local del panel en la app, revalidada por versión. | proposed |
+| [0042](03-adr/0042-particion-de-la-base-por-usuario.md) | Partición de la base por usuario en varios nodos con réplica sincrónica. | proposed |
+| [0043](03-adr/0043-escalado-solo-reactivo.md) | Escalado automático solo reactivo. | proposed |
+| [0044](03-adr/0044-novedades-y-cambios-manuales.md) | Novedades y cambios manuales: dueño por campo y marca de borrado. | proposed |
+| [0045](03-adr/0045-ciclo-de-vida-y-archivado-de-viajes.md) | Archivado diario, reactivación y eliminación al año. | proposed |
+| [0046](03-adr/0046-notificador-de-cambios-del-panel.md) | Notificador separado con evento propio y cola por instancia. | proposed |
+| [0047](03-adr/0047-priorizacion-y-degradacion-ante-sobrecarga.md) | Priorización y degradación ante sobrecarga. | proposed |
+| [0048](03-adr/0048-asignacion-de-reservas-a-viajes.md) | Asignación automática de reservas a viajes por fechas. | proposed |
+
+Las decisiones de la segunda y la tercera iteración se revisan conjuntamente antes de aceptarse.
 
 ## 11. Trazabilidad inicial
 
 | Driver | Iteraciones | Decisiones relacionadas | Validación pendiente |
 |---|---|---|---|
-| QA-1 | 1 y 2, coordinadas con 3 | 0001, 0002, 0020, 0024 | Tiempo completo desde generación externa hasta visualización. |
-| QA-2 y QA-3 | 3 | Base estructural 0001 y 0004 | Consulta web y primer contenido móvil bajo condiciones definidas. |
-| QA-4 | 1 y 3 | 0001, 0002, 0003, 0004 | Recuperación ante fallos y presupuesto mensual. |
-| QA-5 | 1 y 3 | 0001, 0003, 0004 | Capacidad y respuesta ante carga y picos acordados. |
-| QA-6 | 2 y 3 | 0022, 0023, 0024 | Normalización, duplicaciones, desorden y conciliación. |
+| QA-1 | 1, 2 y 3 | 0001, 0002, 0020, 0024, 0040, 0044, 0046 | Tiempo completo desde generación externa hasta visualización. |
+| QA-2 y QA-3 | 3 | 0040, 0041, 0043, 0047 | Prueba de carga del panel y primer contenido móvil con caché. |
+| QA-4 | 1 y 3 | 0001, 0002, 0003, 0004, 0042, 0047 | Conmutación de nodos e instancias; presupuesto mensual. |
+| QA-5 | 1 y 3 | 0001, 0003, 0004, 0042, 0043 | Umbral de escalado reactivo y particiones ante picos. |
+| QA-6 | 2 y 3 | 0022, 0023, 0024, 0044 | Normalización, duplicaciones, desorden, conciliación y marcas de borrado. |
+| RF-04 y RF-05 | 3 | 0040, 0044, 0045, 0048 | Conflictos con cambios manuales, asignación a viajes, archivado y reactivación. |
 | QA-8 | 2 | 0021 | Autorización, renovación, revocación y datos conservados. |
 | QA-9 | 1, 2 y 4 | 0001, 0002, 0023 | Incorporar una integración y evaluar impacto. |
 | QA-7 y QA-10 | 3 y 4, sobre la base de 1 | 0003 y 0004 como base | Compartición, idiomas, formatos y atención regional. |
@@ -243,8 +259,10 @@ Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 | Un correo puede no incluir versión o referencia suficiente. | Separar incorporación automática segura de conciliación o resolución pendiente. | Iteraciones 2 y 3 |
 | Novedades duplicadas o desordenadas pueden alterar incorrectamente una reserva. | Idempotencia y reglas de aplicación, sin depender únicamente del orden del intermediario. | Iteraciones 2 y 3 |
 | Una notificación externa puede no indicar usuario ni región. | Resolver y verificar su vinculación antes del enrutamiento. | Iteración 2 |
-| La caída de una zona puede consumir el presupuesto mensual. | Detección, conmutación y pruebas con tiempos definidos. | Iteración 3 |
-| La caída de una región completa no tiene recuperación diseñada. | Precisar alcance y necesidad de recuperación regional. | Iteración 3 |
+| La caída de una zona puede consumir el presupuesto mensual. | *Ping/echo* y conmutación de nodos de la base en 30 s y 60 s (ADR-0042); falta medirlos. Ventana con una sola copia hasta reconstruir la réplica. | Iteración 3 (diseñado) |
+| La caída de una región completa no tiene recuperación diseñada. | Riesgo aceptado: no está en el estímulo de QA-4; las particiones acotan a quiénes afecta. | Aceptado |
+| QA-1 a escala: avisos perdidos con reconciliación lenta. | Riesgo aceptado en la iteración 3; mitigación candidata para la iteración 5. | Aceptado |
+| Escalón de carga mayor a 1,67 veces durante el arranque de instancias. | Escalado temprano y priorización; QA-2 puede incumplirse en esos minutos; escalado programado solo si la operación muestra picos regulares (CON-5). | Iteración 3 (aceptado) |
 | Región de origen y región más cercana pueden diferir. | Evaluar atención de viajeros y acceso compartido entre regiones. | Iteraciones 3 y 4 |
 | Un cambio confirmado puede no publicarse si el proceso falla. | Persistencia y publicación recuperable coordinadas. | Iteraciones 2 y 3 |
 | Dos componentes pueden mantener estados contradictorios de una autorización. | Definir fuente autoritativa y coordinación de revocación. | Iteraciones 2 y 3 |
@@ -262,6 +280,10 @@ El prototipo debe demostrar recorridos acotados y trazables a contratos y decisi
 - Recuperar publicación pendiente tras una caída.
 - Verificar autorización y revocación del correo.
 - Mantener consultas mientras la ingesta está detenida.
+- Leer el panel por clave y revalidarlo por versión (`304`).
+- Avisar un cambio por SSE desde la instancia del notificador que tiene la conexión.
+- Aplicar dueño por campo, marca de borrado y asignación a viajes.
+- Archivar y reactivar viajes con una fecha simulada.
 
 Son objetivos de validación, no pruebas ejecutadas.
 
@@ -303,3 +325,15 @@ El correo usa avisos como vía principal y sondeo incremental para reconciliaci�
 y renovaciones además de novedades: el perfil adaptable no garantiza QA-1 si se pierde un aviso en cuentas de baja
 frecuencia. Asistencia es un módulo saliente del núcleo, fuera de ingesta. El broker objetivo usa tres miembros en
 tres zonas; esto refina el mínimo general de ADR-0003. Ver el estado actual en [impactos](01-add/impact-log.md).
+
+## Diseño de la iteración 3
+
+El panel se lee por clave desde un documento por usuario que se actualiza en la misma transacción que cada cambio
+(ADR-0040). La app muestra su copia local al abrir y la revalida con la versión (ADR-0041). Un notificador separado
+consume el evento `panel.changed.v1`, con una cola por instancia, y avisa por SSE o push (ADR-0046). La base de cada
+región se divide en particiones por usuario repartidas en nodos, cada uno con réplica sincrónica en otra zona y un
+monitor en tres zonas (ADR-0042). El escalado es solo reactivo, sin capacidad reservada por calendario (ADR-0043, con
+la restricción CON-5), y ante sobrecarga se prioriza el panel (ADR-0047). El núcleo resuelve los conflictos entre
+novedades y cambios manuales con dueño por campo y marcas de borrado (ADR-0044) y asigna las reservas a viajes por
+fechas (ADR-0048); una tarea diaria archiva los viajes completos, permite reactivarlos y elimina los archivados al
+año (ADR-0045). Ver [iteración 3](01-add/iteration-3-query-scale.md).

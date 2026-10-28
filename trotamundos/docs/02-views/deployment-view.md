@@ -1,9 +1,9 @@
 # Vista de despliegue
 
 **Tipo:** Asignación (software a infraestructura)
-**Actualizada en la iteración:** 1
+**Actualizada en la iteración:** 3
 **Mantiene:** Ambos
-**Estado:** Versión inicial (iteración 1). La iteración 3 la refina (escalado, tiempos de conmutación).
+**Estado:** Refinada en la iteración 3 (particiones, notificador, escalado y conmutación).
 
 ## 1. Propósito
 
@@ -20,22 +20,31 @@ flowchart TB
         subgraph Z1["Zona de falla A"]
             G1["Puerta de entrada"]
             N1["Núcleo × n"]
+            NT1["Notificador × n"]
             I1["Ingesta × n"]
             B1["Broker (nodo)"]
-            D1[("Base primaria")]
+            D1[("Nodos de base 1..k: primaria<br/>k+1..N: réplica")]
+            MB1["Monitor de base"]
         end
         subgraph Z2["Zona de falla B"]
             G2["Puerta de entrada"]
             N2["Núcleo × n"]
+            NT2["Notificador × n"]
             I2["Ingesta × n"]
             B2["Broker (nodo)"]
-            D2[("Réplica sincrónica")]
+            D2[("Nodos de base 1..k: réplica<br/>k+1..N: primaria")]
+            MB2["Monitor de base"]
         end
-        subgraph Z3["Zona de falla C (broker)"]
+        subgraph Z3["Zona de falla C"]
             B3["Broker (tercer miembro quorum)"]
+            MB3["Monitor de base"]
+            DC[("Réplicas reconstruidas<br/>si cae una zona")]
         end
         A1["Analítica"]
-        D1 -. "replicación sincrónica" .- D2
+        D1 -. "replicación sincrónica por nodo" .- D2
+        MB1 -. "ping/echo" .- D1
+        MB2 -. "ping/echo" .- D2
+        MB1 -. "acuerdo 2 de 3" .- MB3
         B1 -. "replicación quorum" .- B2
         B2 -. "replicación quorum" .- B3
     end
@@ -53,10 +62,12 @@ flowchart TB
 
 | Nodo o recurso | Qué corre | Réplicas | Observaciones |
 |---|---|---|---|
-| Entrada global | Enrutamiento por región de origen | Redundante | Resuelve la región a partir de la identidad del usuario; para notificaciones de terceros, se resuelve en la iteración 2 |
+| Entrada global | Enrutamiento por región de origen | Redundante | Resuelve la región a partir de la identidad del usuario; para notificaciones de terceros usa el directorio mínimo de suscripciones (ADR-0025) |
 | Región (celda) | Todos los procesos y datos de los usuarios con esa región de origen | Una por mercado | Sumar una región es desplegar una celda más |
-| Zona de falla | Puerta de entrada, núcleo, ingesta, broker y base | Al menos 2 por región | Redundancia activa de los procesos: todas las zonas atienden tráfico; la base es primaria en una zona y réplica en la otra (redundancia pasiva) |
-| Base operativa | Datos de la región, particionados por usuario | Primaria + réplica sincrónica en otra zona | Conmutación automática |
+| Zona de falla | A y B: puerta de entrada, núcleo, notificador, ingesta, broker, base y monitor. C: tercer miembro del broker, tercer monitor y réplicas reconstruidas | 3 por región | Táctica *redundant spare*: todas las instancias de los procesos atienden tráfico; cada nodo de la base tiene una réplica sincrónica (*hot spare*) en la otra zona |
+| Base operativa | Particiones lógicas por hash de usuario, repartidas en nodos físicos (ADR-0042) | Cada nodo: primaria en una zona y réplica sincrónica en otra; las primarias se reparten entre A y B | La unidad de falla es el nodo. Si cae una zona, las réplicas se promueven y las réplicas nuevas se crean en C |
+| Notificador | Conexiones SSE y envío de push (ADR-0046) | Varias instancias en A y B; escala por conexiones abiertas | Cada instancia tiene su cola de avisos; si cae, la app sigue con su caché |
+| Monitor de base | *Ping/echo* a las primarias cada 5 s; promoción de réplicas | 3 instancias, una por zona | Una promoción requiere acuerdo de dos de tres, para evitar promociones dobles |
 | Analítica | Proceso analítico | Por región | Dónde se agregan los datos de todas las regiones: iteración 4 |
 
 ## 4. Rationale
@@ -65,20 +76,24 @@ flowchart TB
 |---|---|
 | Multirregión con región de origen; zonas de falla | [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) |
 | Puerta de entrada por región, redundante, como único acceso | [0004](../03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
+| Particiones con réplica sincrónica y monitor de base | [0042](../03-adr/0042-particion-de-la-base-por-usuario.md) |
+| Notificador por región | [0046](../03-adr/0046-notificador-de-cambios-del-panel.md) |
+| Escalado solo reactivo, con escalado temprano | [0043](../03-adr/0043-escalado-solo-reactivo.md) |
 
 ## 5. Drivers que sustenta
 
 | Driver | Cómo lo sustenta |
 |---|---|
-| QA-4 Disponibilidad | La falla de una instancia o zona se absorbe con las otras zonas (redundancia activa) |
-| QA-5 Escalabilidad | Cada proceso tiene `n` instancias por zona y escala por separado |
+| QA-4 Disponibilidad | La falla de una instancia o zona se absorbe con las otras zonas; la de una primaria, con su réplica sincrónica (*redundant spare*); el monitor detecta con *ping/echo* |
+| QA-5 Escalabilidad | Cada proceso tiene `n` instancias por zona y escala por separado según su métrica; la base crece moviendo particiones a nodos nuevos |
 | QA-10 Multirregión | Cada región es una celda independiente que atiende a sus usuarios |
 | CON-3 (suposición) | Los datos de un usuario quedan en su región de origen |
 
 ## 6. Prototipo
 
-El prototipo corre una sola región en una máquina con `docker compose` (núcleo, ingesta y broker). La multirregión y
-las zonas se documentan acá, pero no se simulan.
+El prototipo corre una sola región en una máquina con `docker compose` (núcleo, notificador, ingesta, broker y una
+base con dos particiones lógicas). La multirregión, las zonas, el monitor y el escalado se documentan acá, pero no se
+simulan.
 
 ## 7. Vistas relacionadas
 
@@ -91,3 +106,15 @@ aloja el tercer miembro; el mínimo inicial de dos zonas para procesos generales
 suficiente en un cluster de dos nodos. Perder una zona conserva dos de tres miembros. Si la infraestructura no
 ofrece esas tres zonas, registrar limitación y no afirmar tolerancia a la caída de cualquiera de ellas.
 [Políticas](../../specs/ingestion-operations.md). El prototipo funcional de un nodo no valida disponibilidad zonal.
+
+## Escalado (iteración 3)
+
+| Proceso | Métrica de escalado | Capacidad mínima |
+|---|---|---|
+| Núcleo | Solicitudes por segundo y latencia del panel | Una instancia por zona; escala al 60 % de uso |
+| Notificador | Conexiones abiertas | Una instancia por zona; escala al 60 % de uso |
+| Ingesta | Antigüedad de la cola | Según la iteración 2 |
+| Consumidor de novedades en el núcleo | No escala con las instancias del núcleo | 8 shards con un consumidor activo cada uno (iteración 2) |
+| Base | No escala automáticamente | Particiones dimensionadas para el pico; se amplían de forma planificada |
+
+Ver [ADR-0043](../03-adr/0043-escalado-solo-reactivo.md). El prototipo no simula zonas ni escalado.

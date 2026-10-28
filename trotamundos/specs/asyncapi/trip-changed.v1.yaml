@@ -1,0 +1,67 @@
+asyncapi: 2.6.0
+info:
+  title: Cambios confirmados de viajes
+  version: 0.1.0
+  description: >
+    Contrato propuesto de la iteración 3. Lo publica el núcleo desde su outbox (ADR-0027) cuando un viaje se crea,
+    cambia, se archiva, se reactiva o se elimina (ADR-0045, ADR-0048). Lo consume la analítica (iteración 4).
+    El notificador no lo usa: consume panel.changed.v1 (ADR-0046). Transporte: RabbitMQ, exchange travel.domain, routing key trip.changed.v1 (ADR-0028).
+    El evento no lleva datos personales más allá de los identificadores.
+defaultContentType: application/json
+channels:
+  trip.changed.v1:
+    publish:
+      operationId: publishTripChanged
+      message:
+        $ref: '#/components/messages/TripChanged'
+components:
+  messages:
+    TripChanged:
+      name: TripChanged
+      payload:
+        type: object
+        additionalProperties: false
+        required:
+        - eventId
+        - schemaVersion
+        - homeRegion
+        - userId
+        - tripId
+        - changeType
+        - panelVersion
+        - committedAt
+        properties:
+          eventId:
+            type: string
+            minLength: 1
+          schemaVersion:
+            type: string
+            enum:
+            - '1'
+          correlationId:
+            type: string
+            minLength: 1
+          homeRegion:
+            type: string
+            minLength: 1
+          userId:
+            type: string
+            minLength: 1
+          tripId:
+            type: string
+            minLength: 1
+          changeType:
+            type: string
+            enum:
+            - created
+            - updated
+            - archived
+            - reactivated
+            - deleted
+          panelVersion:
+            type: integer
+            minimum: 0
+            description: Versión de panel_por_usuario después del cambio (ADR-0040)
+          committedAt:
+            type: string
+            format: date-time

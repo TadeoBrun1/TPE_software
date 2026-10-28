@@ -96,10 +96,10 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 
 | Atributo | Táctica | Cómo se aplica | Drivers | ADR |
 |---|---|---|---|---|
-| Disponibilidad | Redundancia activa | Puerta de entrada, núcleo, ingesta y broker con instancias en al menos dos zonas por región, atendiendo tráfico a la vez | QA-4 | [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) |
-| Disponibilidad | Monitoreo / heartbeat | El balanceador detecta instancias o zonas que no responden y deja de enviarles tráfico | QA-4 | [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) |
+| Disponibilidad | *Redundant spare* (todas las instancias activas) | Puerta de entrada, núcleo, ingesta y broker con instancias en al menos dos zonas por región, atendiendo tráfico a la vez | QA-4 | [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) |
+| Disponibilidad | *Ping/echo* y *monitor* | El balanceador detecta instancias o zonas que no responden y deja de enviarles tráfico | QA-4 | [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) |
 | Disponibilidad | Degradación elegante | Si la ingesta cae, la consulta sigue respondiendo con los últimos datos | QA-4 | [0001](../03-adr/0001-nucleo-modular-con-procesos-separados.md) |
-| Disponibilidad | Redundancia pasiva | Réplica sincrónica de la base en otra zona, que toma el control si falla la primaria | QA-4 | [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) |
+| Disponibilidad | *Redundant spare* con patrón *active redundancy* (*hot spare*) | Réplica sincrónica de la base en otra zona, que toma el control si falla la primaria | QA-4 | [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) |
 | Performance / escalabilidad | Mantener múltiples copias del cómputo e introducir concurrencia | Núcleo sin estado con varias instancias detrás del balanceador | QA-5 | [0001](../03-adr/0001-nucleo-modular-con-procesos-separados.md) |
 | Performance / escalabilidad | Limitar la respuesta a eventos | Las ráfagas de los proveedores se encolan en el broker y el núcleo las procesa a su ritmo | QA-1, CON-2 | [0002](../03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) |
 | Performance / escalabilidad | Administrar las solicitudes de trabajo | Límite de tráfico por cliente en la puerta de entrada | QA-5 | [0004](../03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
@@ -145,7 +145,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 |---|---|---|
 | Novedades de reservas (ingesta → núcleo) | `specs/asyncapi/` (a crear a partir de `booking-events.example.yaml`) | Nuevo: modelo canónico de reserva con versión de esquema. La clave de idempotencia se agrega en la iteración 2 |
 | Eventos de dominio (núcleo → consumidores) | `specs/asyncapi/` (a crear) | Nuevo |
-| API de itinerarios (clientes → puerta de entrada → núcleo) | `specs/openapi/itinerary-api.example.yaml` | Sin cambios; se refina en la iteración 3 |
+| API de itinerarios (clientes → puerta de entrada → núcleo) | `specs/openapi/itinerary-api.example.yaml` (reemplazado en la iteración 3 por `itinerary-api.v1.yaml`) | Sin cambios; se refina en la iteración 3 |
 
 ## Paso 6 — Vistas actualizadas y ADRs creadas
 
@@ -184,7 +184,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 | Riesgo | Driver | Cómo se mitiga | Iteración |
 |---|---|---|---|
 | Sondear millones de buzones puede no entrar en los 5 minutos | QA-1 | Notificaciones del proveedor de correo cuando existan, sondeo como respaldo | 2 |
-| La conmutación ante una falla de zona consume el presupuesto de 5 min/mes | QA-4 | Detección por heartbeat y conmutación automática con tiempos medibles | 3 |
+| La conmutación ante una falla de zona consume el presupuesto de 5 min/mes | QA-4 | Detección por *ping/echo* y conmutación automática con tiempos medibles | 3 |
 | Una persona de otra región no puede ver un itinerario compartido sin copiar datos | QA-7, CON-3 | Leer desde la región de origen del dueño del viaje | 4 |
 | La falla de una región completa no está cubierta: no está en el estímulo de QA-4 y no se diseñó recuperación entre regiones | QA-4 | Analizar si se agrega al escenario; cualquier respaldo debe quedar en la misma jurisdicción (CON-3) | 3 |
 | CON-3 no está validada con una normativa concreta | CON-3 | Validarla antes de cerrar la primera entrega | — |
