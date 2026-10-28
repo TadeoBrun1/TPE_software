@@ -1,5 +1,9 @@
 # Escenarios de atributos de calidad (SEI, 6 partes)
 
+**Qué es:** los atributos de calidad del enunciado refinados como escenarios de 6 partes.
+**Mantiene:** ambos. **Estado:** COMPLETADO (revisado con la skill `/test-QAs`). Cambios solo por PR de ambos: son
+drivers inmutables durante ADD.
+
 Regla de este documento: los valores que vienen **del enunciado** se usan tal cual. Los que se inventaron para poder
 medir están marcados como **Suposición** y se explican abajo. Una suposición es un punto de partida (straw man).
 
@@ -44,7 +48,7 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 
 | Parte | Contenido |
 |---|---|
-| Fuente del estímulo | Infraestructura de ejecucion (nodo, zona o región) |
+| Fuente del estímulo | Infraestructura de ejecución (instancia o zona de falla) |
 | Estímulo | Una instancia o zona del servicio de consulta deja de responder |
 | Artefacto | Servicio de consulta de itinerarios y su almacenamiento |
 | Ambiente | Operación normal, con tráfico global |
@@ -55,9 +59,9 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 
 | Parte | Contenido |
 |---|---|
-| Fuente del estímulo | Viajeros usuarios de la aplicacion |
+| Fuente del estímulo | Viajeros usuarios de la aplicación |
 | Estímulo | Consultan sus itinerarios y se reciben actualizaciones de reservas |
-| Artefacto |Servicios de consulta e ingesta de itinerarios |
+| Artefacto | Servicios de consulta e ingesta de itinerarios |
 | Ambiente | Operación con pico de carga |
 | Respuesta | El sistema procesa las consultas y actualizaciones, y agrega capacidad automáticamente a medida que crece la carga |
 | Medida de respuesta | Soporta 2 millones de usuarios activos semanales sobre 15 millones de cuentas y un pico de **5 veces** el promedio, cumpliendo QA-1 y QA-2 |
@@ -111,11 +115,11 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 | Parte | Contenido |
 |---|---|
 | Fuente del estímulo | Viajero usuario de la aplicación |
-| Estímulo | Usa la aplicación desde una región distinta con su idioma y formato locales |
+| Estímulo | Usa la aplicación con un idioma y formato regional distintos a los del idioma base, o desde otro país durante un viaje |
 | Artefacto | Aplicación y backend multirregión |
 | Ambiente | Operación normal |
-| Respuesta | El sistema muestra el contenido en el idioma y formato del usuario y atiende la solicitud desde la región más cercana |
-| Medida de respuesta | El 100% de los textos y formatos de los idiomas soportados se muestra en la configuración del usuario, y se cumplen QA-2 (800 ms) y QA-3 (1,4 s) |
+| Respuesta | El sistema muestra el contenido en el idioma y formato del usuario y atiende la solicitud desde la región de origen del usuario |
+| Medida de respuesta | El 100 % de los textos y formatos de los idiomas soportados se muestra según la configuración del usuario, y se siguen cumpliendo QA-2 (800 ms) y QA-3 (1,4 s) aunque el usuario esté fuera de su región |
 
 ## Suposiciones a validar
 
@@ -126,7 +130,10 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 | Pico de 5 veces el promedio | QA-5 | Estimación por analogía con plataformas de viajes en disrupciones; el enunciado solo dice "dramáticos" |
 | 99,9 % sin pérdida ni duplicación | QA-6 | Analogía con SLAs de integraciones entre sistemas |
 | 10 días-persona | QA-9 | Estimación por analogía con una integración nueva de complejidad media |
+| Red 4G y sesión ya iniciada | QA-3 | El enunciado no fija las condiciones de red; 4G es el caso típico de un viajero |
 | Detección en 30 s y redirección en 60 s | QA-4 | El presupuesto de 5 min/mes solo admite unas pocas fallas por mes si cada una se resuelve en alrededor de un minuto |
 
 
-## === Escenarios de atributos de calidad para parte 2 ===
+## Escenarios para la 2da entrega
+
+Se agregan cuando se elija la opción avanzada (A o B).

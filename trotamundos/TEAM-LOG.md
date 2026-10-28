@@ -12,4 +12,5 @@ Una fila por aporte relevante. Sirve para que la evolución del trabajo y la lab
 | 2026-10-27 | `Tadeo Brun` | Revision y correccion de requerimientos funcionales | `functional-rqmts.md` |
 | 2026-10-27 | `Tadeo Brun` + `Tomas Lateana` | Iteracion 1 de ADD y ADRs 0001 a 0004 | `iteration-1-structure.md`, `docs/03-adr/` |
 | 2026-10-27 | `Tadeo Brun` | Revisión de la iteración 1: arquitectura de referencia, patrones y tácticas, se elimina la ADR del almacén analítico y se renumeran las ADRs (0001 a 0004), vistas C&C, despliegue y módulos | `iteration-1-structure.md`, `docs/03-adr/`, `docs/02-views/` |
+| 2026-10-28 | `Tadeo Brun` | Revisión de coherencia de los requerimientos: estados actualizados a COMPLETADO, QA-10 alineado con la región de origen, tabla de restricciones corregida | `docs/00-requirements/` |
 |  |  |  |  |

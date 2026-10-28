@@ -2,7 +2,7 @@
 
 **Qué es:** resumen priorizado de lo que guía el diseño. Sirve de entrada a ADD (paso 1) y es inmutable durante
 el proceso: si cambia, se hace por PR revisado por ambos y se anota la razón.
-**Mantiene:** ambos. **Estado:** BORRADOR.
+**Mantiene:** ambos. **Estado:** COMPLETADO.
 
 ## Propósito del diseño
 
@@ -34,12 +34,28 @@ Detalle completo en [functional-rqmts.md](functional-rqmts.md).
 | QA-9 | Evolucionabilidad | M | M | No |
 | QA-10 | Usabilidad e i18n | M | H | No |
 
+Criterio: es **driver principal** todo escenario de importancia alta (H). Los de importancia media también se
+atienden, en la iteración que indica el [plan](../01-add/iteration-plan.md). QA-9 y la parte multirregión de QA-10 se
+adelantan a la iteración 1 porque condicionan la estructura (ver
+[iteration-1-structure.md](../01-add/iteration-1-structure.md)).
+
 Escenarios completos en [quality-attribute-scenarios.md](quality-attribute-scenarios.md) y árbol en
 [utility-tree.md](utility-tree.md).
 
 ## Restricciones y concerns
 
-Ver [constraints-concerns.md](constraints-concerns.md).
+| ID | Resumen | Estado |
+|---|---|---|
+| CON-1 | Integración con terceros solo por APIs estándar | Confirmada |
+| CON-2 | Sistemas externos que no se pueden modificar | Confirmada |
+| CON-3 | Datos personales según la normativa de cada región | Suposición a validar |
+| CON-4 | El cliente móvil aprovecha capacidades nativas (GPS) | Confirmada |
+| CRN-1 | Estructura general del sistema | Iteración 1 |
+| CRN-2 | Logging, monitoreo y trazas | Iteración 4 |
+| CRN-3 | Errores y reintentos con sistemas externos | Iteración 2 |
+| CRN-4 | Configuración y secretos | Iteración 2 |
+
+Detalle en [constraints-concerns.md](constraints-concerns.md).
 
 ## Escala del sistema
 
