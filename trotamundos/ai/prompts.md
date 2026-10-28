@@ -1,7 +1,47 @@
-# Prompts usados
+# Uso de IA en el trabajo
 
-Adaptación del flujo del paper "Better Together" a los nombres de archivo de este repo. Sirve de plantilla y de
-**registro**: cada vez que se use IA para producir un artefacto, se agrega una fila a la tabla de abajo.
+Este archivo explica cómo se usó la IA para producir la arquitectura de Trotamundos: con qué contexto, con qué
+prompts y, sobre todo, qué controles humanos se aplicaron. El flujo parte del paper "Better Together" adjunto al TPE,
+adaptado a los nombres de archivo de este repo. Los aportes de cada integrante se registran en el
+[TEAM-LOG](../TEAM-LOG.md).
+
+## Cómo se trabajó
+
+La IA se usó como asistente del proceso ADD, no como quien decide. Cada iteración siguió los mismos pasos:
+
+1. **Contexto fijo.** La IA recibió la [persona de arquitecto](architect-persona.md), el proceso ADD y los drivers
+   del repositorio (ver la tabla de abajo). Así, sus propuestas respetan las restricciones técnicas y no usan el
+   plazo del TPE ni el tamaño del grupo como criterio de diseño.
+2. **Alternativas en lugar de respuestas.** Para cada problema de la iteración, la IA planteó qué había que resolver
+   y entre dos y cuatro alternativas, con sus ventajas, desventajas y los drivers que afectan. No se usaron matrices
+   de decisión.
+3. **Decisión humana.** El integrante responsable de la iteración eligió la alternativa que mejor se adecuaba a los
+   drivers, o pidió más explicación antes de elegir. Las decisiones críticas siempre las tomó una persona, porque el
+   paper mostró que los modelos cambian de opinión entre corridas.
+4. **Redacción.** Con las decisiones tomadas, la IA redactó los pasos 2 a 7 de ADD, las ADRs en formato MADR, los
+   contratos en `specs/` y las vistas. Las cifras que la IA no podía justificar con el enunciado quedaron marcadas
+   como suposiciones, indicando de qué dato parten.
+5. **Auditoría independiente.** Un segundo agente de IA, en un contexto aparte y sin la conversación en la que se
+   tomaron las decisiones, auditó la iteración como lo haría un profesor: coherencia entre ADRs, vistas y
+   contratos; drivers mal cubiertos; tácticas mal nombradas; suposiciones sin marcar. Se le indicó que las
+   decisiones elegidas tienen trade-offs y que no debía juzgar cuál era "la mejor", sino si estaban bien aplicadas.
+6. **Decisiones sobre los hallazgos.** Los hallazgos que cambiaban el comportamiento del sistema volvieron al
+   integrante para que eligiera cómo resolverlos. Los errores de coherencia se corrigieron directamente.
+7. **Revisión cruzada.** El otro integrante revisó la iteración en el pull request. Sus observaciones se evaluaron,
+   se aplicaron las que correspondían y se registraron a su nombre en el TEAM-LOG.
+8. **Verificación.** Antes de cada commit se validaron los contratos (sintaxis, referencias y esquemas), los links
+   y el render de los diagramas Mermaid. Validar los contratos no demuestra el comportamiento del sistema: nada se
+   marca como probado ni aprobado sin evidencia real.
+
+## Uso por etapa
+
+| Etapa | Responsable | Herramienta | Uso de la IA | Controles humanos |
+|---|---|---|---|---|
+| Requisitos (`docs/00-requirements/`) | Tadeo Brun | Claude, con la skill `/test-qas` | Revisión de los escenarios de calidad con el template SEI de 6 partes y revisión de coherencia entre QA, restricciones y requerimientos funcionales | Cada cambio de estado y de contenido lo confirmó el integrante |
+| Iteración 1 — Estructura general | Ambos; revisión de Tadeo Brun | Asistente de IA con la persona de arquitecto | Primera versión de los pasos de ADD y de las ADRs 0001 a 0004; después, auditoría en rol de profesor que llevó a marcar arquitectura de referencia, patrones y tácticas, a quitar la matriz de decisión y a eliminar una ADR | Las decisiones de la revisión las tomó Tadeo Brun |
+| Iteración 2 — Ingesta | Tomas Lateana | ChatGPT/Codex | Redacción por pasos de la iteración, las ADRs 0020 a 0028, las vistas de ingesta y los contratos; consulta de documentación oficial (Gmail, Microsoft Graph, RabbitMQ, SEI) | Revisión cruzada de Tadeo Brun (asistida por Claude); correcciones aplicadas por Tomas Lateana |
+| Iteración 3 — Consulta y escala | Tadeo Brun | Claude | Alternativas para cada decisión, redacción de pasos, ADRs 0040 a 0048, API de itinerarios y vistas; auditoría independiente en un contexto aparte | Decisiones elegidas por Tadeo Brun y confirmadas con Tomas Lateana; revisión cruzada de Tomas Lateana |
+| Iteración 4 — Seguridad y evolución | Ambos; decisiones de Tadeo Brun | Claude | Alternativas para cada decisión, redacción de pasos, ADRs 0060 a 0067, contratos y vistas; auditoría independiente en un contexto aparte | Decisiones sobre los hallazgos de la auditoría tomadas por Tadeo Brun; revisión cruzada de Tomas Lateana en el PR |
 
 ## Archivos que se le dan a la IA como contexto
 
@@ -12,8 +52,12 @@ Adaptación del flujo del paper "Better Together" a los nombres de archivo de es
 | `docs/00-requirements/architectural-drivers.md` y los archivos que enlaza | Entradas priorizadas |
 | `docs/architecture.md` | Documento central que se va modificando |
 | `docs/01-add/iteration-plan.md` | Plan acordado |
+| `docs/01-add/impact-log.md` | Acuerdos entre iteraciones |
 
 ## Prompts
+
+Los prompts 1 a 5 son los del paper, adaptados al repo. Los prompts 6 y 7 resumen el modo de trabajo que se usó en
+las iteraciones.
 
 **1. Revisar entradas**
 
@@ -54,44 +98,34 @@ Redactá una ADR en formato MADR, usando docs/03-adr/adr-template.md, para la de
 Incluí al menos dos alternativas descartadas con sus pros y contras y la trazabilidad a los drivers.
 ```
 
+**6. Decidir por alternativas**
+
+```
+Para la iteración N, decime qué hay que evaluar y resolver. Para cada punto, dame entre dos y cuatro
+alternativas que se ajusten al problema, con sus ventajas, desventajas y los drivers que afectan. Yo elijo la
+opción; no tomes decisiones por tu cuenta. Marcá como suposición todo dato que no salga del enunciado o de los QA.
+```
+
+**7. Auditoría independiente**
+
+```
+Sos un auditor de arquitectura (rol: profesor que corrige un trabajo práctico). Solo lectura: no modifiques
+archivos. Revisá la iteración N en la rama <rama> contra el enunciado, los requisitos y las iteraciones
+anteriores. Las decisiones ya están tomadas y tienen trade-offs: no juzgues si son las mejores, sino si están
+bien aplicadas. Buscá contradicciones entre ADRs, vistas y contratos; drivers mal cubiertos; tácticas mal
+nombradas según Bass (4ta ed.); suposiciones sin marcar; documentos desactualizados. Ordená los hallazgos por
+gravedad e indicá si cada uno es un error o una decisión discutible.
+```
+
 ## Reglas de uso
 
-1. **Una persona revisa todo lo que produce la IA** antes de abrir el PR. En el paper, los modelos cambiaron de
-   opinión entre corridas en decisiones críticas (monolito modular o microservicios), así que esas las decide una
-   persona.
-2. Se corrige a mano lo que esté mal y se anota abajo qué se cambió.
-3. Los números inventados por la IA se tratan como suposiciones hasta validarlos.
-
-## Registro
-
-| Fecha | Quién | Prompt (número o texto) | Artefacto generado | Qué se corrigió a mano |
-|---|---|---|---|---|
-|  |  |  |  |  |
-
-## Registro de preparación — iteración 2
-
-| Fecha | Herramienta | Solicitud resumida | Artefactos | Revisión humana |
-|---|---|---|---|---|
-| 2026-10-27 | ChatGPT/Codex | Continuar por pasos la iteración 2 y documentar vistas/ADRs (paso 6) | Iteración, vistas de ingesta, ADR-0020 a 0024 y contrato propuesto | Revisión cruzada y paso 7 pendientes |
-
-Base inicial: `a5cf3ca379324426b493cee10a78953ab0a7ab30`; actualizada antes del PR a
-`5e3c0c377280046e934fad1d1e13c0d31711c5c5` para conservar la primera iteración publicada por el otro integrante.
-Se refinó el contrato con región de origen, clave de negocio y orden por reserva. No se atribuyen pruebas o
-aprobaciones inexistentes.
-
-## Alineación asistida de la iteración 2
-
-2026-10-27: ChatGPT/Codex prepara correcciones de integración solicitadas por Tomas tras revisar las correcciones
-de la primera iteración. Script local con respaldo; no se registran aprobación conjunta, pruebas de sistema ni
-publicación en GitHub. Revisar el diff y documentar los aportes humanos reales antes de integrar.
-
-## Preparación asistida del cierre de diseño
-
-2026-10-27: solicitud de completar iteración 2; ChatGPT/Codex consulta documentación oficial de RabbitMQ/Kafka, redacta decisiones/políticas y evalúa escenarios sin ejecutar sistema. No atribuye aprobación o pruebas a los integrantes.
-
-## 2026-10-28 — Preparación de correcciones de revisión de iteración 2
-
-Solicitud de Tomas: analizar las correcciones de Tadeo para PR #4 y preparar una aplicación rápida.
-Asistencia: revisión de avisos y coste de sondeo, ADR-0025 a 0027, patrones y tácticas, asistencia saliente del núcleo,
-vistas, índice e impactos. Fuentes primarias: Gmail, Microsoft Graph, RabbitMQ y SEI. Se mantiene explícito el
-conflicto de QA-1 ante avisos perdidos con reconciliación lenta. Revisión humana y ejecución del prototipo pendientes.
+1. **Las decisiones de arquitectura las toma una persona.** La IA propone alternativas y redacta; el integrante
+   responsable elige.
+2. **Todo lo que produce la IA lo revisa una persona** antes del pull request, y el otro integrante lo revisa en el
+   pull request.
+3. **Cada iteración pasa por una auditoría independiente**, en un contexto aparte, antes de la revisión cruzada.
+4. **Los números que la IA no puede justificar son suposiciones** hasta validarlos, y se marcan como tales con su
+   origen.
+5. **No se atribuyen a los integrantes pruebas, mediciones ni aprobaciones que no ocurrieron.** El estado de cada
+   documento dice qué está diseñado, qué está revisado y qué falta validar.
+6. **Los aportes se registran a nombre de quien los hizo** en el TEAM-LOG, incluidas las revisiones cruzadas.
