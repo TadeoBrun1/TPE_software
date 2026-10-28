@@ -17,8 +17,8 @@ reparten los datos entre ellas y cómo se tolera la falla de una parte de la inf
 
 ## Decision Drivers
 
-* QA-10 (parte multirregión): el sistema debe poder operar en varias regiones y atender al usuario desde una región
-  cercana. Es un requisito explícito del enunciado.
+* QA-10 (parte multirregión): el sistema debe poder operar en varias regiones y atender a cada usuario desde su
+  región de origen, cumpliendo QA-2 y QA-3 aunque esté de viaje. Es un requisito explícito del enunciado.
 * QA-4 Disponibilidad: la falla de una instancia o de una zona no debe interrumpir el servicio (estímulo del
   escenario), dentro de un presupuesto de 5 minutos por mes.
 * CON-3 (**suposición**): los datos personales se guardan según la normativa de la región del usuario. Si se

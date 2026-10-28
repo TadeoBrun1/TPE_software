@@ -1,7 +1,7 @@
 # Árbol de utilidad
 
 **Qué es:** escenarios de calidad organizados por atributo y refinamiento, con (Importancia, Dificultad).
-**Mantiene:** ambos. **Estado:** BORRADOR. Regenerar con `/arbol-utilidad` cuando los QAs estén auditados.
+**Mantiene:** ambos. **Estado:** COMPLETADO (coincide con los escenarios revisados con `/test-QAs`).
 
 Las prioridades de esta tabla son **propuestas a validar** (ningún stakeholder las confirmó todavía).
 
@@ -18,7 +18,7 @@ Las prioridades de esta tabla son **propuestas a validar** (ningún stakeholder 
 | QA-8 | Seguridad | Acceso a correos | 100 % de accesos con credenciales autorizadas | (H, M) |
 | QA-7 | Seguridad | Itinerarios compartidos | 100 % de accesos no designados rechazados | (M, M) |
 | QA-9 | Evolucionabilidad | Nuevos medios de transporte | Agregar un medio en 10 días-persona o menos | (M, M) |
-| QA-10 | Usabilidad / i18n | Multirregión e idiomas | Idioma y formato del usuario, atendido desde una región cercana | (M, H) |
+| QA-10 | Usabilidad / i18n | Multirregión e idiomas | Idioma y formato del usuario; QA-2 y QA-3 también fuera de su región | (M, H) |
 
 ## Árbol
 
@@ -33,7 +33,7 @@ flowchart TD
     U --> X["Usabilidad e i18n"]
 
     D --> D1["Recuperación ante fallas"]
-    D1 --> QA4["QA-4 5 min por mes (H, H)"]
+    D1 --> QA4["QA-4 Detección 30 s, máx. 5 min/mes (H, H)"]
     S --> S1["Picos por disrupciones"]
     S1 --> QA5["QA-5 Pico 5x (H, H)"]
     P --> P1["Frescura de actualizaciones"]
@@ -51,10 +51,13 @@ flowchart TD
     E --> E1["Nuevos medios de transporte"]
     E1 --> QA9["QA-9 10 días-persona (M, M)"]
     X --> X1["Multirregión e idiomas"]
-    X1 --> QA10["QA-10 Idioma, formato y región cercana (M, H)"]
+    X1 --> QA10["QA-10 Idioma, formato y región (M, H)"]
 ```
 
-## Drivers (H, H)
+## Escenarios más críticos (H, H)
+
+Son los de mayor importancia y dificultad. Los drivers principales son todos los de importancia alta (H), incluidos
+los (H, M); ver [architectural-drivers.md](architectural-drivers.md).
 
 - **QA-4 Disponibilidad:** 5 minutos por mes es muy exigente y el sistema es global.
 - **QA-5 Escalabilidad:** la carga tiene picos fuertes e impredecibles, y el sistema debe seguir cumpliendo la latencia.
@@ -62,6 +65,7 @@ flowchart TD
 
 ## Observaciones
 
-- QA-3 y QA-10 tienen valor medio con dificultad media o alta: revisar su peso antes de invertir mucho esfuerzo (la
-  skill sugiere hacerlo con (M, H)).
-- Tres escenarios (H, H) alcanzan para guiar las iteraciones sin que el sistema parezca inviable.
+- QA-10 es (M, H): importancia media y dificultad alta. Su parte multirregión se atiende igual en la iteración 1
+  porque condiciona la estructura de despliegue; la parte de idiomas y formatos queda para la iteración 4.
+- QA-3 (M, M) se atiende en la iteración 3 junto con QA-2.
+- Las prioridades son una propuesta del equipo: ningún stakeholder las confirmó.
