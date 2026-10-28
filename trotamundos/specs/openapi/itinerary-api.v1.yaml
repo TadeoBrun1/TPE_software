@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: API de itinerarios de Trotamundos
+  version: 0.1.0
+  description: >
+    Contrato propuesto de la iteración 3 (consulta y gestión de viajes). Lo produce el núcleo y lo consumen la
+    aplicación web y la app móvil a través de la puerta de entrada regional (ADR-0004).
+    ADRs relacionadas: ADR-0040 (modelo de lectura del panel), ADR-0041 (caché local y notificador),
+    ADR-0043 (límites y prioridades), ADR-0044 (aplicación de novedades y edición manual),
+    ADR-0045 (archivado). La autenticación del viajero se decide en la iteración 4; aquí se modela como
+    bearerAuth genérico.
+servers:
+  - url: https://{region}.api.trotamundos.example/v1
+    variables:
+      region:
+        default: sa-east
+        description: Región de origen del usuario; la entrada global elige el servidor (ADR-0003).
+security:
+  - bearerAuth: []
+paths:
+  /panel:
+    get:
+      summary: Panel de viajes activos del usuario autenticado
+      description: >
+        Lectura por clave del documento panel_por_usuario (ADR-0040). El ETag es la versión del panel; con
+        If-None-Match vigente responde 304 sin cuerpo (ADR-0041). Prioridad alta ante sobrecarga (ADR-0043).
+      operationId: getPanel
+      parameters:
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: Panel actual
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Panel"
+        "304":
+          description: El panel no cambió desde la versión indicada
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /panel/events:
+    get:
+      summary: Avisos de cambio del panel (Server-Sent Events)
+      description: >
+        Conexión SSE servida por el notificador (ADR-0041). Cada evento informa solo la nueva versión del panel;
+        el cliente pide luego GET /panel. No transporta datos de reservas.
+      operationId: streamPanelChanges
+      responses:
+        "200":
+          description: Flujo de eventos `panel-changed` con cuerpo {"panelVersion":<entero>}
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /trips/archived:
+    get:
+      summary: Viajes anteriores (archivados) del usuario
+      description: Viajes archivados en el último año (ADR-0045). Prioridad baja ante sobrecarga (ADR-0043).
+      operationId: listArchivedTrips
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        "200":
+          description: Página de viajes archivados
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [trips]
+                properties:
+                  trips:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Trip"
+                  nextCursor:
+                    type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /bookings:
+    post:
+      summary: Agregar una reserva manualmente (RF-04)
+      description: >
+        Si no se indica tripId, el núcleo la asigna por fechas o crea un viaje nuevo (ADR-0044).
+      operationId: createBooking
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Reserva creada
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+  /bookings/{bookingId}:
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      summary: Editar una reserva (RF-04)
+      description: >
+        Los campos editados por el usuario quedan marcados. Las novedades externas posteriores pueden cambiar los
+        campos del proveedor (y se avisa al usuario); los campos del usuario se conservan (ADR-0044).
+        If-Match con la versión de la reserva evita pisar un cambio concurrente.
+      operationId: updateBooking
+      parameters:
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingPatch"
+      responses:
+        "200":
+          description: Reserva actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          description: La reserva cambió desde la versión indicada
+        "503":
+          $ref: "#/components/responses/Overloaded"
+    delete:
+      summary: Eliminar una reserva (RF-04)
+      operationId: deleteBooking
+      responses:
+        "204":
+          description: Reserva eliminada
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      description: Versión del panel que el cliente tiene en caché
+      schema:
+        type: string
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Evita crear dos veces la misma reserva si el cliente reintenta
+      schema:
+        type: string
+  headers:
+    ETag:
+      description: Versión del recurso
+      schema:
+        type: string
+    RetryAfter:
+      description: Segundos sugeridos antes de reintentar
+      schema:
+        type: integer
+  responses:
+    BadRequest:
+      description: Datos inválidos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: No autenticado
+    NotFound:
+      description: No existe o no pertenece al usuario
+    TooManyRequests:
+      description: Límite por cliente superado (ADR-0043)
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+    Overloaded:
+      description: Sobrecarga temporal; operación de prioridad media o baja rechazada (ADR-0043)
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+  schemas:
+    Panel:
+      type: object
+      required: [panelVersion, trips]
+      properties:
+        panelVersion:
+          type: integer
+          minimum: 0
+        trips:
+          type: array
+          description: Viajes activos ordenados por fecha de inicio
+          items:
+            $ref: "#/components/schemas/Trip"
+    Trip:
+      type: object
+      required: [id, name, status, bookings]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, archived]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        bookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+    Booking:
+      type: object
+      required: [id, type, status, origin, version]
+      properties:
+        id:
+          type: string
+        tripId:
+          type: string
+        type:
+          type: string
+          enum: [flight, hotel, car, train, bus]
+        status:
+          type: string
+          enum: [confirmed, modified, cancelled, pending]
+        origin:
+          type: string
+          enum: [email, provider, manual]
+        provider:
+          type: string
+        providerReference:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        location:
+          type: string
+        displayName:
+          type: string
+        notes:
+          type: string
+        userEditedFields:
+          type: array
+          description: Campos que el usuario editó (ADR-0044)
+          items:
+            type: string
+        version:
+          type: integer
+          minimum: 1
+    BookingInput:
+      type: object
+      required: [type, startsAt]
+      properties:
+        tripId:
+          type: string
+        type:
+          type: string
+          enum: [flight, hotel, car, train, bus]
+        provider:
+          type: string
+        providerReference:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        location:
+          type: string
+        displayName:
+          type: string
+        notes:
+          type: string
+    BookingPatch:
+      type: object
+      minProperties: 1
+      properties:
+        tripId:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        location:
+          type: string
+        displayName:
+          type: string
+        notes:
+          type: string
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string

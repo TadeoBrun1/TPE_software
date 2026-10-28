@@ -22,6 +22,8 @@ flowchart TD
         COM["comparticion"]
         SUS["suscriptor-novedades"]
         PUB["publicador-eventos"]
+        PAN["panel<br/>(proyector, único escritor)"]
+        RUT["ruteo de particiones"]
         ASI["asistencia saliente"]
         AGE["adaptador de agencia"]
     end
@@ -50,6 +52,10 @@ flowchart TD
     VIA --> PUB
     RES --> PUB
     COM --> VIA
+    RES --> PAN
+    VIA --> PAN
+    API --> PAN
+    API --> RUT
 
     API --> ASI
     ASI --> AGE
@@ -78,8 +84,10 @@ Leyenda: la flecha significa "puede usar".
 | Módulo | Responsabilidad | Directorio en `prototype/` |
 |---|---|---|
 | núcleo/api | Expone la API de itinerarios definida en `specs/openapi/` | `nucleo/api` |
-| núcleo/viajes | Agrupa reservas por viaje; tarea programada que archiva viajes completados (RF-05) | `nucleo/viajes` |
-| núcleo/reservas | Alta, cambio y baja de reservas; reservas pendientes de resolución | `nucleo/reservas` |
+| núcleo/viajes | Agrupa reservas por viaje y asigna las que llegan sin viaje por fechas (ADR-0044); tarea diaria que archiva viajes completos y elimina los archivados al año (ADR-0045) | `nucleo/viajes` |
+| núcleo/reservas | Alta, cambio y baja de reservas; aplica novedades con dueño por campo y registra campos editados por el usuario (ADR-0044); reservas pendientes de resolución | `nucleo/reservas` |
+| núcleo/panel | Proyector: único escritor de `panel_por_usuario`; lo actualiza en la transacción del cambio y lo regenera desde las tablas (ADR-0040) | `nucleo/panel` |
+| núcleo/ruteo-particiones | Calcula la partición de cada usuario y conoce el nodo primario (ADR-0042) | `nucleo/datos` |
 | núcleo/usuarios | Región de origen, idioma, cuentas de correo vinculadas y remitentes permitidos | `nucleo/usuarios` |
 | núcleo/comparticion | Personas designadas por viaje (iteración 4) | `nucleo/comparticion` |
 | núcleo/suscriptor-novedades | Recibe novedades del broker y las pasa a reservas | `nucleo/mensajeria` |
@@ -106,6 +114,8 @@ Leyenda: la flecha significa "puede usar".
 * Los adaptadores de mensajería (publicadores y consumidores) conocen el broker; los módulos de dominio usan puertos.
 * Resolución regional pertenece a entrada global, no al dominio ni al procesador de ingesta.
 * Asistencia invoca su puerto saliente con recursos acotados y no importa código de ingesta.
+* Solo `panel` escribe `panel_por_usuario`; `reservas` y `viajes` le piden la actualización dentro de su transacción (ADR-0040).
+* Ningún módulo abre una transacción que abarque más de una partición (ADR-0042).
 * Los directorios de la tabla son organización propuesta; no afirman código ya implementado.
 
 ## 5. Rationale
@@ -115,6 +125,8 @@ Leyenda: la flecha significa "puede usar".
 | Núcleo modular separado de la ingesta | [0001](../03-adr/0001-nucleo-modular-con-procesos-separados.md) |
 | Adaptador por proveedor y modelo canónico | [0001](../03-adr/0001-nucleo-modular-con-procesos-separados.md) |
 | Comunicación por mensajes con contrato | [0002](../03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) |
+| Proyector del panel como único escritor | [0040](../03-adr/0040-modelo-de-lectura-del-panel.md) |
+| Reglas de aplicación de novedades en `reservas` y `viajes` | [0044](../03-adr/0044-aplicacion-de-novedades-en-el-nucleo.md) |
 
 ## 6. Drivers que sustenta
 
@@ -122,6 +134,7 @@ Leyenda: la flecha significa "puede usar".
 |---|---|
 | QA-9 Evolucionabilidad | Un medio de transporte nuevo se agrega con un adaptador nuevo, sin tocar los existentes (táctica *restringir dependencias*) |
 | RF-05 | El ciclo de vida del viaje vive en un solo módulo del núcleo |
+| QA-2 | Un único escritor mantiene el documento del panel coherente con las tablas |
 
 ## 7. Vistas relacionadas
 

@@ -1,0 +1,115 @@
+---
+status: "proposed"
+date: 2026-10-28
+decision-makers: "Tadeo Brun"
+consulted: ""
+informed: "Tomas Lateana"
+---
+
+# Archivado diario por partición y eliminación de viajes archivados después de un año
+
+## Context and Problem Statement
+
+RF-05 pide que, cuando un viaje se completa, sus elementos se archiven o eliminen automáticamente de la vista
+principal. Hay que decidir cuándo un viaje está completo, qué pasa con él y qué mecanismo lo hace.
+
+## Decision Drivers
+
+* RF-05 Ciclo de vida del viaje, de forma automática.
+* QA-2: mantener acotado el documento del panel (ADR-0040).
+* CON-3 (suposición): minimizar los datos personales que se guardan.
+* QA-5: que el proceso no compita con el tráfico de los viajeros.
+
+## Considered Options
+
+Cuándo y qué:
+
+* A1. Completo a la fecha de su última reserva más 2 días; se archiva y se conserva
+* A2. Igual que A1, y los viajes archivados se eliminan después de un plazo
+* A3. El usuario marca el viaje como completo
+
+Mecanismo:
+
+* B1. Tarea programada diaria por partición
+* B2. Temporizador por viaje (mensaje diferido a la fecha de fin)
+* B3. Ocultar los viajes vencidos al armar el panel, sin proceso en segundo plano
+
+## Decision Outcome
+
+Chosen options: "A2. Archivar y eliminar después de un plazo" y "B1. Tarea programada diaria por partición", because
+cumple RF-05 sin intervención del usuario, mantiene el panel chico, limita los datos personales guardados y usa las
+mismas transacciones que cualquier otro cambio del núcleo.
+
+Reglas:
+
+* Un viaje está **completo** cuando pasó la fecha de su última reserva más **2 días** (margen para demoras y vuelos
+  de vuelta tardíos).
+* **Archivar:** el viaje pasa a estado `archivado`, sale de `panel_por_usuario` y queda consultable en "viajes
+  anteriores". Si después llega una novedad (por ejemplo, un reembolso), se aplica igual sobre el viaje archivado.
+* **Eliminar:** los viajes archivados se eliminan definitivamente **1 año** después de archivados, con sus reservas.
+  El plazo es una suposición del equipo (el enunciado no lo fija).
+* **Mecanismo:** una vez por día, en el horario de menor carga de la región, cada partición busca en lotes los viajes
+  completos y los archiva; la misma tarea elimina los archivados vencidos. Cada viaje se procesa en una transacción
+  que actualiza el estado, el panel (ADR-0040) y publica `trip.changed.v1` con el tipo `archived` o `deleted` en la
+  outbox (ADR-0027).
+* La tarea es idempotente: si se corta a mitad, la siguiente ejecución retoma.
+* Los eventos ya enviados a la analítica no se eliminan con el viaje; cómo se anonimizan es tema de la iteración 4.
+
+Patrones y tácticas que aplica:
+
+| Patrón o táctica | Cómo se aplica | Driver |
+|---|---|---|
+| Patrón *Scheduler Agent* / tarea por lotes | Tarea diaria por partición | RF-05 |
+| Táctica *programar recursos* (performance) | Se ejecuta en el horario de menor carga | QA-5 |
+| Táctica *reducir la sobrecarga computacional* (performance) | El panel solo contiene viajes activos | QA-2 |
+| Táctica *limitar la exposición* (seguridad) | Menos datos personales guardados: eliminación al año | CON-3 |
+
+### Consequences
+
+* Good, because es automático y reversible durante el año de archivo.
+* Good, because el panel queda chico y la lectura sigue siendo barata.
+* Good, because los datos personales no se acumulan indefinidamente.
+* Bad, because un viaje puede tardar hasta un día en archivarse después de completarse.
+* Bad, because el usuario pierde su historial después de un año.
+
+### Confirmation
+
+Prototipo: con una fecha simulada, la tarea archiva un viaje vencido (sale del panel y publica el evento), no toca
+uno activo, y elimina un archivado de más de un año. Ejecutarla dos veces seguidas no produce cambios en la segunda.
+
+## Pros and Cons of the Options
+
+### A1. Archivar y conservar
+
+* Good, because el usuario conserva todo su historial.
+* Bad, because los datos personales se acumulan sin límite (CON-3).
+
+### A3. Lo marca el usuario
+
+* Good, because nunca se equivoca.
+* Bad, because el enunciado pide que sea automático.
+
+### B2. Temporizador por viaje
+
+* Good, because archiva justo a tiempo.
+* Bad, because hay que reprogramar el temporizador cada vez que cambian las fechas del viaje, y millones de mensajes
+  diferidos ocupan el broker.
+
+### B3. Ocultar al leer
+
+* Good, because no necesita procesos en segundo plano.
+* Bad, because el documento del panel crece sin límite y la lectura deja de ser trivial (QA-2); además nunca se
+  eliminan datos.
+
+## More Information
+
+### Trazabilidad
+
+| Elemento | Enlace |
+|---|---|
+| Iteración ADD | 3, [iteration-3-query-scale](../01-add/iteration-3-query-scale.md) |
+| Drivers | RF-05, QA-2, QA-5, CON-3 |
+| Vistas afectadas | [module-view](../02-views/module-view.md), [domain-model](../02-views/domain-model.md) |
+| Specs | [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml) |
+| ADRs relacionadas | [0027](0027-publicacion-del-nucleo.md), [0040](0040-modelo-de-lectura-del-panel.md), [0042](0042-particion-de-la-base-por-usuario.md) |
+| Código del prototipo | `prototype/` |

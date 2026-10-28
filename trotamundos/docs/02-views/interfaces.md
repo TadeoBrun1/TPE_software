@@ -3,13 +3,14 @@
 **Qué es:** resumen de los contratos del sistema. La fuente de verdad de cada contrato está en [`specs/`](../../specs/);
 acá se explica quién usa cada uno y para qué.
 **Mantiene:** quien posee el contrato.
-**Estado:** contratos de iteración 2 propuestos; API de consulta pendiente de iteración 3
+**Estado:** contratos de las iteraciones 2 y 3 propuestos
 
 | Contrato | Tipo | Archivo | Productor | Consumidores | Iteración | ADR |
 |---|---|---|---|---|---|---|
-| API de consulta de itinerarios | REST | `specs/openapi/itinerary-api.v1.yaml` | Servicio de consulta | Web, móvil | 3 | |
+| API de itinerarios (panel, avisos SSE, viajes archivados, gestión manual) | REST y SSE | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) | Núcleo (SSE: notificador) | Web, móvil | 3 | 0040, 0041, 0043, 0044, 0045 |
 | Novedad de reserva detectada (propuesta) | Evento | [booking-change-detected.v1.yaml](../../specs/asyncapi/booking-change-detected.v1.yaml) | Ingesta | Consumidor del núcleo | 2 | 0020–0024 |
-| Cambio confirmado de reserva | Evento | [booking-confirmed.v1.yaml](../../specs/asyncapi/booking-confirmed.v1.yaml) | Núcleo | Analítica | 2, implementación 3/4 | 0027 |
+| Cambio confirmado de reserva | Evento | [booking-confirmed.v1.yaml](../../specs/asyncapi/booking-confirmed.v1.yaml) | Núcleo | Analítica, notificador | 2, implementación 3/4 | 0027, 0041 |
+| Cambio confirmado de viaje | Evento | [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml) | Núcleo | Notificador, analítica | 3 | 0041, 0045 |
 
 ## Reglas
 

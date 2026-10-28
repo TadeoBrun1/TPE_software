@@ -145,7 +145,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 |---|---|---|
 | Novedades de reservas (ingesta → núcleo) | `specs/asyncapi/` (a crear a partir de `booking-events.example.yaml`) | Nuevo: modelo canónico de reserva con versión de esquema. La clave de idempotencia se agrega en la iteración 2 |
 | Eventos de dominio (núcleo → consumidores) | `specs/asyncapi/` (a crear) | Nuevo |
-| API de itinerarios (clientes → puerta de entrada → núcleo) | `specs/openapi/itinerary-api.example.yaml` | Sin cambios; se refina en la iteración 3 |
+| API de itinerarios (clientes → puerta de entrada → núcleo) | `specs/openapi/itinerary-api.example.yaml` (reemplazado en la iteración 3 por `itinerary-api.v1.yaml`) | Sin cambios; se refina en la iteración 3 |
 
 ## Paso 6 — Vistas actualizadas y ADRs creadas
 
