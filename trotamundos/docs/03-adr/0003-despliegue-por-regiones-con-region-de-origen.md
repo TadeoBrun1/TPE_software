@@ -55,9 +55,9 @@ Patrones y tácticas que aplica:
 | Patrón o táctica | Cómo se aplica | Driver |
 |---|---|---|
 | Patrón de despliegue por celdas (*Deployment Stamps*, Azure Architecture Center) | Cada región es una copia completa e independiente del sistema que atiende a un subconjunto de usuarios | QA-10, QA-4 |
-| Táctica *redundancia activa* (disponibilidad) | Instancias en varias zonas atendiendo tráfico al mismo tiempo | QA-4 |
-| Táctica *monitoreo / heartbeat* (disponibilidad) | El balanceador detecta instancias o zonas que no responden y deja de enviarles tráfico | QA-4 |
-| Táctica *redundancia pasiva* (disponibilidad) | Réplica sincrónica de la base en otra zona, que toma el control si falla la primaria | QA-4 |
+| Táctica *redundant spare* (disponibilidad), con todas las instancias activas | Instancias en varias zonas atendiendo tráfico al mismo tiempo | QA-4 |
+| Tácticas *ping/echo* y *monitor* (disponibilidad) | El balanceador detecta instancias o zonas que no responden y deja de enviarles tráfico | QA-4 |
+| Táctica *redundant spare* (disponibilidad), patrón *active redundancy* (*hot spare*) | Réplica sincrónica de la base en otra zona, que toma el control si falla la primaria | QA-4 |
 | Partición de datos por usuario (*sharding*) | La región de origen es parte de la clave de partición | QA-10, CON-3 |
 
 Queda sin resolver, y se trata en otras iteraciones:

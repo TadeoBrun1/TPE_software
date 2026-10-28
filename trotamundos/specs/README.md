@@ -58,4 +58,5 @@ datos son suficientes. RabbitMQ y políticas definidos en ADR-0028; pruebas del 
 
 * [API de itinerarios v1](openapi/itinerary-api.v1.yaml): panel con `ETag`, avisos SSE, viajes archivados y gestión
   manual. Reemplaza al ejemplo de formato `itinerary-api.example.yaml`.
-* [Cambios confirmados de viajes](asyncapi/trip-changed.v1.yaml): lo consumen el notificador y la analítica.
+* [Cambios confirmados de viajes](asyncapi/trip-changed.v1.yaml): lo consume la analítica (iteración 4).
+* [Avisos de cambio del panel](asyncapi/panel-changed.v1.yaml): lo consume solo el notificador (ADR-0046).

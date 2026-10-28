@@ -20,7 +20,7 @@ el panel para cumplir los 800 ms de QA-2 de forma estable.
 
 * QA-2 Latencia web: el 95 % de las solicitudes del panel en 800 ms o menos.
 * QA-5 Escalabilidad: la latencia debe mantenerse en los picos, cuando además llegan muchas novedades.
-* Coherencia: el viajero no debe ver un panel que contradiga un cambio que ya se confirmó.
+* RF-04 Gestión manual: el viajero que cambia una reserva tiene que ver su cambio al recargar el panel (coherencia).
 * QA-1: el panel no debe consumir parte de los 5 minutos de frescura.
 
 ## Considered Options
@@ -49,7 +49,7 @@ Reglas:
 * **Reconstruible:** las tablas normalizadas son la fuente de verdad. El panel de un usuario se puede regenerar desde
   cero en cualquier momento (por ejemplo, ante un error o un cambio de formato).
 * **Versionado:** el documento guarda la versión del último cambio aplicado. Se usa para detectar desvíos y como
-  `ETag` de la API (ADR-0041).
+  `ETag` de la API (ADR-0041) y en el aviso al cliente (ADR-0046).
 * Los viajes archivados no están en el documento (ADR-0045), así que su tamaño queda acotado.
 
 Patrones y tácticas que aplica:
@@ -118,8 +118,8 @@ Patrones y tácticas que aplica:
 | Elemento | Enlace |
 |---|---|
 | Iteración ADD | 3, [iteration-3-query-scale](../01-add/iteration-3-query-scale.md) |
-| Drivers | QA-2, QA-5, QA-1 |
+| Drivers | QA-2, QA-5, QA-1, RF-04 |
 | Vistas afectadas | [module-view](../02-views/module-view.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
-| ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0027](0027-publicacion-del-nucleo.md), [0041](0041-cache-local-y-notificador.md), [0042](0042-particion-de-la-base-por-usuario.md), [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md) |
+| ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0027](0027-publicacion-del-nucleo.md), [0041](0041-cache-local-del-panel.md), [0046](0046-notificador-de-cambios-del-panel.md), [0042](0042-particion-de-la-base-por-usuario.md), [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md) |
 | Código del prototipo | `prototype/` |

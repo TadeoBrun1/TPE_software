@@ -43,3 +43,5 @@ Anotar acá cualquier cambio con fecha y razón.
 | 2026-10-27 | Se quita el cronograma | El plazo del TPE no es criterio de diseño; el avance se sigue en el TEAM-LOG |
 | 2026-10-28 | La iteración 3 incluye la aplicación de novedades en el núcleo | El consumidor de novedades y RF-04 viven en el núcleo, que refina esta iteración |
 | 2026-10-28 | QA-1 a escala (avisos perdidos) se registra como riesgo aceptado; candidato para la iteración 5 | Decisión de alcance de la iteración 3 |
+| 2026-10-28 | Se agrega CON-5 (startup con recursos limitados) como suposición | La auditoría de la iteración 3 marcó que el argumento de costo de ADR-0043 no estaba en los requerimientos |
+| 2026-10-28 | Se corrigen los nombres de tácticas de disponibilidad en las iteraciones 1 y 3 según Bass, 4ta edición (*redundant spare*, *ping/echo*) | Auditoría de la iteración 3 |

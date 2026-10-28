@@ -50,6 +50,7 @@ Escenarios completos en [quality-attribute-scenarios.md](quality-attribute-scena
 | CON-2 | Sistemas externos que no se pueden modificar | Confirmada |
 | CON-3 | Datos personales según la normativa de cada región | Suposición a validar |
 | CON-4 | El cliente móvil aprovecha capacidades nativas (GPS) | Confirmada |
+| CON-5 | Startup con recursos limitados: sin capacidad ociosa sin evidencia de uso | Suposición a validar |
 | CRN-1 | Estructura general del sistema | Iteración 1 |
 | CRN-2 | Logging, monitoreo y trazas | Iteración 4 |
 | CRN-3 | Errores y reintentos con sistemas externos | Iteración 2 |

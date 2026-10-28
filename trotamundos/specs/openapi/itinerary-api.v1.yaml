@@ -5,9 +5,10 @@ info:
   description: >
     Contrato propuesto de la iteración 3 (consulta y gestión de viajes). Lo produce el núcleo y lo consumen la
     aplicación web y la app móvil a través de la puerta de entrada regional (ADR-0004).
-    ADRs relacionadas: ADR-0040 (modelo de lectura del panel), ADR-0041 (caché local y notificador),
-    ADR-0043 (límites y prioridades), ADR-0044 (aplicación de novedades y edición manual),
-    ADR-0045 (archivado). La autenticación del viajero se decide en la iteración 4; aquí se modela como
+    ADRs relacionadas: ADR-0040 (modelo de lectura del panel), ADR-0041 (caché local), ADR-0046 (notificador),
+    ADR-0047 (límites y prioridades), ADR-0044 (novedades y cambios manuales), ADR-0048 (asignación a viajes),
+    ADR-0045 (archivado y reactivación). Respuestas ante carga: 429 = el cliente superó su límite;
+    503 con Retry-After = sobrecarga, operación de prioridad media o baja rechazada. La autenticación del viajero se decide en la iteración 4; aquí se modela como
     bearerAuth genérico.
 servers:
   - url: https://{region}.api.trotamundos.example/v1
@@ -23,7 +24,7 @@ paths:
       summary: Panel de viajes activos del usuario autenticado
       description: >
         Lectura por clave del documento panel_por_usuario (ADR-0040). El ETag es la versión del panel; con
-        If-None-Match vigente responde 304 sin cuerpo (ADR-0041). Prioridad alta ante sobrecarga (ADR-0043).
+        If-None-Match vigente responde 304 sin cuerpo (ADR-0041). Prioridad alta ante sobrecarga (ADR-0047).
       operationId: getPanel
       parameters:
         - $ref: "#/components/parameters/IfNoneMatch"
@@ -50,7 +51,7 @@ paths:
     get:
       summary: Avisos de cambio del panel (Server-Sent Events)
       description: >
-        Conexión SSE servida por el notificador (ADR-0041). Cada evento informa solo la nueva versión del panel;
+        Conexión SSE servida por el notificador (ADR-0046). Cada evento informa solo la nueva versión del panel;
         el cliente pide luego GET /panel. No transporta datos de reservas.
       operationId: streamPanelChanges
       responses:
@@ -65,7 +66,7 @@ paths:
   /trips/archived:
     get:
       summary: Viajes anteriores (archivados) del usuario
-      description: Viajes archivados en el último año (ADR-0045). Prioridad baja ante sobrecarga (ADR-0043).
+      description: Viajes archivados en el último año (ADR-0045). Prioridad baja ante sobrecarga (ADR-0047).
       operationId: listArchivedTrips
       parameters:
         - name: cursor
@@ -100,11 +101,42 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+  /trips/{tripId}/archive:
+    post:
+      summary: Archivar un viaje a mano
+      description: Saca el viaje del panel antes de que lo haga la tarea diaria (ADR-0045). Prioridad baja.
+      operationId: archiveTrip
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Viaje archivado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: El viaje ya está archivado
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
   /trips/{tripId}/reactivate:
     post:
       summary: Devolver un viaje archivado al panel
       description: >
         Para los casos en que el viaje sigue en curso sin que ningún proveedor lo haya informado (ADR-0045).
+        El viaje no se vuelve a archivar antes de la fecha de reactivación + 7 días. Prioridad baja.
       operationId: reactivateTrip
       parameters:
         - name: tripId
@@ -125,13 +157,15 @@ paths:
           $ref: "#/components/responses/NotFound"
         "409":
           description: El viaje no está archivado
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
         "503":
           $ref: "#/components/responses/Overloaded"
   /bookings:
     post:
       summary: Agregar una reserva manualmente (RF-04)
       description: >
-        Si no se indica tripId, el núcleo la asigna por fechas o crea un viaje nuevo (ADR-0044).
+        Si no se indica tripId, el núcleo la asigna por fechas o crea un viaje nuevo (ADR-0048). Prioridad media.
       operationId: createBooking
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -155,6 +189,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
         "503":
           $ref: "#/components/responses/Overloaded"
   /bookings/{bookingId}:
@@ -169,14 +205,10 @@ paths:
       description: >
         Los campos editados por el usuario quedan marcados. Las novedades externas posteriores pueden cambiar los
         campos del proveedor (y se avisa al usuario); los campos del usuario se conservan (ADR-0044).
-        If-Match con la versión de la reserva evita pisar un cambio concurrente.
+        If-Match con la versión de la reserva evita pisar un cambio concurrente. Prioridad media.
       operationId: updateBooking
       parameters:
-        - name: If-Match
-          in: header
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/IfMatch"
       requestBody:
         required: true
         content:
@@ -198,11 +230,18 @@ paths:
           $ref: "#/components/responses/NotFound"
         "412":
           description: La reserva cambió desde la versión indicada
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
         "503":
           $ref: "#/components/responses/Overloaded"
     delete:
       summary: Eliminar una reserva (RF-04)
+      description: >
+        Si la reserva vino de un proveedor, se guarda una marca de borrado para que las novedades posteriores no la
+        recreen (ADR-0044). Prioridad media.
       operationId: deleteBooking
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
       responses:
         "204":
           description: Reserva eliminada
@@ -210,6 +249,10 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+        "412":
+          description: La reserva cambió desde la versión indicada
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
         "503":
           $ref: "#/components/responses/Overloaded"
 components:
@@ -223,6 +266,13 @@ components:
       in: header
       required: false
       description: Versión del panel que el cliente tiene en caché
+      schema:
+        type: string
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Versión de la reserva que el cliente modifica
       schema:
         type: string
     IdempotencyKey:
@@ -253,19 +303,19 @@ components:
     NotFound:
       description: No existe o no pertenece al usuario
     TooManyRequests:
-      description: Límite por cliente superado (ADR-0043)
+      description: El cliente superó su límite de solicitudes (ADR-0047)
       headers:
         Retry-After:
           $ref: "#/components/headers/RetryAfter"
     Overloaded:
-      description: Sobrecarga temporal; operación de prioridad media o baja rechazada (ADR-0043)
+      description: Sobrecarga temporal; operación de prioridad media o baja rechazada (ADR-0047)
       headers:
         Retry-After:
           $ref: "#/components/headers/RetryAfter"
   schemas:
     Panel:
       type: object
-      required: [panelVersion, trips]
+      required: [panelVersion, trips, unassignedBookings, notices]
       properties:
         panelVersion:
           type: integer
@@ -275,6 +325,33 @@ components:
           description: Viajes activos ordenados por fecha de inicio
           items:
             $ref: "#/components/schemas/Trip"
+        unassignedBookings:
+          type: array
+          description: Reservas sin fechas, pendientes de que el usuario las asigne a un viaje (ADR-0048)
+          items:
+            $ref: "#/components/schemas/Booking"
+        notices:
+          type: array
+          description: Avisos de los últimos 7 días, por ejemplo una novedad que cambió un campo editado (ADR-0044)
+          items:
+            $ref: "#/components/schemas/Notice"
+    Notice:
+      type: object
+      required: [id, type, createdAt]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [provider_overrode_user_edit, booking_cancelled, schedule_changed]
+        bookingId:
+          type: string
+        field:
+          type: string
+          description: Campo afectado, si corresponde
+        createdAt:
+          type: string
+          format: date-time
     Trip:
       type: object
       required: [id, name, status, bookings]
@@ -286,6 +363,10 @@ components:
         status:
           type: string
           enum: [active, archived]
+        reactivatedUntil:
+          type: string
+          format: date
+          description: Si el usuario lo reactivó, no se archiva antes de esta fecha (ADR-0045)
         startDate:
           type: string
           format: date
@@ -331,7 +412,7 @@ components:
           type: string
         userEditedFields:
           type: array
-          description: Campos que el usuario editó (ADR-0044)
+          description: Campos que el usuario editó; las novedades no cambian los campos del usuario (ADR-0044)
           items:
             type: string
         version:

@@ -7,10 +7,11 @@ acá se explica quién usa cada uno y para qué.
 
 | Contrato | Tipo | Archivo | Productor | Consumidores | Iteración | ADR |
 |---|---|---|---|---|---|---|
-| API de itinerarios (panel, avisos SSE, viajes archivados, gestión manual) | REST y SSE | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) | Núcleo (SSE: notificador) | Web, móvil | 3 | 0040, 0041, 0043, 0044, 0045 |
+| API de itinerarios (panel, avisos SSE, viajes archivados, gestión manual) | REST y SSE | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) | Núcleo (SSE: notificador) | Web, móvil | 3 | 0040, 0041, 0044, 0045, 0046, 0047, 0048 |
 | Novedad de reserva detectada (propuesta) | Evento | [booking-change-detected.v1.yaml](../../specs/asyncapi/booking-change-detected.v1.yaml) | Ingesta | Consumidor del núcleo | 2 | 0020–0024 |
-| Cambio confirmado de reserva | Evento | [booking-confirmed.v1.yaml](../../specs/asyncapi/booking-confirmed.v1.yaml) | Núcleo | Analítica, notificador | 2, implementación 3/4 | 0027, 0041 |
-| Cambio confirmado de viaje | Evento | [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml) | Núcleo | Notificador, analítica | 3 | 0041, 0045 |
+| Cambio confirmado de reserva | Evento | [booking-confirmed.v1.yaml](../../specs/asyncapi/booking-confirmed.v1.yaml) | Núcleo | Analítica | 2, implementación 3/4 | 0027 |
+| Cambio confirmado de viaje | Evento | [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml) | Núcleo | Analítica (iteración 4) | 3 | 0045, 0048 |
+| Aviso de cambio del panel | Evento | [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml) | Núcleo | Notificador (cola por instancia y cola de push) | 3 | 0046 |
 
 ## Reglas
 
@@ -23,8 +24,8 @@ acá se explica quién usa cada uno y para qué.
 [Contrato y errores](../../specs/ingestion-contract.md). Los acuerdos se revisan con la iteración 3 antes de
 implementar: novedad detectada no equivale a cambio confirmado. No se exige `tripId`. El núcleo verifica la
 vinculación y decide conciliación/asociación. Los eventos no llevan secretos y deben tolerar reentregas.
-La API de consulta sigue pendiente. El evento confirmado tiene contrato propuesto en ADR-0027; los archivos con
-nombre `example` siguen siendo ejemplos.
+La API de itinerarios se definió en la iteración 3 (`itinerary-api.v1.yaml`). El evento confirmado tiene contrato
+propuesto en ADR-0027; los archivos con nombre `example` que quedan siguen siendo ejemplos.
 
 
 ## Contratos complementarios de la iteración 2

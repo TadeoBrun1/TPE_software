@@ -63,7 +63,7 @@ Patrones y tácticas que aplica:
 |---|---|---|
 | Arquitecturas de referencia de cliente rico, aplicación móvil y aplicación de servicios | Forma general del sistema | CRN-1, CON-4 |
 | Patrón *API Gateway* | Punto único de entrada a la región, con validación y balanceo | QA-4, QA-5 |
-| Táctica *redundancia activa* (disponibilidad) | Varias instancias de la puerta de entrada en varias zonas | QA-4 |
+| Táctica *redundant spare* (disponibilidad), con todas las instancias activas | Varias instancias de la puerta de entrada en varias zonas | QA-4 |
 | Táctica *administrar las solicitudes de trabajo* (performance) | Límite de tráfico por cliente en la puerta de entrada | QA-5 |
 
 ### Consequences

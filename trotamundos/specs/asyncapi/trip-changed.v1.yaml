@@ -4,8 +4,8 @@ info:
   version: 0.1.0
   description: >
     Contrato propuesto de la iteración 3. Lo publica el núcleo desde su outbox (ADR-0027) cuando un viaje se crea,
-    cambia, se archiva o se elimina (ADR-0044, ADR-0045). Lo consumen el notificador (ADR-0041) y la analítica
-    (iteración 4). Transporte: RabbitMQ, exchange travel.domain, routing key trip.changed.v1 (ADR-0028).
+    cambia, se archiva, se reactiva o se elimina (ADR-0045, ADR-0048). Lo consume la analítica (iteración 4).
+    El notificador no lo usa: consume panel.changed.v1 (ADR-0046). Transporte: RabbitMQ, exchange travel.domain, routing key trip.changed.v1 (ADR-0028).
     El evento no lleva datos personales más allá de los identificadores.
 defaultContentType: application/json
 channels:

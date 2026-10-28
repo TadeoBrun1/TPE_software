@@ -13,7 +13,7 @@ Un diagrama por escenario clave. Debajo de cada uno, una descripción de qué re
 | SEQ-1 | Llega un correo de reserva y se agrega al itinerario | RF-01, QA-1 | 2 | Propuesta documentada; evaluación pendiente |
 | SEQ-2 | Un tercero informa una cancelación | RF-03, QA-6 | 2 | Propuesta documentada; evaluación pendiente |
 | SEQ-3 | El viajero abre el panel y recibe un cambio | QA-2, QA-3, QA-1 | 3 | Propuesta |
-| SEQ-4 | Falla la primaria de una partición | QA-4 | 3 | Propuesta |
+| SEQ-4 | Falla la primaria de un nodo de la base | QA-4 | 3 | Propuesta |
 | SEQ-5 | Se comparte un itinerario con otra persona | QA-7 | 4 | Pendiente |
 | SEQ-6 | Una novedad pisa un campo editado por el usuario | RF-04, QA-6 | 3 | Propuesta |
 
@@ -45,30 +45,33 @@ sequenceDiagram
     Note over N,DB: Más tarde se aplica una novedad
     N->>DB: Transacción con reserva, panel versión 43 y outbox
     N->>B: Publica el evento de la outbox
-    B->>NT: booking.changed.v1 del usuario
+    B->>NT: panel.changed.v1 (llega a todas las instancias)
+    NT->>NT: La instancia con la conexión del usuario avisa, las demás descartan
     NT-->>App: panel-changed, versión 43
     App->>G: GET /panel con If-None-Match 42
     N-->>App: 200 con el panel versión 43
 ```
 
 **Qué representa:** la app muestra contenido sin esperar la red (QA-3), la lectura es por clave (QA-2) y un cambio
-llega a la pantalla sin consultas periódicas (etapa de cliente de QA-1). ADR-0040 y ADR-0041.
+llega a la pantalla sin consultas periódicas (etapa de cliente de QA-1). ADR-0040, ADR-0041 y ADR-0046.
 
-## SEQ-4 — Falla la primaria de una partición
+## SEQ-4 — Falla la primaria de un nodo de la base
 
 ```mermaid
 sequenceDiagram
-    participant MB as Monitor de base
-    participant P as Primaria de la partición 3 (zona A)
-    participant R as Réplica de la partición 3 (zona B)
+    participant MB as Monitor de base (3 instancias)
+    participant P as Primaria del nodo 3 (zona A)
+    participant R as Réplica del nodo 3 (zona B)
     participant N as Núcleo
     participant App as App del usuario
-    MB->>P: Heartbeat
+    MB->>P: Ping cada 5 s
     P--xMB: Sin respuesta
-    Note over MB: Falla confirmada en 30 s o menos
+    Note over MB: 6 pings sin respuesta, falla confirmada en 30 s
+    MB->>MB: Acuerdo de 2 de las 3 instancias
+    MB->>P: Aislar la primaria anterior
     MB->>R: Promover a primaria
     R-->>MB: Primaria activa
-    MB->>N: Actualiza el ruteo de la partición 3
+    MB->>N: Actualiza el ruteo de las particiones del nodo 3
     Note over MB,N: Servicio restablecido en 60 s o menos
     App->>N: GET /panel
     N->>R: Lee panel_por_usuario
@@ -78,7 +81,8 @@ sequenceDiagram
 ```
 
 **Qué representa:** la falla afecta solo a los usuarios de una partición y solo durante la conmutación; la réplica
-sincrónica no pierde escrituras confirmadas (QA-4). Después se crea una réplica nueva. ADR-0042.
+sincrónica no pierde escrituras confirmadas (QA-4). La falla afecta a los usuarios de todas las particiones de ese
+nodo. Después se crea una réplica nueva (en la zona C si cayó una zona entera). ADR-0042.
 
 ## SEQ-6 — Una novedad pisa un campo editado por el usuario
 
@@ -93,11 +97,13 @@ sequenceDiagram
     N->>DB: ¿Ya se aplicó este evento?
     DB-->>N: No
     N->>N: Fecha es campo del proveedor, el usuario la había editado
-    N->>DB: Transacción con fecha nueva, notas sin cambios, panel, aviso y outbox
+    N->>DB: Transacción con fecha nueva, notas sin cambios, aviso en el panel y outbox
     N-->>B: ACK después del commit
-    B->>NT: booking.changed.v1
-    NT-->>App: panel-changed y aviso de la fecha modificada
+    B->>NT: panel.changed.v1, relevancia important
+    NT-->>App: panel-changed (SSE) o push si la app está cerrada
+    App->>N: GET /panel
+    N-->>App: Panel con el aviso de la fecha modificada
 ```
 
 **Qué representa:** la novedad cambia los datos del proveedor y conserva los del usuario, con aviso; el control de
-entrada evita aplicarla dos veces (QA-6). ADR-0044.
+entrada evita aplicarla dos veces (QA-6). ADR-0044 y ADR-0046.
