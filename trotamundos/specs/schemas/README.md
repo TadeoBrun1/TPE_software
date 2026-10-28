@@ -26,3 +26,11 @@ entonces esas reservas solo tienen campos comunes.
   el recorrido de QA-9 de la [iteración 4](../../docs/01-add/iteration-4-security-evolvability.md).
 * Los detalles no van en `booking.facts.v1` (analítica) ni se traducen: el cliente los muestra con los textos de sus
   catálogos (ADR-0065).
+
+## Proyección compartida
+
+Estos JSON Schema validan estructura y tipos, no detectan si el contenido de un texto es un nombre o un código.
+`seat: "Pasajero Ana, localizador ABC123"` satisface el tipo string del esquema de tren, pero no debe publicarse
+por esa sola razón. En esta entrega `SharedBooking` omite siempre `details`; el propietario mantiene su bloque
+completo. La respuesta compartida se construye desde una lista explícita de campos comunes y no serializando el
+Booking completo con exclusiones. Los esquemas de entrada permanecen inmutables como exige su versionado.

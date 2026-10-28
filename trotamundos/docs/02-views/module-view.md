@@ -50,7 +50,7 @@ flowchart TD
 
     subgraph Analitica["Analítica"]
         ACO["consumidor-hechos"]
-        AAN["anonimizador<br/>(clave anual)"]
+        AAN["seudonimizador<br/>(clave anual)"]
         AAL["almacen-analitico"]
     end
 
@@ -121,8 +121,8 @@ Leyenda: la flecha significa "puede usar".
 | núcleo/comparticion | Invitaciones, aceptación, permisos por viaje y persona, revocación, vista compartida sin notas ni códigos, tarjeta para redes (ADR-0061, ADR-0063); acepta solo con el email invitado (`emailHmac`); intercepta todo pedido sobre un viaje ajeno | `nucleo/comparticion` |
 | núcleo/auditoria | Puerto de escritura de solo agregado al registro de auditoría; si falla, la operación se rechaza (ADR-0061) | `nucleo/auditoria` |
 | núcleo/esquemas-detalles | Carga al arrancar los esquemas de `details` registrados en la configuración (no se compilan) y valida cada bloque (ADR-0066) | `nucleo/esquemas` |
-| analítica/consumidor-hechos | Consume `booking.facts.v1` y `trip.changed.v1` con su propia cola (ADR-0064) | `analitica/consumo` |
-| analítica/anonimizador | Reemplaza identificadores con la clave anual, descarta campos fuera de la lista permitida | `analitica/anonimizacion` |
+| analítica/consumidor-hechos | Consume con su cola, deduplica por evento y guarda recepción y hecho atómicamente antes de ACK (ADR-0064) | `analitica/consumo` |
+| analítica/seudonimizador | Reemplaza identificadores según período committedAt, descarta campos fuera de la lista permitida; riesgo residual de reidentificación | `analitica/seudonimizacion` |
 | analítica/almacen-analitico | Escritura y consultas pesadas del almacén analítico regional | `analitica/almacen` |
 | observabilidad | Biblioteca común: propaga `correlationId` y `traceparent` (también en los mensajes), métricas por etapa y logs estructurados sin datos personales (ADR-0067) | `comun/observabilidad` |
 | núcleo/suscriptor-novedades | Recibe novedades del broker y las pasa a reservas | `nucleo/mensajeria` |
@@ -177,7 +177,7 @@ Leyenda: la flecha significa "puede usar".
 | Asignación a viajes en `viajes` | [0048](../03-adr/0048-asignacion-de-reservas-a-viajes.md) |
 | Notificador como proceso aparte | [0046](../03-adr/0046-notificador-de-cambios-del-panel.md) |
 | Compartición y auditoría en el núcleo | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) |
-| Analítica con anonimización al entrar | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
+| Analítica con seudonimización al entrar | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
 | Idioma en el perfil, textos en los clientes | [0065](../03-adr/0065-internacionalizacion-en-el-cliente.md) |
 | Esquemas de detalles por tipo | [0066](../03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) |
 | Biblioteca de observabilidad | [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |

@@ -72,3 +72,10 @@ datos son suficientes. RabbitMQ y políticas definidos en ADR-0028; pruebas del 
   `details` (ADR-0066).
 * [Esquemas de detalles por tipo](schemas/README.md): `flight.v1` y `train.v1`.
 * [Registro de auditoría](access-audit.md) de accesos a viajes compartidos (ADR-0061).
+
+## Refinamientos de revisión de iteración 4
+
+* [Procesamiento analítico](analytics-processing.md): deduplicación, ACK y claves anuales.
+* [Medición de calidad](quality-measurement.md): tiempo de caída, cobertura y reportes de cliente.
+* API de itinerarios pasa a borrador 0.3.0: SharedBooking omite details, respuestas compartidas no-store,
+  DELETE de referencias local, perfil completo de bearerAuth y recepción durable de telemetría.

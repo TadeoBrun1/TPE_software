@@ -49,3 +49,10 @@ RabbitMQ/AMQP sobre TLS: [políticas](../../specs/ingestion-operations.md). Nove
 pero conservan tipo lógico. Evento confirmado: [booking-confirmed.v1.yaml](../../specs/asyncapi/booking-confirmed.v1.yaml).
 [Protocolo de autorización](../../specs/ingestion-authorization.md) completa la vigencia interna sin elegir login del viajero.
 El login del viajero se define en la iteración 4 (ADR-0060).
+
+## Refinamiento de revisión de iteración 4
+
+API de itinerarios: borrador 0.3.0. La vista compartida usa una proyección sin details; un DELETE de referencia
+se ejecuta localmente aunque el GET del mismo tripId sea remoto. Ver el perfil JWT de ADR-0060, la clasificación
+completa de [auditoría](../../specs/access-audit.md), el [consumo analítico](../../specs/analytics-processing.md) y
+la [medición](../../specs/quality-measurement.md). Los contratos son propuestas para revisión, no implementación.

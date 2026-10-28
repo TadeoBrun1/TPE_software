@@ -49,9 +49,11 @@ Reglas:
   `HMAC(clave_directorio, email normalizado)`, con una clave que solo tiene la entrada global, y la busca en el
   directorio global mínimo, que devuelve la región de origen; el login sigue en el proveedor de identidad de esa
   región. El directorio guarda solo `HMAC(email) → región`. Como el cálculo se hace del lado del servidor y la clave
-  no es pública, no se puede revertir con un diccionario ni usar desde afuera para averiguar si un email tiene cuenta
-  (la consulta tiene límite de tasa y responde igual exista o no la cuenta: si no existe, deriva al proveedor de la
-  región del país que indica la app, donde se puede crear). Una cuenta nueva se crea en la región que corresponde a
+  no es pública, el directorio no permite probar candidatos sin acceso al servicio. El endpoint de login tiene
+  límite de tasa y respuesta genérica; si no existe la cuenta, deriva al proveedor de la
+  región del país que indica la app, donde se puede crear. Esa derivación puede revelar diferencias de región:
+  el HMAC protege el directorio, pero no demuestra ausencia de enumeración del login. La respuesta pública y sus
+  tiempos deben revisarse como riesgo de identidad. Una cuenta nueva se crea en la región que corresponde a
   su país y registra su HMAC en el directorio.
 * **El directorio frente a CON-3:** el HMAC de un email es un seudónimo, y un seudónimo sigue siendo dato personal
   para normativas como el GDPR. Se acepta por proporcionalidad: es el mínimo indispensable para saber a qué región
@@ -62,7 +64,8 @@ Reglas:
   puede revocar. El token de acceso lleva `userId`, `homeRegion` y `emailHmac` (HMAC del email verificado con una
   clave común a los proveedores de todas las regiones, que usa ADR-0061 para atar una invitación a su destinatario
   sin mover emails entre regiones). La puerta de entrada valida firma y vencimiento con las claves públicas de los
-  proveedores, que guarda en caché; no consulta al proveedor en cada solicitud.
+  proveedores, que guarda en caché; no consulta al proveedor en cada solicitud. El perfil de validación completo
+  y la identidad entre regiones se especifican a continuación.
 * **Enrutamiento:** la entrada global elige la región por `homeRegion` del token (sin validar la firma, solo para
   elegir); una solicitud sin token se enruta por el prefijo de región del recurso (tarjetas para redes, tickets SSE,
   ADR-0062 y ADR-0063) o, en el login, por el directorio. La puerta de entrada de la región sí valida la firma.
@@ -81,6 +84,35 @@ Reglas:
   (ADR-0046). No queda en los logs.
 * El proveedor de identidad se despliega en cada región con instancias en al menos dos zonas (ADR-0003). El
   directorio global se replica en varias regiones, como la entrada global.
+
+### Perfil de tokens e identidad entre regiones
+
+La puerta aplica todas estas comprobaciones antes de atribuir una identidad:
+
+1. Solo acepta tokens de acceso para la API. `typ=at+jwt`, `aud` contiene `trotamundos-api` y `iss` coincide
+   exactamente con un emisor registrado. Rechaza ID tokens, tokens de renovación y tickets SSE aunque tengan firma válida.
+2. Verifica la firma con claves obtenidas de la configuración confiable de ese emisor; `kid` solo selecciona dentro
+   de esas claves. Usa una lista de algoritmos permitidos por emisor; rechaza `none`, algoritmos no registrados y
+   claves o URLs propuestas por el propio token. Un emisor o clave desconocidos no se aceptan por defecto.
+3. Valida `exp`, `nbf` cuando exista, y la vigencia declarada; la tolerancia de reloj inicial es 30 s como hipótesis
+   operativa, sin extender un token arbitrariamente. Los tokens de acceso tienen una vida máxima de 15 minutos.
+4. Exige `sub`, `userId` y `homeRegion`. El proveedor mantiene una correspondencia estable de `sub` a `userId`;
+   la región del emisor registrado debe coincidir con `homeRegion`. No se toma la región del cuerpo de una petición.
+5. El principal canónico de autorización es `(homeRegion, userId)`, no un `userId` sin región. Su vinculación a
+   `(iss, sub)` se crea en el alta y no se reasigna a otra persona. Permisos e invitaciones aceptadas guardan ambas
+   partes del principal. La auditoría registra además el emisor verificado cuando hay token válido.
+6. Al aceptar invitaciones exige `emailHmac` emitido a partir de un email verificado. El canal mTLS autentica la
+   puerta remitente, pero no sustituye firma, emisor, audiencia ni permiso del viajero. Solo una región registrada
+   puede reenviar las operaciones de la tabla de ADR-0062.
+
+Las reglas se reflejan en `bearerAuth` de la API. Fuente del perfil: [JWT BCP, RFC 8725](https://www.rfc-editor.org/rfc/rfc8725.html)
+y [JWT Access Tokens, RFC 9068](https://www.rfc-editor.org/rfc/rfc9068.html).
+
+Los tickets SSE usan un perfil separado: emisor de la puerta regional, `typ=trotamundos-sse-ticket+jwt`,
+`aud=trotamundos-sse`, principal canónico y vencimiento de 30 s. Se rechazan en la API REST. El prefijo de región
+solo enruta: la firma debe vincular la misma región. Se mantiene la decisión de permitir reutilización durante
+esos 30 s; no se describe como ticket de un solo uso. La clave o el perfil de validación no se comparten de forma
+que un ticket se acepte como token de acceso.
 
 Patrones y tácticas que aplica:
 
@@ -113,7 +145,9 @@ Patrones y tácticas que aplica:
 
 Prototipo: un proveedor de identidad local emite tokens; la puerta de entrada rechaza un token vencido, uno con firma
 inválida y uno de otra región que no llega por el canal entre regiones; acepta uno de otra región que llega por ese
-canal; un ticket SSE vencido no abre la conexión.
+canal; un ticket SSE vencido no abre la conexión. Agregar rechazo de audiencia incorrecta, emisor desconocido,
+ID token usado en la API, algoritmo no permitido y región que no corresponde al emisor; dos usuarios de regiones
+distintas con el mismo identificador local no comparten permisos.
 
 ## Pros and Cons of the Options
 

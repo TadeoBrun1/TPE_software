@@ -230,3 +230,13 @@ Iteración 4, ADR-0067. Se aplica a todos los exchanges de esta topología (`tra
 | Privacidad | Los encabezados solo llevan identificadores de traza; nunca datos de reservas ni del usuario (CON-3) |
 | Biblioteca | Productores y consumidores usan la biblioteca común `observabilidad` (vista de módulos) para inyectar y extraer el contexto |
 | Prototipo | Una novedad simulada debe mostrar una sola traza desde la ingesta hasta el notificador, también tras una reentrega |
+
+## Consumidores de analítica y medición de QA
+
+La cola propia de analítica sigue el protocolo de [analytics-processing.md](analytics-processing.md): recepción
+única y hecho atómicos, ACK posterior y período estable. Su control de recepción tiene retención ligada a los
+hechos; no hereda sin revisión los 30 días del consumidor del núcleo. La seudonimización no sustituye ese control.
+
+Las sondas temporales de QA-4 y la cobertura de telemetría de QA-1 se definen en
+[quality-measurement.md](quality-measurement.md). Un reporte aceptado con 202 no se descarta; un rechazo temporal
+permite reintento del cliente. Los límites de cola local pueden producir pérdidas, que se cuentan como desconocidas.

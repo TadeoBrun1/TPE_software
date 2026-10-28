@@ -2,7 +2,8 @@
 
 **Responsable:** Ambos (Tadeo Brun y Tomas Lateana)
 **Fecha:** 2026-10-28
-**Estado:** Decisiones tomadas (2026-10-28). Las ADRs 0060 a 0067 quedan en `proposed` hasta el merge a `main`.
+**Estado:** diseño documentado y correcciones de revisión propuestas (2026-10-28). Las ADRs 0060 a 0067
+quedan en `proposed`; estas correcciones requieren revisión conjunta antes de integrarse.
 Revisada con una auditoría independiente (ver [Revisión de la iteración](#revisión-de-la-iteración)).
 **Rango de ADRs:** 0060 a 0079 (ver [CONTRIBUTING](../../CONTRIBUTING.md))
 
@@ -35,7 +36,7 @@ para poder medir los QA de las iteraciones anteriores.
 | ID | Efecto en esta iteración |
 |---|---|
 | CON-2 | Las redes sociales son sistemas externos que no podemos modificar: hay que usar lo que ya entienden para mostrar un enlace (metadatos estándar) |
-| CON-3 (suposición, se mantiene) | Los datos personales no cruzan regiones: identidad por región, lectura remota de viajes compartidos, analítica solo regional, observabilidad por región |
+| CON-3 (suposición, se mantiene) | Persistencia regional del estado autoritativo; el tránsito de respuestas compartidas y las excepciones de directorio e invitaciones se declaran en ADR-0062. Falta validar CON-3 |
 | CON-4 | La app móvil nativa formatea con las librerías del sistema y guarda catálogos de textos |
 | CON-5 (suposición) | No se reserva capacidad ociosa: el proveedor de identidad, la analítica y el colector escalan de forma reactiva como los demás procesos (ADR-0043) |
 
@@ -56,7 +57,7 @@ para poder medir los QA de las iteraciones anteriores.
 | Puerta de entrada y entrada global | Validación de tokens, enrutamiento por región en el login y reenvío entre regiones |
 | Núcleo / `usuarios` y `comparticion` | Identidad del viajero, preferencias de idioma, invitaciones, permisos y auditoría |
 | Núcleo / `reservas` | Campos comunes y detalles por tipo |
-| Analítica | Fuente de datos, almacén y anonimización |
+| Analítica | Fuente de datos, almacén y seudonimización |
 | Clientes web y móvil | Login, ticket SSE, catálogos de textos, formato, vista genérica de reservas |
 | Todos los procesos | Trazas, métricas y logs |
 
@@ -77,7 +78,7 @@ redes no ejecutan la aplicación web (ADR-0063).
 | *Federated Identity* (OpenID Connect / OAuth 2.0) con token firmado | Un proveedor de identidad por región emite tokens de 15 min; la puerta de entrada los valida sin consultar | QA-7, QA-5 | [0060](../03-adr/0060-identidad-por-region-con-tokens.md) |
 | *Gateway Routing* | La entrada global enruta por región de origen; la puerta de entrada reenvía a la región del dueño de un viaje compartido | CON-3, RF-08 | [0060](../03-adr/0060-identidad-por-region-con-tokens.md), [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) |
 | *Publish-Subscribe* y *Transactional Outbox* (iteraciones 1 y 2) | El núcleo publica `booking.facts.v1` para la analítica en la misma transacción que el cambio | RF-07 | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
-| Almacén analítico separado | Copia regional de los hechos, anonimizada, para consultas pesadas | RF-07, QA-5 | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
+| Almacén analítico separado | Copia regional de los hechos, seudonimizada, para consultas pesadas | RF-07, QA-5 | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
 | Modelo con campos comunes y extensión por tipo (esquema por tipo) | Bloque `details` validado contra `specs/schemas/` | QA-9 | [0066](../03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) |
 | Catálogos de recursos externos (*externalized strings*) | Textos de la interfaz fuera del código, por idioma | QA-10 | [0065](../03-adr/0065-internacionalizacion-en-el-cliente.md) |
 | *Distributed Tracing* con identificador de correlación | `correlationId` y `traceparent` desde la ingesta hasta el cliente | CRN-2, QA-1 | [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |
@@ -91,7 +92,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 | Seguridad | Autenticar actores | Token firmado en cada solicitud; mTLS y validación del token entre regiones | QA-7 | [0060](../03-adr/0060-identidad-por-region-con-tokens.md), [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) |
 | Seguridad | Autorizar actores | Permiso por viaje y persona en `comparticion`, verificado en todo pedido sobre un viaje ajeno; aceptación solo con el email invitado (`emailHmac`); el dueño quita el permiso con efecto en la siguiente lectura | QA-7 | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) |
 | Seguridad | Limitar el acceso | Solo la puerta de entrada recibe solicitudes externas; el ticket SSE solo abre la conexión de avisos; un token de otra región solo se acepta por el canal mTLS | QA-7 | [0060](../03-adr/0060-identidad-por-region-con-tokens.md) |
-| Seguridad | Limitar la exposición | Vista compartida sin notas ni códigos; `details` sin datos personales; `404` en lugar de `403`; tarjeta pública sin reservas; datos sin copiar entre regiones; directorio con HMAC calculado en el servidor; analítica anonimizada; logs sin datos personales | QA-7, CON-3 | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md), [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md), [0063](../03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md), [0064](../03-adr/0064-analitica-regional-anonimizada.md), [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |
+| Seguridad | Limitar la exposición | Vista compartida sin notas ni códigos; `details` omitido de la vista compartida; `404` en lugar de `403`; tarjeta pública sin reservas; respuestas remotas sin persistencia en la puerta del lector; directorio con HMAC calculado en el servidor; analítica seudonimizada; logs sin datos personales | QA-7, CON-3 | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md), [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md), [0063](../03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md), [0064](../03-adr/0064-analitica-regional-anonimizada.md), [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |
 | Seguridad | Revocar el acceso (reaccionar a ataques) | Bloquear una cuenta comprometida revoca su token de renovación | QA-7 | [0060](../03-adr/0060-identidad-por-region-con-tokens.md) |
 | Seguridad | Auditar | Registro de solo agregado de cada intento sobre viajes compartidos, escrito antes de responder por el núcleo y por la puerta de entrada | QA-7 | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) |
 | Seguridad | Detectar intrusiones | Alerta ante un aumento de rechazos sobre un mismo viaje o de un mismo actor | QA-7 | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md), [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |
@@ -117,8 +118,8 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 | Núcleo / `comparticion` | Módulo con contenido (estaba vacío) | Invitaciones (con `emailHmac`), aceptación, permisos, quita de permisos, vista compartida y tarjeta para redes; intercepta todo pedido sobre un viaje ajeno; escribe la auditoría |
 | Registro de auditoría | Almacén nuevo, por región, operado como un nodo más de la base (ADR-0042) | Registros de solo agregado de los intentos sobre viajes compartidos ([access-audit.md](../../specs/access-audit.md)) |
 | Núcleo / `reservas` | Módulo refinado | Campos comunes; valida y guarda `details` según el esquema registrado; publica `booking.facts.v1` |
-| Analítica | Proceso refinado | Consume `booking.facts.v1` y `trip.changed.v1`, anonimiza y guarda |
-| Almacén analítico | Almacén nuevo, por región | Hechos anonimizados para consultas pesadas |
+| Analítica | Proceso refinado | Consume `booking.facts.v1` y `trip.changed.v1`, seudonimiza y guarda |
+| Almacén analítico | Almacén nuevo, por región | Hechos seudonimizados para consultas pesadas |
 | Colector de observabilidad | Componente nuevo, por región | Recibe trazas, métricas y logs de todos los procesos; alertas |
 | Clientes web y móvil | Refinados | Login con el proveedor de su región, renovación del token, ticket SSE, catálogos, formato CLDR, vista genérica de reservas |
 
@@ -130,7 +131,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 | Un token de otra región solo se acepta si llega por el canal mTLS entre puertas de entrada y para un recurso con el prefijo de la región que lo recibe | Reenvío entre regiones sin abrir la puerta a tokens ajenos (ADR-0060, ADR-0062) |
 | Un recurso con prefijo de otra región se reenvía a esa región; la respuesta no se guarda en la región del lector; la puerta no aplica reglas de dominio | No copiar datos personales (ADR-0062, CON-3) |
 | Todo pedido sobre un viaje ajeno, por cualquier endpoint, pasa por `comparticion`, que verifica el permiso y escribe la auditoría antes de responder; los rechazos previos al núcleo los registra la puerta de entrada; si la auditoría falla, se rechaza | QA-7 al 100 % (ADR-0061) |
-| La analítica no lee la base operativa; solo consume eventos y guarda lo anonimizado | Separar cargas y no guardar datos personales (ADR-0064) |
+| La analítica no lee la base operativa; solo consume eventos y guarda lo seudonimizado | Separar cargas y no guardar datos personales (ADR-0064) |
 | El núcleo y el panel no interpretan `details` | QA-9 (ADR-0066) |
 | El backend no devuelve textos traducidos ni fechas formateadas | El panel no depende del idioma (ADR-0065) |
 | Ningún log, traza ni métrica lleva emails, nombres, códigos de reserva ni tokens | CON-3 (ADR-0067) |
@@ -144,7 +145,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 | Vida del ticket SSE | 30 s, firmado, sin control de uso único | Alcanza para abrir la conexión y se valida sin estado compartido (ADR-0060) |
 | Vigencia de una invitación | 7 días | Valor de producto (suposición, ADR-0061) |
 | Retención de la auditoría | 1 año | Mismo plazo que los viajes (ADR-0045; suposición) |
-| Cambio y destrucción de la clave de anonimización | Anual | Alinea la analítica con la eliminación de viajes (ADR-0064) |
+| Cambio y destrucción de la clave de seudonimización | Anual | Alinea la analítica con la eliminación de viajes (ADR-0064) |
 | Tamaño mínimo de un grupo para exportar agregados analíticos | 20 reservas | Evitar que un agregado identifique a una persona (suposición, ADR-0064) |
 | Muestreo de trazas | Todas las lentas o con error; 10 % de las normales | Costo de almacenamiento (suposición, ADR-0067) |
 
@@ -170,7 +171,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 | [Vista de módulos](../02-views/module-view.md) | Contenido de `comparticion`, refinamiento de `usuarios` y `reservas`, esquemas por tipo |
 | [Vistas de secuencia](../02-views/sequence-views.md) | SEQ-5 (compartir y leer un viaje desde otra región) y SEQ-7 (login y conexión SSE) |
 | [Modelo de dominio](../02-views/domain-model.md) | Invitación y permiso, referencia a viaje compartido, registro de auditoría, detalles por tipo, preferencias de idioma |
-| [Interfaces](../02-views/interfaces.md) | API 0.2.0, `booking.facts.v1`, esquemas de detalles |
+| [Interfaces](../02-views/interfaces.md) | API 0.3.0, `booking.facts.v1`, esquemas de detalles |
 
 | ADR | Título | Estado |
 |---|---|---|
@@ -178,7 +179,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) | Compartición con personas designadas con cuenta, control en el núcleo y auditoría | Propuesta |
 | [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) | Lectura remota de viajes compartidos en la región del dueño | Propuesta |
 | [0063](../03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) | Tarjeta de resumen pública para compartir en redes sociales | Propuesta |
-| [0064](../03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales, con los eventos anonimizados al entrar | Propuesta |
+| [0064](../03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales, con los eventos seudonimizados al entrar | Propuesta |
 | [0065](../03-adr/0065-internacionalizacion-en-el-cliente.md) | Internacionalización: catálogos remotos, datos neutros y formato en el cliente | Propuesta |
 | [0066](../03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) | Reserva con campos comunes y detalles con esquema propio por tipo | Propuesta |
 | [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) | Observabilidad con trazas distribuidas, métricas por etapa y logs estructurados | Propuesta |
@@ -200,16 +201,16 @@ mediciones.
 | QA-7: el dueño quita el permiso y la persona intenta leer | El permiso ya no existe → auditoría → `404` | Efecto en la siguiente lectura | — |
 | QA-7: la auditoría no se puede escribir | El núcleo o la puerta no responden con datos → `503`; el evento queda en los logs estructurados con una alerta | Rechazado siempre; registrado en los logs | Si fallan a la vez la auditoría y los logs de la región, el rechazo no queda registrado (riesgo residual) |
 | QA-7: token robado | Sirve hasta 15 minutos; el token de renovación se revoca | Ventana acotada | Riesgo aceptado (ADR-0060) |
-| RF-08: Ana (Europa) acepta y ve un viaje de Juan (Sudamérica) | Acepta con su cuenta (reenvío por mTLS) → la app registra la referencia en Europa con `POST /shared/trips` → al abrirlo, puerta de Europa → mTLS → puerta de Sudamérica acepta el token de Ana por venir del canal → núcleo verifica, audita y responde | Ana ve el viaje sin que se copie a Europa | Suma la red entre regiones (100 a 250 ms, suposición); si Sudamérica no responde, `503` |
+| RF-08: Ana (Europa) acepta y ve un viaje de Juan (Sudamérica) | Acepta con su cuenta (reenvío por mTLS) → la app registra la referencia en Europa con `POST /shared/trips` → al abrirlo, puerta de Europa → mTLS → puerta de Sudamérica acepta el token de Ana por venir del canal → núcleo verifica, audita y responde | Ana ve la respuesta autorizada, que transita por Europa sin persistirse en su puerta | Suma la red entre regiones (100 a 250 ms, suposición); si Sudamérica no responde, `503` |
 | Redes sociales: Juan publica su viaje | `POST /trips/{id}/social-card` → enlace `/cards/{id}` con prefijo de región → el robot de la red llega sin token, la entrada global lo enruta por el prefijo → página con Open Graph | Se publica destino, mes y días | El itinerario no se publica: es la interpretación elegida. Publicar el mes indica cuándo el viajero está de viaje; la app lo advierte |
 | RF-07: el equipo de datos consulta destinos más reservados del año | Consulta pesada en el almacén analítico de cada región; se combinan los resultados | Sin efecto en el panel de los viajeros | Tendencias globales armadas fuera del sistema |
-| RF-07: se elimina un viaje (ADR-0045) | No se toca la analítica; la clave con la que se anonimizaron casi todos sus datos ya se destruyó | Datos analíticos no vinculables, salvo hechos tardíos | Un hecho tardío (reembolso sobre el viaje archivado) queda vinculable hasta un año después de eliminar el viaje; una cuenta eliminada, hasta destruir la clave (riesgos aceptados) |
+| RF-07: se elimina un viaje (ADR-0045) | Se mantiene retención de hechos seudonimizados, con control de recepción separado | No se afirma anonimato por destruir la clave | Falta validar retención y riesgo de reidentificación frente a CON-3; período cerrado sin clave produce resolución pendiente |
 | RF-07: tasa de cancelación y anticipación | Cada hecho de cancelación trae la fecha de creación de la reserva | Se calcula sin vincular eventos | Una reserva creada y cancelada en períodos de clave distintos aparece con dos códigos |
 | QA-10: un usuario argentino usa la app en inglés durante un viaje a Japón | La entrada global lo envía a Sudamérica (su región); el panel llega con fechas ISO 8601, zona IANA y montos con moneda; la app formatea en inglés y muestra cada hora en la zona del lugar | Textos y formatos según su configuración | Ver el presupuesto de latencia de QA-2 fuera de la región, abajo |
 | QA-10 con QA-3: abrir la app | Usa el panel en caché y el catálogo ya guardado; nada depende del idioma | QA-3 sin cambios | Un idioma recién agregado se descarga en segundo plano |
 | QA-9: agregar ferry | Esquema `details-ferry.v1.json` y código `ferry` → adaptador nuevo en la ingesta → registro del esquema en el núcleo por configuración → vista del detalle en clientes y textos en catálogos | Sin cambios en el código de los otros medios ni en `viajes`, `reservas` y `panel`; entre 8 y 10 días-persona (suposición) | Si el proveedor solo manda correos, el extractor puede superar los 10 días. Si la app vieja recibe `ferry`, lo muestra con la vista genérica |
 | CRN-2 con QA-1: medir una novedad | El `correlationId` nace en la ingesta → `booking.change.detected.v1` → transacción del núcleo → `panel.changed.v1` (`correlationIds`) → evento SSE → la app lo informa con `POST /telemetry/panel-shown`; `traceparent` en todos los encabezados | Tiempo por etapa del presupuesto de 300 s | Hay que propagar el contexto a través de RabbitMQ en todos los procesos |
-| CRN-2 con QA-4: medir la inactividad | Disponibilidad de la puerta de entrada por minuto y conmutaciones del monitor | Minutos de inactividad por mes medidos | — |
+| CRN-2 con QA-4: medir la inactividad | Sondas externas cada 5 s por región y partición, intervalos consolidados y conmutaciones | Segundos de indisponibilidad comparables con 300 s/mes | Cobertura e incertidumbre declaradas; no confundir tasa de éxitos con minutos |
 
 ### Presupuesto de latencia de QA-2 fuera de la región (QA-10)
 
@@ -235,10 +236,10 @@ mantener conexiones abiertas entre la entrada y cada región. Queda como riesgo 
 | QA-7 | Cumplido por diseño | Rechazo garantizado en todos los caminos y registro en todos (núcleo y puerta); riesgo residual si fallan a la vez la auditoría y los logs de la región; la ventana de 15 minutos de un token robado es un riesgo aceptado. Pruebas del prototipo (designado, no designado, enlace reenviado antes y después de aceptar, endpoint del dueño, sin token, permiso quitado) |
 | RF-08 | Cumplido por diseño | Sin avisos en vivo de viajes compartidos |
 | Redes sociales | Cumplido con la interpretación de la tarjeta | Confirmar la interpretación con la cátedra |
-| RF-07 | Cumplido por diseño | Validar con el equipo de datos qué consultas necesita; no hay vista global automática |
+| RF-07 | Diseño propuesto con recepción idempotente y consultas delimitadas | Validar consultas, retención, reidentificación y hechos tardíos sin clave; no hay vista global automática |
 | QA-10 | Parcial | Textos y formatos cumplidos por diseño; QA-2 fuera de la región se cumple con la conexión abierta, pero una conexión nueva desde muy lejos puede superar 800 ms (riesgo aceptado, ver el presupuesto). Probar dos idiomas y zonas horarias |
 | QA-9 | Cumplido por diseño | Medir el esfuerzo real agregando un medio al prototipo |
-| CRN-2 | Cumplido por diseño | Implementar la propagación en el prototipo, incluido el encabezado `traceparent` en RabbitMQ |
+| CRN-2 | Diseño de trazas y medición propuesto | Verificar propagación, sondas temporales, cobertura de telemetría y desfase de reloj según quality-measurement.md |
 
 ### Riesgos
 
@@ -250,10 +251,10 @@ mantener conexiones abiertas entre la entrada y cada región. Queda como riesgo 
 | Las claves del directorio (entrada global) y de `emailHmac` (común a los proveedores de identidad) son secretos globales | QA-7, CON-3 | Custodia en el gestor de secretos (CRN-4); su filtración permite vincular seudónimos, no leer emails |
 | Un ticket SSE copiado sirve 30 s para abrir otra conexión de avisos | QA-7 | Aceptado: los avisos no llevan datos de reservas |
 | Una primera solicitud desde muy lejos de la región de origen puede superar 800 ms | QA-10, QA-2 | Aceptado; mitigación candidata para la iteración 5 (TLS en la entrada global cerca del usuario) |
-| Un hecho analítico tardío queda vinculable hasta un año después de eliminar el viaje | CON-3 | Aceptado (decisión del equipo): se mantiene la clave anual |
+| Hecho nuevo de período cuya clave ya se destruyó | RF-07 | Resolución durable; no regenerar clave ni cambiar período. Medir cobertura de hechos tardíos |
 | La lectura compartida entre regiones depende de la otra región y suma latencia | RF-08, QA-2 | Aceptado; medir la latencia entre regiones |
 | El directorio global guarda un seudónimo por usuario fuera de su región y, si cae, no se puede iniciar sesión desde un dispositivo nuevo | QA-4, CON-3 | Aceptado por proporcionalidad (ADR-0060); se replica en varias regiones y la app recuerda la región del último login |
-| Datos de una cuenta eliminada quedan seudonimizados en la analítica hasta un año | CON-3 | Aceptado; validar contra la normativa elegida (CON-3 sigue siendo suposición) |
+| Retención de hechos tras eliminar una cuenta | CON-3 | La retención elegida requiere validación; destruir la clave no demuestra anonimato ni fija por sí solo un plazo suficiente |
 | Un medio que solo llega por correo puede superar los 10 días-persona | QA-9 | Registrar el esfuerzo real con el prototipo |
 | El núcleo no puede aplicar reglas sobre los detalles de un medio | QA-9 | Aceptado; una regla así es un cambio explícito del núcleo |
 | Interpretación de "compartir en redes" como tarjeta de resumen | Interoperabilidad | Confirmar con la cátedra |
@@ -297,9 +298,11 @@ Registrado en el [registro de impactos](impact-log.md):
 
 ### ¿Se sigue iterando?
 
-Los drivers de la primera entrega quedan cubiertos por diseño, salvo QA-10, que queda parcial por la latencia de una
-conexión nueva desde muy lejos de la región de origen. Queda una iteración 5 opcional para ese riesgo y para el de
-QA-1 a escala, y después la evaluación final.
+Los drivers tienen diseño documentado con los refinamientos propuestos en esta revisión. QA-10 sigue parcial
+por latencia internacional; QA-1 a escala sigue abierto y CON-3 requiere validar retención y transferencias. Las
+pruebas de cobertura de auditoría, exposición compartida, recepción analítica y medición forman parte de la
+evaluación antes de declarar cumplimiento. La iteración 5 puede refinar los riesgos registrados; no los elimina
+por su sola clasificación como aceptados.
 
 ### Evaluación final de la arquitectura
 
@@ -314,7 +317,7 @@ Antes de entregar, repasar todos los escenarios (H, H) con *Scenario Walkthrough
 | Ticket SSE | Un ticket vencido no abre la conexión; uno vigente sí | `itinerary-api.v1.yaml` | 0060 |
 | Compartición y auditoría | Invitar, aceptar con el email invitado, intentar aceptar con otra cuenta, leer, pedir por `/trips/{tripId}`, pedir sin token, quitar el permiso; cada intento queda en la auditoría | `itinerary-api.v1.yaml`, `access-audit.md` | 0061 |
 | Lectura entre regiones | Dos instancias locales como dos regiones; reenvío por prefijo y registro de la referencia con `POST /shared/trips` | `itinerary-api.v1.yaml` | 0062 |
-| Anonimización | Un `booking.facts.v1` se guarda sin identificadores ni `correlationId` | `booking-facts.v1.yaml` | 0064 |
+| Seudonimización y recepción | Un hecho se guarda con códigos, sin identificadores originales ni correlationId; reentrega no duplica y la rotación conserva el período de commit | `booking-facts.v1.yaml` | 0064 |
 | Medio nuevo | Agregar `ferry` con su esquema y un adaptador simulado, y verificar en el historial que no cambió código de los otros medios | `specs/schemas/` | 0066 |
 | Trazas | Una novedad simulada genera una traza con el mismo `correlationId` en ingesta, núcleo y notificador, y el cliente de prueba la cierra con `POST /telemetry/panel-shown` | `panel-changed.v1.yaml`, `itinerary-api.v1.yaml` | 0067 |
 
@@ -364,3 +367,22 @@ Las correcciones aplicadas fueron:
 * **Contratos:** zonas IANA, campos editables en `BookingPatch` y `503` al quitar un permiso.
 * **Documentos desactualizados:** notas en ADR-0001, ADR-0003, ADR-0004, el contrato de ingesta y el registro de
   impactos.
+
+## Correcciones de revisión — preparación 2026-10-28
+
+Se proponen estos ajustes para revisión conjunta; no se registra una nueva aceptación ni pruebas de prototipo:
+
+| Tema | Decisión refinada | Contrato o evidencia futura |
+|---|---|---|
+| Identidad | Validar emisor, audiencia, tipo, firma, algoritmo y vigencia; principal regional estable | ADR-0060 y bearerAuth; rechazar ID token o aud incorrecta |
+| Exposición de detalles | El dueño conserva details; SharedBooking lo omite siempre en esta entrega | ADR-0066; probar texto sensible válido por esquema y respuesta sin el bloque |
+| Auditoría | Cubrir rechazos previos al núcleo por todas las rutas de viajes y reservas, incluso de la misma región | access-audit.md; probar sin token, token inválido y 429 |
+| Enrutamiento | GET compartido remoto; DELETE del marcador local aun con prefijo ajeno | Tabla de ADR-0062; probar borrado con región del dueño caída |
+| Analítica | Recepción y hecho atómicos antes de ACK; período committedAt; resolución si no existe clave histórica | analytics-processing.md; reentrega, carrera, caída y cambio de año |
+| QA-4 | Segundos de indisponibilidad con sondas externas y consolidación de intervalos | quality-measurement.md; caída sin tráfico y fallos solapados |
+| QA-1 | Reintentar reportes, confirmar recepción durable, contar faltantes e incertidumbre de reloj | quality-measurement.md; 503, repetición y desfase horario |
+| CON-3 | Diferenciar estado persistido y tránsito; seudonimización no demuestra anonimato | ADR-0062 y ADR-0064; validación de criterio y riesgo pendiente |
+
+Los resultados de diseño del paso 7 deben leerse con estos límites: medir no demuestra automáticamente cumplimiento,
+una lectura remota transmite datos y la retención analítica necesita evaluación de reidentificación. Los escenarios
+adicionales deben incorporarse a la implementación antes de afirmar cobertura efectiva.

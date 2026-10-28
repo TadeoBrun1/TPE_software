@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de itinerarios de Trotamundos
-  version: 0.2.0
+  version: 0.3.0
   description: >
     Contrato propuesto de la iteración 3 (consulta y gestión de viajes), ampliado en la iteración 4 (autenticación,
     compartición, tarjeta para redes sociales, detalles por tipo de reserva y datos neutros para la
@@ -91,7 +91,7 @@ paths:
         ocurridos antes de la suscripción o durante una desconexión. Luego cada evento `panel-changed` informa solo
         la nueva versión del panel; si es mayor que la del cliente, este pide GET /panel. El servidor no guarda
         avisos de conexiones caídas: reconectar no los recupera, la revalidación sí. Mientras la conexión está caída,
-        el cliente revalida cada 60 s. No transporta datos de reservas. Se autentica con un ticket de un solo uso
+        el cliente revalida cada 60 s. No transporta datos de reservas. Se autentica con un ticket firmado reutilizable durante sus 30 s de vigencia
         (POST /panel/events/ticket); cada reconexión pide un ticket nuevo.
       operationId: streamPanelChanges
       security: []
@@ -336,7 +336,7 @@ paths:
       description: >
         La persona invitada, con sesión iniciada, envía el secreto recibido por email. Se acepta solo si el
         emailHmac de su token (email verificado) coincide con el de la invitación, así que otra cuenta no puede
-        aceptarla aunque tenga el enlace (ADR-0061). Desde ese momento el permiso queda atado a su userId. Aceptar
+        aceptarla aunque tenga el enlace (ADR-0061). Desde ese momento el permiso queda atado a su principal (homeRegion, userId). Aceptar
         otra vez con la misma cuenta no tiene efecto. Si el viaje es de otra región, la puerta de entrada reenvía la
         solicitud (ADR-0062). Después de aceptar, la app registra la referencia en su región con POST /shared/trips.
         Cada intento, aceptado o no, se registra en la auditoría. Prioridad media.
@@ -431,6 +431,8 @@ paths:
       description: >
         La app la borra cuando la lectura del viaje devuelve 404 (permiso quitado o viaje eliminado) o cuando el
         usuario lo pide. Solo afecta a la lista del usuario, en su región; no cambia el permiso. Idempotente.
+        Aunque tripId tenga prefijo de otra región, esta operación no se reenvía ni consulta al dueño; puede borrar
+        un marcador aun si la región del dueño no responde (tabla de ADR-0062).
       operationId: removeSharedTripRef
       responses:
         "204":
@@ -451,7 +453,13 @@ paths:
       operationId: getSharedTrip
       responses:
         "200":
-          description: Viaje en solo lectura, sin notas ni códigos de reserva
+          description: Viaje en solo lectura, sin notas, códigos de reserva ni details
+          headers:
+            Cache-Control:
+              description: No persistir respuestas compartidas en cliente ni puertas de entrada
+              schema:
+                type: string
+                enum: [no-store]
           content:
             application/json:
               schema:
@@ -534,7 +542,9 @@ paths:
       description: >
         Cierra la medición de punta a punta de QA-1 (ADR-0067): la app informa la versión del panel que mostró, los
         correlationIds que recibió en el evento panel-changed y el instante. Solo datos técnicos, sin datos de
-        reservas. Prioridad baja: ante sobrecarga se descarta (ADR-0047).
+        reservas. Prioridad baja: ante sobrecarga se rechaza con 503 y el cliente reintenta; 202 confirma recepción durable
+        regional. Reportes repetidos se deduplican por principal y panelVersion; se informa cobertura de muestras
+        perdidas, sin imputarlas como éxitos (specs/quality-measurement.md).
       operationId: reportPanelShown
       requestBody:
         required: true
@@ -558,7 +568,7 @@ paths:
                   format: date-time
       responses:
         "202":
-          description: Recibido
+          description: Recibido de forma durable, o reporte ya recibido; el cliente puede retirar su copia pendiente
         "401":
           $ref: "#/components/responses/Unauthorized"
         "429":
@@ -673,7 +683,10 @@ components:
         (ADR-0062): en ese caso valida la firma con las claves del proveedor de la región del token. Además de userId
         y homeRegion, el token lleva emailHmac (HMAC del email verificado), que se usa al aceptar invitaciones
         (ADR-0061). El cliente lo renueva con su token de renovación directamente ante el proveedor de identidad
-        (ADR-0060).
+        (ADR-0060). Validación completa: typ at+jwt, aud trotamundos-api, iss registrado, firma y algoritmo
+        permitidos por emisor, exp y nbf cuando exista. sub se vincula de forma estable a userId y homeRegion debe
+        corresponder a ese emisor. El principal es (homeRegion, userId). Se rechazan ID tokens, tokens de renovación
+        y tickets SSE. Las claves se seleccionan de la configuración confiable del emisor, nunca de URLs del token.
   parameters:
     TripId:
       name: tripId
@@ -1001,6 +1014,7 @@ components:
           format: date-time
     SharedTrip:
       type: object
+      additionalProperties: false
       required: [id, name, status, bookings]
       description: Vista de solo lectura para una persona designada; sin notas ni códigos de reserva (ADR-0061)
       properties:
@@ -1023,6 +1037,10 @@ components:
             $ref: "#/components/schemas/SharedBooking"
     SharedBooking:
       type: object
+      additionalProperties: false
+      description: >
+        Proyección explícita de campos comunes para compartición. Omite notes, providerReference y todo details,
+        incluso si el esquema de entrada es válido. No se serializa el Booking completo (ADR-0061 y ADR-0066).
       required: [id, type, status]
       properties:
         id:
@@ -1048,8 +1066,6 @@ components:
           type: string
         displayName:
           type: string
-        details:
-          $ref: "#/components/schemas/BookingDetails"
     SocialCard:
       type: object
       required: [id, url, destination, month, days]

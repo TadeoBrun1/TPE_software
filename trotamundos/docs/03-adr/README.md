@@ -53,7 +53,7 @@ Plantilla: [adr-template.md](adr-template.md).
 | [0061](0061-comparticion-con-cuenta-y-auditoria.md) | Compartición con personas designadas con cuenta, control en el núcleo y auditoría | proposed | 4 | QA-7, RF-08 |
 | [0062](0062-lectura-de-viajes-compartidos-entre-regiones.md) | Lectura remota de viajes compartidos en la región del dueño | proposed | 4 | CON-3, QA-7, QA-2 |
 | [0063](0063-tarjeta-de-resumen-para-redes-sociales.md) | Tarjeta de resumen pública para compartir en redes sociales | proposed | 4 | QA-7, interoperabilidad, CON-2 |
-| [0064](0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales con anonimización al entrar | proposed | 4 | RF-07, QA-4, QA-5, CON-3 |
+| [0064](0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales con seudonimización al entrar | proposed | 4 | RF-07, QA-4, QA-5, CON-3 |
 | [0065](0065-internacionalizacion-en-el-cliente.md) | Internacionalización: catálogos remotos, datos neutros y formato en el cliente | proposed | 4 | QA-10, QA-2, QA-3 |
 | [0066](0066-detalles-de-reserva-extensibles-por-tipo.md) | Reserva con campos comunes y detalles con esquema propio por tipo | proposed | 4 | QA-9, RF-05 |
 | [0067](0067-observabilidad-con-trazas-y-metricas.md) | Observabilidad con trazas, métricas por etapa y logs estructurados | proposed | 4 | CRN-2, QA-1, QA-4, CON-3 |

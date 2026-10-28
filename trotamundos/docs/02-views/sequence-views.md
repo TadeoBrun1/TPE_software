@@ -112,7 +112,7 @@ sequenceDiagram
     GS->>N: Aceptar invitación
     N->>N: Secreto válido y emailHmac del token igual al de la invitación
     N->>AU: share.accept permitido
-    N-->>A: 200, permiso atado al userId de Ana (vía GS y GE)
+    N-->>A: 200, permiso atado al principal regional de Ana (vía GS y GE)
     A->>GE: POST /shared/trips (referencia sa-east:7)
     GE->>NE: Guarda solo la referencia en la partición de Ana (idempotente)
     NE-->>A: 200
@@ -140,7 +140,7 @@ sequenceDiagram
 
 **Qué representa:** solo una cuenta con el email invitado puede aceptar, y desde ahí el permiso queda atado a esa
 cuenta, así que reenviar el enlace no da acceso ni antes ni después de aceptar; cada intento, permitido o rechazado,
-queda registrado antes de responder (QA-7). Los datos de Juan se leen en su región y no se copian a Europa; la app de
+queda registrado antes de responder (QA-7). El estado de Juan se lee en su región; la respuesta autorizada transita por Europa sin persistirse allí. La app de
 Ana registra en Europa solo la referencia al viaje (CON-3, RF-08). ADR-0060, ADR-0061 y ADR-0062.
 
 ## SEQ-6 — Una novedad pisa un campo editado por el usuario
@@ -186,7 +186,7 @@ sequenceDiagram
     IDP-->>App: Token de acceso 15 min (userId, homeRegion, emailHmac) y token de renovación
     App->>E: GET /panel con el token
     E->>G: Elige la región por homeRegion
-    G->>G: Valida firma y vencimiento con claves en caché
+    G->>G: Valida emisor, audiencia, tipo, firma, vigencia y región
     G-->>App: 200 panel
     App->>G: POST /panel/events/ticket con el token
     G-->>App: Ticket firmado con prefijo de región, 30 s

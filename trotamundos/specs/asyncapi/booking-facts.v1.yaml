@@ -8,7 +8,9 @@ info:
     tripId y bookingId por códigos calculados con su clave anual y descarta correlationId antes de guardar.
     Lleva solo los campos de la lista permitida: no incluye códigos de reserva, nombres, notas, precios ni el bloque
     de detalles por tipo. Transporte: RabbitMQ, exchange travel.domain, routing key booking.facts.v1 (ADR-0028),
-    cola quorum propia de la analítica.
+    cola quorum propia de la analítica. El consumidor deduplica por homeRegion, tipo lógico y eventId,
+    con hecho y recepción atómicos antes del ACK. El período anual deriva de committedAt, no de la recepción;
+    ver specs/analytics-processing.md. Son datos seudonimizados con riesgo residual, no anonimato demostrado.
 defaultContentType: application/json
 channels:
   booking.facts.v1:

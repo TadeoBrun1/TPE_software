@@ -168,3 +168,10 @@ la identidad de reserva ni del caso. Ver [contrato de ingesta](../../specs/inges
 
 - ~~¿La persona con quien se comparte tiene cuenta propia?~~ Sí: resuelto en la iteración 4 (ADR-0061).
 - ¿"Origen" de la reserva (correo, tercero, manual) se modela como atributo o como entidad? En la iteración 1 queda como atributo.
+
+## Refinamiento de identidad y proyección compartida
+
+Los permisos identifican al destinatario por (homeRegion, userId), vinculado de forma estable a (iss, sub) del
+proveedor confiable. Un userId local igual en otra región no designa a la misma persona. La vista SharedBooking
+es una proyección separada: omite notes, providerReference y details, conservados para el dueño. Ver ADR-0060 y
+ADR-0066. El marcador ReferenciaCompartida vive en la región del lector y su DELETE no se reenvía al dueño.

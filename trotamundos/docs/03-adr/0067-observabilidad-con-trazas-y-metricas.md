@@ -44,15 +44,24 @@ Reglas:
 * **Métricas por etapa de QA-1:** detección, extracción, publicación, espera en cola, aplicación y aviso al cliente,
   con los límites de `specs/ingestion-operations.md`. Para cerrar la medición de punta a punta, la app informa cuándo
   mostró la versión nueva con `POST /telemetry/panel-shown` (versión del panel, `correlationIds` e instante), una
-  operación de prioridad baja que se puede descartar ante sobrecarga (ADR-0047).
-* **Métricas de QA-4:** disponibilidad de la puerta de entrada (solicitudes exitosas sobre totales, por minuto),
-  conmutaciones del monitor de base y tiempo con una sola copia (ADR-0042).
+  operación de prioridad baja que se puede rechazar con 503 ante sobrecarga, con reintento del cliente. Un 202
+  confirma recepción durable: no se descarta un reporte aceptado. Las pérdidas se cuentan en la cobertura.
+* **Métricas de QA-4:** separar proporción de solicitudes exitosas de segundos de indisponibilidad. Sondas
+  independientes cada 5 s recorren entrada, puerta, núcleo y base por región y partición, aun sin tráfico real.
+  Registrar intervalos, cobertura y fallos parciales; unir intervalos solapados antes de comparar con 300 s/mes.
+  Conmutaciones y tiempo con una sola copia se observan adicionalmente (ADR-0042).
 * **Logs estructurados:** sin emails, nombres, códigos de reserva ni tokens; solo identificadores internos.
 * **Colector por región:** cada región guarda sus trazas, métricas y logs (CON-3). Las alertas (por ejemplo, la
   antigüedad de la cola de más de 40 s, una conmutación, o un aumento de rechazos en la auditoría de ADR-0061) se
   envían al equipo de operación.
-* **Muestreo:** se guardan todas las trazas con error o lentas y una fracción de las normales (suposición: 10 %); las
-  métricas no se muestrean.
+* **Muestreo:** para conservar trazas con error o lentas y 10 % de las normales, seleccionar al final (tail sampling),
+  dimensionar su ventana y contar trazas incompletas. No se promete recuperar spans ya descartados al inicio.
+  Las métricas de disponibilidad y cobertura no se muestrean.
+* **Cobertura de QA-1:** contar actualizaciones esperadas, reportadas, lentas y desconocidas. Telemetría perdida en
+  sobrecarga no se considera éxito; declarar desfase de reloj del cliente y ausencia de occurredAt externo. El
+  percentil de los reportes recibidos no demuestra el del conjunto si faltan muestras sesgadas por carga.
+
+El protocolo y las pruebas están en [quality-measurement.md](../../specs/quality-measurement.md).
 
 Patrones y tácticas que aplica:
 
@@ -74,7 +83,8 @@ Patrones y tácticas que aplica:
 
 Prototipo: una novedad simulada genera una traza que recorre ingesta, broker, núcleo y notificador con el mismo
 `correlationId`; el cliente de prueba recibe el `panel-changed` con ese identificador y lo informa en
-`POST /telemetry/panel-shown`; las métricas por etapa muestran el tiempo de cada una.
+`POST /telemetry/panel-shown`; las métricas por etapa muestran el tiempo de cada una. Agregar caída sin tráfico,
+solapamiento de incidentes, 503 de telemetría, reentrega del reporte y desfase del reloj del cliente.
 
 ## Pros and Cons of the Options
 

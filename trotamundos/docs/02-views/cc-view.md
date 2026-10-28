@@ -29,8 +29,8 @@ flowchart LR
         MB["Monitor de base<br/>(ping/echo y conmutación,<br/>3 instancias)"]
         B{{"RabbitMQ regional<br/>novedades · dominio · panel · asistencia"}}
         I["Ingesta<br/>(adaptador por proveedor)"]
-        A["Analítica<br/>(anonimiza al entrar)"]
-        AS[("Almacén analítico<br/>(anonimizado)")]
+        A["Analítica<br/>(seudonimiza al entrar)"]
+        AS[("Almacén analítico<br/>(seudonimizado)")]
         IDP["Proveedor de identidad<br/>(OpenID Connect)"]
         AU[("Registro de auditoría<br/>(solo agregado)")]
         OT["Colector de observabilidad<br/>(trazas, métricas, logs)"]
@@ -57,7 +57,7 @@ flowchart LR
     B -- "entrega novedades" --> N
     N -- "publica eventos de dominio y panel.changed" --> B
     B -- "booking.facts.v1 y trip.changed.v1" --> A
-    A -- "guarda hechos anonimizados" --> AS
+    A -- "guarda hechos seudonimizados" --> AS
     W -- "login y renovación (OIDC)" --> IDP
     M -- "login y renovación (OIDC)" --> IDP
     G -- "claves públicas (en caché)" --> IDP
@@ -90,8 +90,8 @@ sola para no recargar el diagrama.
 | Base operativa | Datos del núcleo de los usuarios de la región en particiones por usuario; incluye `panel_por_usuario` (ADR-0040, ADR-0042) | 3 |
 | Intermediario de mensajes | Conserva mensajes de novedades, dominio y asistencia | 2 |
 | Ingesta | Sondea correos, recibe notificaciones y consulta a terceros, traduce al modelo canónico y publica novedades | 2 |
-| Analítica | Consume `booking.facts.v1` y `trip.changed.v1`, anonimiza y guarda; no lee la base operativa (ADR-0064) | 4 |
-| Almacén analítico | Hechos anonimizados de la región para consultas pesadas del equipo de datos (ADR-0064) | 4 |
+| Analítica | Consume `booking.facts.v1` y `trip.changed.v1`, seudonimiza y guarda; no lee la base operativa (ADR-0064) | 4 |
+| Almacén analítico | Hechos seudonimizados de la región para consultas pesadas del equipo de datos (ADR-0064) | 4 |
 | Proveedor de identidad | Login, tokens de 15 min, renovación y revocación de los usuarios de la región (ADR-0060) | 4 |
 | Registro de auditoría | Registros de solo agregado de los accesos a viajes compartidos de la región; lo escriben el núcleo y la puerta de entrada (ADR-0061) | 4 |
 | Colector de observabilidad | Recibe trazas, métricas y logs de la región y dispara alertas (ADR-0067) | 4 |
@@ -141,7 +141,7 @@ partición. Cualquier cambio sobre ellos se anota en [impact-log.md](../01-add/i
 | Compartición y auditoría | [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) |
 | Reenvío entre regiones | [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) |
 | Tarjeta para redes sociales | [0063](../03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) |
-| Analítica regional anonimizada | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
+| Analítica regional seudonimizada | [0064](../03-adr/0064-analitica-regional-anonimizada.md) |
 | Observabilidad | [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |
 
 ## 7. Drivers que sustenta

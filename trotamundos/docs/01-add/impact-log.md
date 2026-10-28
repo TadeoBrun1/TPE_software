@@ -79,7 +79,7 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 | Fecha | Origen | Cambio o decisión | Afecta | Tratamiento | Estado |
 |---|---|---|---|---|---|
 | 2026-10-28 | 4, ADR-0060 | La entrada global usa `homeRegion` del token para enrutar y un directorio global `HMAC(email) → región` para el login (HMAC calculado en la entrada global); sin token, enruta por el prefijo de región del recurso | 1 | Refina ADR-0003 y ADR-0004 sin cambiarlas; el directorio sigue el criterio del de suscripciones (ADR-0025) | Propuesto para revisión |
-| 2026-10-28 | 4, ADR-0062 | La puerta de entrada reenvía por mTLS a otra región los recursos con su prefijo; los identificadores de viajes e invitaciones llevan la región del dueño | 1 y 3 | Nuevo conector entre regiones; no se copian datos | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0062 | La puerta de entrada reenvía por mTLS a otra región los recursos con su prefijo; los identificadores de viajes e invitaciones llevan la región del dueño | 1 y 3 | Nuevo conector entre regiones; la respuesta autorizada transita sin persistirse en las puertas; tabla de enrutamiento por método en ADR-0062 | Propuesto para revisión |
 | 2026-10-28 | 4, ADR-0066 | `booking.change.detected.v1` pasa a 0.2.0: tipo abierto, `arrivalLocation` y `details` según `specs/schemas/` | 2 | Contrato de diseño 0.x sin consumidores en producción; los adaptadores producen `details` y el núcleo lo valida. Reglas de productor y consumidor en `ingestion-contract.md` (cambios de la 0.2.0) y nota en ADR-0023 | Coordinado con 2 (2026-10-28) |
 | 2026-10-28 | 4, ADR-0064 | El núcleo publica `booking.facts.v1` desde su outbox; la analítica consume además `trip.changed.v1`. `booking.changed.v1` queda sin consumidores en la primera entrega | 2 y 3 | Nueva cola quorum de la analítica en `travel.domain` (ADR-0028) | Propuesto para revisión |
 | 2026-10-28 | 4, ADR-0067 | Además del `correlationId`, los mensajes llevan el contexto de traza (`traceparent`) en sus encabezados | 2 y 3 | Todos los productores y consumidores propagan el contexto con la biblioteca `observabilidad`; el contexto se guarda en la outbox. Reglas en `ingestion-operations.md` (sección 5) y `core-publication.md` | Coordinado con 2 (2026-10-28) |
@@ -101,3 +101,18 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 
 El paso 7 contiene análisis de escenarios. La implementación y el cumplimiento medido quedan diferenciados del
 estado documental. QA-1 a escala permanece abierto hasta resolver la recuperación dentro del presupuesto a escala.
+
+## Correcciones propuestas de revisión de iteración 4 — 2026-10-28
+
+| Cambio | Afecta | Tratamiento | Estado |
+|---|---|---|---|
+| Perfil JWT y principal homeRegion + userId | 1, 3 y 4 | ADR-0060 y bearerAuth; permisos comparan principal completo | Propuesto para revisión |
+| SharedBooking omite details; respuesta compartida no-store | 3 y 4 | ADR-0061/0066 y API 0.3.0; no cambia el bloque original del dueño | Propuesto para revisión |
+| Auditoría de rechazos en rutas del dueño y de reservas | 1, 3 y 4 | access-audit.md; no consultar propiedad para decidir si auditar un rechazo sin token | Propuesto para revisión |
+| GET remoto y DELETE local de marcadores | 1, 3 y 4 | Tabla por método y ruta de ADR-0062 | Propuesto para revisión |
+| Analítica idempotente y período de commit | 2, 3 y 4 | analytics-processing.md; outbox conserva eventId; hecho y recepción atómicos | Propuesto para revisión |
+| Medición temporal y cobertura de telemetría | 2, 3 y 4 | quality-measurement.md; 202 durable, reintentos y muestras faltantes declaradas | Propuesto para revisión |
+| Persistencia regional y tránsito; seudonimización | 1 y 4 | ADR-0062/0064; CON-3 y retención aún requieren validar el criterio elegido | Propuesto para revisión |
+
+Esta preparación no registra aprobación humana nueva ni ejecución del prototipo. Se mantienen los riesgos previos
+que no resuelven estas correcciones, en particular QA-1 de detección a escala y QA-10 de latencia internacional.

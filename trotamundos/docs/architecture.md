@@ -19,7 +19,7 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 | [1 — Estructura general](01-add/iteration-1-structure.md) | En revisión; ADRs propuestas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
 | [2 — Ingesta](01-add/iteration-2-ingestion.md) | Pasos 2–7 revisados; viabilidad de QA-1 y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
 | [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; decisiones confirmadas por ambos | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
-| [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pasos 2–7 documentados y auditados; decisiones de ambos integrantes | Identidad por región, compartición con cuenta y auditoría, lectura entre regiones, tarjeta para redes, analítica regional anonimizada, internacionalización en el cliente, detalles por tipo de reserva y observabilidad. |
+| [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pasos 2–7 documentados y auditados; decisiones de ambos integrantes | Identidad por región, compartición con cuenta y auditoría, lectura entre regiones, tarjeta para redes, analítica regional seudonimizada, internacionalización en el cliente, detalles por tipo de reserva y observabilidad. |
 
 La incorporación de al menos un módulo avanzado —recomendaciones o chatbot— es obligatoria para la segunda entrega. Su elección continúa pendiente.
 
@@ -77,7 +77,7 @@ La arquitectura separa tres clases de trabajo:
 |---|---|
 | Núcleo modular | Consultar y gestionar viajes, reservas, usuarios y permisos. Es el único dueño del estado oficial. |
 | Ingesta | Obtener información externa autorizada, normalizarla y publicar novedades. |
-| Analítica | Ejecutar procesamiento analítico separado de las operaciones habituales, con un almacén por región y los datos anonimizados al entrar ([ADR-0064](03-adr/0064-analitica-regional-anonimizada.md)). |
+| Analítica | Ejecutar procesamiento analítico separado de las operaciones habituales, con un almacén por región y los datos seudonimizados al entrar ([ADR-0064](03-adr/0064-analitica-regional-anonimizada.md)). |
 
 El núcleo es inicialmente un único desplegable con módulos internos.
 
@@ -133,7 +133,7 @@ La región de origen no se obtiene de la ubicación momentánea del viajero.
 - Atender desde la región de origen no garantiza atender desde la región físicamente más cercana.
 - El comportamiento para usuarios que viajan se refina en las iteraciones 3 y 4: se los atiende desde su región de
   origen y la app formatea en su idioma y en la zona horaria de cada reserva (ADR-0065).
-- La compartición entre regiones se lee de forma remota en la región del dueño, sin copiar datos (ADR-0062).
+- La compartición entre regiones se lee de forma remota en la región del dueño, sin persistir una réplica en la puerta del lector; la respuesta sí transita entre regiones (ADR-0062).
 - La identificación de la región correspondiente a una notificación externa se resuelve en la iteración 2.
 - La recuperación ante caída de una región completa no está diseñada en esta base.
 - No se afirma cumplimiento de políticas regionales de datos sin definir y validar sus criterios.
@@ -240,7 +240,7 @@ Ver el [índice completo de ADRs](03-adr/README.md).
 | [0061](03-adr/0061-comparticion-con-cuenta-y-auditoria.md) | Compartición con personas designadas con cuenta, control en el núcleo y auditoría. | proposed |
 | [0062](03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) | Lectura remota de viajes compartidos en la región del dueño. | proposed |
 | [0063](03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) | Tarjeta de resumen pública para redes sociales. | proposed |
-| [0064](03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales con anonimización al entrar. | proposed |
+| [0064](03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales con seudonimización al entrar. | proposed |
 | [0065](03-adr/0065-internacionalizacion-en-el-cliente.md) | Catálogos de textos remotos, datos neutros del backend y formato en el cliente. | proposed |
 | [0066](03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) | Campos comunes y detalles con esquema propio por tipo de reserva. | proposed |
 | [0067](03-adr/0067-observabilidad-con-trazas-y-metricas.md) | Trazas distribuidas, métricas por etapa y logs estructurados. | proposed |
@@ -263,7 +263,7 @@ Las decisiones de la segunda, la tercera y la cuarta iteración se revisan conju
 | QA-10 | 1, 3 y 4 | 0003, 0040, 0065 | Dos idiomas y zonas horarias sobre el mismo panel; latencia de QA-2 desde lejos de la región (parcial). |
 | CRN-2 | 4 | 0067 | Propagación del contexto a través del broker. |
 | RF-06 | 2, implementación coordinada con 3 | 0026: asistencia saliente del núcleo | Solicitud de asistencia a la agencia preferida. |
-| RF-07 | 1 y 4 | 0001, 0064 | Consultas del equipo de datos y anonimización. |
+| RF-07 | 1 y 4 | 0001, 0064 | Consultas del equipo de datos y seudonimización. |
 
 Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 
@@ -286,7 +286,7 @@ Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 | Un token de acceso robado sirve hasta 15 minutos. | Vida corta y revocación del token de renovación (ADR-0060). | Iteración 4 (aceptado) |
 | Una primera solicitud desde muy lejos de la región de origen puede superar los 800 ms de QA-2. | Se cumple con la conexión abierta; mitigación candidata: TLS en la entrada global cerca del usuario. | Iteración 4 (aceptado), candidata para la 5 |
 | Si falla la auditoría, se rechazan las lecturas de viajes compartidos. | QA-7 exige el 100 %; auditoría replicada en dos zonas (ADR-0061). | Iteración 4 (aceptado) |
-| Los datos analíticos de una cuenta eliminada, o un hecho tardío de un viaje eliminado, siguen seudonimizados hasta un año. | Destrucción anual de la clave (ADR-0064); validar con la normativa elegida (CON-3). | Iteración 4 (aceptado) |
+| Retención de hechos seudonimizados tras eliminar una cuenta o viaje, y cobertura de hechos tardíos sin clave. | Validar retención y riesgo de reidentificación; aplicar protocolo idempotente y período de commit (ADR-0064). | Iteración 4 (validación pendiente) |
 | CON-3 carece de un criterio concreto validado. | Precisar la política regional de datos y sus consecuencias. | Ambos integrantes |
 
 ## 13. Prototipo y evidencia
@@ -366,11 +366,21 @@ consultar al proveedor y la conexión SSE se abre con un ticket firmado (ADR-006
 que tienen cuenta: el dueño invita por email, solo una cuenta con ese email puede aceptar y el permiso queda atado a
 ella; todo pedido sobre un viaje ajeno pasa por el módulo `comparticion`, y cada intento, permitido o rechazado, queda
 registrado antes de responder, por el núcleo o por la puerta de entrada (ADR-0061). Si la persona es de otra región,
-la puerta de entrada reenvía la solicitud a la región del dueño por un canal mTLS y los datos no se copian (ADR-0062).
+la puerta de entrada reenvía la solicitud a la región del dueño por un canal mTLS y la respuesta autorizada transita sin persistirse en las puertas (ADR-0062).
 En redes sociales se publica una tarjeta de resumen que no da acceso al itinerario (ADR-0063). La analítica tiene un
-almacén por región, alimentado por el evento `booking.facts.v1` y anonimizado al entrar con una clave que se destruye
+almacén por región, alimentado por el evento `booking.facts.v1` y seudonimizado al entrar con una clave que se destruye
 cada año (ADR-0064). El backend devuelve datos neutros y los clientes formatean con catálogos de textos remotos
 (ADR-0065); QA-2 fuera de la región queda en riesgo para conexiones nuevas desde muy lejos. Las reservas tienen campos
 comunes y un bloque de detalles con esquema propio por tipo, para agregar medios sin tocar el núcleo (ADR-0066). Todos
 los procesos envían trazas, métricas y logs a un colector por región, con el `correlationId` de punta a punta hasta la
 app (ADR-0067). Ver [iteración 4](01-add/iteration-4-security-evolvability.md).
+
+## Correcciones propuestas de revisión de iteración 4
+
+El principal es regional y los tokens tienen validación completa de emisor, audiencia, tipo y vigencia (ADR-0060).
+La vista compartida omite details; su respuesta transita a la región del lector sin persistencia en las puertas,
+con Cache-Control no-store. Eliminar un marcador se ejecuta siempre en la región del lector (ADR-0062).
+La analítica aplica recepción idempotente y códigos por período de committedAt; no se afirma anonimato por destruir
+claves. Ver [procesamiento](../specs/analytics-processing.md). La auditoría cubre también rechazos sin token a rutas
+del dueño; [medición de calidad](../specs/quality-measurement.md) separa tiempo de caída de tasa de éxito y declara
+telemetría faltante. Las correcciones quedan propuestas para revisión conjunta, sin pruebas de prototipo ejecutadas.

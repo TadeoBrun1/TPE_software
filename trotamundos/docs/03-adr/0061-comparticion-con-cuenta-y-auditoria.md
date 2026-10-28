@@ -47,11 +47,11 @@ Reglas:
 * **Aceptar:** la persona inicia sesión y acepta con ese secreto (`POST /shares/{shareId}/accept`). El núcleo acepta
   solo si el `emailHmac` del token (email verificado por el proveedor de identidad de la región de quien acepta)
   coincide con el de la invitación. Así, aunque el enlace se reenvíe antes de aceptarlo, otra cuenta no puede
-  aceptarlo, y no hace falta mover emails entre regiones. Desde la aceptación el permiso queda atado al `userId`.
+  aceptarlo, y no hace falta mover emails entre regiones. Desde la aceptación el permiso queda atado al principal `(homeRegion, userId)` de ADR-0060.
   Aceptar dos veces con la misma cuenta no tiene efecto (idempotente).
 * **Permiso:** solo lectura del viaje y sus reservas. La vista compartida no incluye las notas del dueño ni los
-  códigos de reserva de los proveedores; los esquemas de `details` no pueden tener códigos ni datos personales
-  (ADR-0066).
+  códigos de reserva de los proveedores. En esta entrega también omite por completo `details`: los esquemas de
+  entrada no pueden demostrar que un texto libre carece de datos personales (ADR-0066).
 * **Quitar el permiso:** el dueño quita el permiso (`DELETE /trips/{tripId}/shares/{shareId}`) o cancela una
   invitación pendiente; tiene efecto en la siguiente lectura, porque el permiso se verifica siempre. Archivar el viaje
   mantiene los permisos; eliminarlo (ADR-0045) los borra junto con el email del invitado.
@@ -65,9 +65,9 @@ Reglas:
   agregado, antes de responder:
   * el núcleo de la región del dueño registra cada acceso a un viaje ajeno, permitido o rechazado, y cada
     invitación, aceptación (o intento) y quita de permiso;
-  * la puerta de entrada registra en el registro de su región los rechazos que ocurren antes de llegar al núcleo del
-    dueño sobre recursos de compartición: sin token o con token inválido, región del identificador inexistente y
-    región del dueño que no responde.
+  * la puerta registra los rechazos previos al núcleo sobre rutas de viajes, sus subrutas, reservas, referencias
+    compartidas e invitaciones, incluso de la misma región y sin token válido. Incluye fallos de autenticación,
+    límites de tasa, región inexistente y región sin respuesta; ver clasificación completa en `access-audit.md`.
 
   Si el registro no se puede escribir, la solicitud se rechaza (`503`) y la puerta deja el evento en sus logs
   estructurados con una alerta (ADR-0067). El rechazo está garantizado siempre; el registro, salvo que fallen a la vez
@@ -102,7 +102,8 @@ Patrones y tácticas que aplica:
 
 Prototipo y pruebas: el dueño invita, la persona acepta y ve el viaje; otra cuenta con el enlace reenviado no puede
 aceptarlo antes ni leerlo después (`404`); una solicitud sin token y una a `GET /trips/{tripId}` con un viaje ajeno
-también se rechazan; tras quitar el permiso, la persona recibe `404`; cada intento aparece en el registro de
+también se rechazan; incluir solicitudes sin token a un viaje de la misma región y a una ruta de reserva. Tras
+quitar el permiso, la persona recibe `404`; cada intento aparece en el registro de
 auditoría.
 
 ## Pros and Cons of the Options

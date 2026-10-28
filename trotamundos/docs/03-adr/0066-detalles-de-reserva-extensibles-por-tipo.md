@@ -48,8 +48,11 @@ Reglas:
   en la ingesta).
 * **Qué no va en `details`:** códigos de reserva, números de billete, nombres de pasajeros ni otros datos personales.
   Esos datos van en los campos comunes (`providerReference`, notas), que la vista compartida y la analítica ya
-  filtran (ADR-0061, ADR-0064). Así, el bloque se puede mostrar en un viaje compartido sin que el núcleo lo
-  interprete.
+  filtran (ADR-0061, ADR-0064). Esa regla es un contrato de los adaptadores, no una garantía semántica del
+  JSON Schema: un campo de texto válido todavía puede contener información sensible. En esta entrega, la vista
+  compartida omite `details` por completo y no devuelve el objeto Booking del dueño. El dueño conserva el bloque
+  original. Habilitar detalles compartidos requiere una proyección permitida por esquema y revisión de exposición;
+  ante un tipo o esquema nuevo, la proyección compartida parte vacía.
 * **Agregar un medio nuevo** (recorrido de QA-9 con un medio que hoy no existe, por ejemplo ferry):
   1. esquema `specs/schemas/details-ferry.v1.json` y el código `ferry` en la lista de tipos conocidos del contrato;
   2. adaptador del proveedor en la ingesta (ADR-0023), que produce los campos comunes y los detalles;
@@ -82,6 +85,7 @@ Patrones y tácticas que aplica:
 * Bad, because el núcleo no puede hacer reglas de negocio sobre los detalles (por ejemplo, avisar un cambio de andén
   como cambio importante) sin conocer ese esquema.
 * Bad, because los clientes tienen que agregar la vista de cada medio nuevo; hasta entonces lo muestran genérico.
+* Bad, because la vista compartida no incluye detalles como asiento o andén en esta entrega, para no reenviar texto libre sin una proyección revisada.
 * Bad, because abrir el tipo en los contratos cambia la versión 0.1.0 de `booking.change.detected.v1` (contrato de
   diseño de la iteración 2, sin consumidores en producción).
 
@@ -89,7 +93,9 @@ Patrones y tácticas que aplica:
 
 Prueba de QA-9: agregar el medio "ferry" en el prototipo con un adaptador simulado, su esquema y su vista, y
 verificar con el historial de cambios que no se modificó código de los otros medios ni de los módulos `viajes`,
-`reservas` y `panel`. Registrar el esfuerzo real.
+`reservas` y `panel`. Registrar el esfuerzo real. Agregar una reserva con texto sensible en un campo de details
+aceptado por el esquema: el dueño lo conserva, la vista compartida no incluye ese bloque. Verificar también tipos
+y esquemas desconocidos, sin habilitar exposición por defecto.
 
 ## Pros and Cons of the Options
 

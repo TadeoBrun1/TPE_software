@@ -49,7 +49,7 @@ flowchart TB
             DC[("Réplicas reconstruidas<br/>si cae una zona")]
         end
         A1["Analítica"]
-        AS1[("Almacén analítico<br/>(anonimizado)")]
+        AS1[("Almacén analítico<br/>(seudonimizado)")]
         A1 --- AS1
         D1 -. "replicación sincrónica por nodo" .- D2
         AU1 -. "replicación sincrónica" .- AU2
@@ -80,7 +80,7 @@ flowchart TB
 | Base operativa | Particiones lógicas por hash de usuario, repartidas en nodos físicos (ADR-0042) | Cada nodo: primaria en una zona y réplica sincrónica en otra; las primarias se reparten entre A y B | La unidad de falla es el nodo. Si cae una zona, las réplicas se promueven y las réplicas nuevas se crean en C |
 | Notificador | Conexiones SSE y envío de push (ADR-0046) | Varias instancias en A y B; escala por conexiones abiertas | Cada instancia tiene su cola de avisos; si cae, la app sigue con su caché |
 | Monitor de base | *Ping/echo* a las primarias cada 5 s; promoción de réplicas | 3 instancias, una por zona | Una promoción requiere acuerdo de dos de tres, para evitar promociones dobles |
-| Analítica y almacén analítico | Consumo de `booking.facts.v1` y `trip.changed.v1`, anonimización y consultas pesadas (ADR-0064) | Por región; no hay almacén global | No está en el camino de los viajeros: su caída solo atrasa los datos analíticos, que esperan en su cola |
+| Analítica y almacén analítico | Consumo de `booking.facts.v1` y `trip.changed.v1`, seudonimización y consultas pesadas (ADR-0064) | Por región; no hay almacén global | No está en el camino de los viajeros: su caída solo atrasa los datos analíticos, que esperan en su cola |
 | Directorio global de regiones | `HMAC(email)` → región para el login, calculado por la entrada global con una clave propia (ADR-0060) | Replicado en varias regiones, como la entrada global | Guarda un seudónimo por usuario (aceptado por proporcionalidad frente a CON-3); si cae, no se puede iniciar sesión desde un dispositivo nuevo |
 | Proveedor de identidad | Login, tokens y revocación de los usuarios de la región (ADR-0060) | Instancias en A y B | Guarda credenciales y emails solo de su región (CON-3) |
 | Registro de auditoría | Accesos a viajes compartidos (ADR-0061) | Se opera como un nodo más de la base (ADR-0042): primaria en A, réplica sincrónica en B, mismo monitor de base y reconstrucción en C | Si no se puede escribir, la lectura compartida se rechaza (`503`) |
@@ -109,7 +109,7 @@ flowchart TB
 | QA-4 Disponibilidad | La falla de una instancia o zona se absorbe con las otras zonas; la de una primaria, con su réplica sincrónica (*redundant spare*); el monitor detecta con *ping/echo* |
 | QA-5 Escalabilidad | Cada proceso tiene `n` instancias por zona y escala por separado según su métrica; la base crece moviendo particiones a nodos nuevos |
 | QA-10 Multirregión | Cada región es una celda independiente que atiende a sus usuarios |
-| CON-3 (suposición) | Los datos de un usuario quedan en su región de origen: identidad, auditoría, analítica y observabilidad también son regionales; un viaje compartido se lee en su región sin copiarse |
+| CON-3 (suposición) | Estado autoritativo y almacenes regionales; el viaje compartido se lee en origen y su respuesta autorizada transita sin persistencia en la puerta del lector. Excepciones y validación de CON-3 en ADR-0062 |
 | QA-7 | Identidad y auditoría con redundancia en dos zonas |
 
 ## 6. Prototipo

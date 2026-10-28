@@ -32,3 +32,8 @@ roles y confirm/mandatory/ACK según [políticas](ingestion-operations.md). Esqu
 [booking-confirmed.v1.yaml](asyncapi/booking-confirmed.v1.yaml). La versión bookingVersion es interna del núcleo,
 no sourceVersion del proveedor. El payload analítico puede ampliarse de forma compatible al refinar 4; este
 contrato mínimo no decide su almacenamiento ni autoriza copiar datos personales indiscriminadamente.
+
+## Consumidor analítico
+
+La analítica aplica recepción y hechos atómicos, ACK posterior y tratamiento de períodos con clave destruida,
+según [analytics-processing.md](analytics-processing.md). La outbox puede republicar: no se presupone entrega única.
