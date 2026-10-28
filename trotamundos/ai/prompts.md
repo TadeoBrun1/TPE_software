@@ -45,7 +45,7 @@ la materia.
 | Iteración 1 — Estructura general | Ambos; revisión de Tadeo Brun | Primera versión de los pasos de ADD y de las ADRs 0001 a 0004 con la persona de arquitecto; después, auditoría en rol de profesor que llevó a marcar arquitectura de referencia, patrones y tácticas, a quitar la matriz de decisión y a eliminar una ADR | Las decisiones de la revisión las tomó Tadeo Brun |
 | Iteración 2 — Ingesta | Tomas Lateana | Redacción por pasos de la iteración, las ADRs 0020 a 0028, las vistas de ingesta y los contratos; consulta de documentación oficial (Gmail, Microsoft Graph, RabbitMQ, SEI) | Revisión cruzada de Tadeo Brun, también asistida por IA; correcciones aplicadas por Tomas Lateana |
 | Iteración 3 — Consulta y escala | Tadeo Brun | Alternativas para cada decisión, redacción de pasos, ADRs 0040 a 0048, API de itinerarios y vistas; auditoría independiente en un contexto aparte | Decisiones elegidas por Tadeo Brun y confirmadas con Tomas Lateana; revisión cruzada de Tomas Lateana |
-| Iteración 4 — Seguridad y evolución | Ambos; decisiones de Tadeo Brun | Alternativas para cada decisión, redacción de pasos, ADRs 0060 a 0067, contratos y vistas; auditoría independiente en un contexto aparte | Decisiones sobre los hallazgos de la auditoría tomadas por Tadeo Brun; revisión cruzada de Tomas Lateana en el PR |
+| Iteración 4 — Seguridad y evolución | Tadeo Brun y Tomas Lateana | Alternativas para cada decisión, redacción de pasos, ADRs 0060 a 0067, contratos y vistas; auditoría independiente en un contexto aparte | Decisiones y respuestas a los hallazgos de la auditoría tomadas por ambos integrantes |
 
 ## Archivos que se le dan a la IA como contexto
 

@@ -1,6 +1,6 @@
 # Iteración 4 — Seguridad, compartición, analítica, internacionalización y evolucionabilidad
 
-**Responsable:** Ambos (decisiones tomadas por Tadeo Brun; revisión cruzada de Tomas Lateana pendiente en el PR)
+**Responsable:** Ambos (Tadeo Brun y Tomas Lateana)
 **Fecha:** 2026-10-28
 **Estado:** Decisiones tomadas (2026-10-28). Las ADRs 0060 a 0067 quedan en `proposed` hasta el merge a `main`.
 Revisada con una auditoría independiente (ver [Revisión de la iteración](#revisión-de-la-iteración)).

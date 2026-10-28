@@ -1,8 +1,8 @@
 ---
 status: "proposed"
 date: 2026-10-28
-decision-makers: "Tadeo Brun"
-consulted: "Tomas Lateana (revisión cruzada pendiente en el PR de la iteración 4)"
+decision-makers: "Tadeo Brun, Tomas Lateana"
+consulted: ""
 informed: ""
 ---
 
