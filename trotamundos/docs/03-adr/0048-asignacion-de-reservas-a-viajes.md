@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-28
 decision-makers: "Tadeo Brun"
 consulted: "Tomas Lateana (contrato booking.change.detected.v1)"
@@ -90,3 +90,10 @@ una sin fechas queda en "sin asignar"; mover una reserva y recibir otra novedad 
 | Specs | [booking-change-detected.v1.yaml](../../specs/asyncapi/booking-change-detected.v1.yaml), [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0040](0040-modelo-de-lectura-del-panel.md), [0044](0044-novedades-y-cambios-manuales.md), [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md) |
 | Código del prototipo | `prototype/` |
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #6](https://github.com/TadeoBrun1/TPE_software/pull/6),
+merge `54122ee` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

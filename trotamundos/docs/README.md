@@ -49,3 +49,8 @@ flowchart TD
 - Cada archivo empieza con un encabezado que dice **qué es** y **quién lo mantiene**.
 - Los links son relativos para que sirvan tanto en el repo como en la Wiki.
 - Lo que no viene del enunciado y se asumió se marca como **Suposición** con su criterio.
+
+## Cierre de primera entrega
+
+[Revisión final, escenarios y riesgos](04-evaluation/first-delivery-review.md). Distingue integración del diseño,
+verificaciones de documentos y validaciones de implementación pendientes.

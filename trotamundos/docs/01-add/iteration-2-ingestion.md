@@ -2,7 +2,8 @@
 
 **Responsable de la iteración:** Tomas Lateana (integrante A).
 **Preparación documental:** 2026-10-27, con asistencia de ChatGPT/Codex.
-**Estado:** pasos 2 a 7 documentados y revisados; viabilidad de QA-1 a escala abierta para revisión en PR #4. Pruebas de prototipo pendientes.
+**Estado:** diseño integrado en `main` mediante PR #4; ADRs aceptadas documentalmente.
+Validación de implementación y riesgos pendientes según [cierre de primera entrega](../04-evaluation/first-delivery-review.md).
 **ADRs:** 0020 a 0028, dentro del bloque 0020–0039.
 
 ## Base y alcance
@@ -114,8 +115,8 @@ Identidad del mensaje e identidad de la reserva son diferentes; conciliación co
 | ADR-0020 a 0028 | Contexto, drivers, alternativas, consecuencias y confirmación futura |
 | [Impactos](impact-log.md) | Cambios que deben revisar los responsables de 1 y 3 |
 
-Todas las ADR de esta iteración quedan `proposed` hasta su aceptación mediante revisión cruzada.
-Se preservan la primera iteración y sus ADR; la propuesta de ingesta debe revisarse con la tercera.
+Las ADR de esta iteración están aceptadas documentalmente tras la integración del PR #4 y sus refinamientos
+coordinados con 3 y 4. La verificación de cuotas, carga y recuperación mantiene sus pendientes.
 
 ## Paso 7 — Análisis del diseño y cierre de la iteración
 
@@ -182,11 +183,10 @@ concurrente, agencia con resultado incierto y carga de referencia. Resultados a�
 
 ### ¿Se sigue iterando?
 
-**Se entrega el diseño revisado y el paso 7 para revisión cruzada en PR #4. QA-1 a escala conserva un conflicto
-de viabilidad abierto; la iteración no se presenta como cumplimiento demostrado ni como cierre sin riesgos.**
-Broker y análisis están definidos; la recuperación de correo a escala requiere el refinamiento señalado. Los ADR-0020 a 0028 mantienen `proposed` hasta aceptación real por ambos; el cierre
-administrativo se registra al aprobar. Si pruebas o cuotas invalidan las hipótesis, se crea un refinamiento/ADR,
-no se afirma que el requisito estaba cumplido. Se continúa con implementación y las iteraciones 3/4.
+**El diseño quedó integrado mediante PR #4 y refinamientos posteriores. QA-1 a escala conserva su conflicto
+de viabilidad y no se declara demostrado.** Las ADR-0020 a 0028 están aceptadas como decisiones de diseño; cuotas,
+recuperación y pruebas de implementación continúan como pendientes. Ver el cierre global y su matriz de riesgos.
+Si una prueba invalida una hipótesis, se documentará el refinamiento correspondiente.
 
 ## Acuerdos de integración actualizados
 

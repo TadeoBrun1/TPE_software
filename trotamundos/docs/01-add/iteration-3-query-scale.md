@@ -2,8 +2,8 @@
 
 **Responsable:** Tadeo Brun (integrante B)
 **Fecha:** 2026-10-28
-**Estado:** Decisiones confirmadas por ambos integrantes (2026-10-28). Las ADRs 0040 a 0048 quedan en `proposed`
-hasta el merge a `main`. Revisada con una auditoría independiente (ver el final del documento).
+**Estado:** diseño integrado en `main` mediante PR #6; ADRs aceptadas documentalmente.
+Validación de implementación y riesgos pendientes según [cierre de primera entrega](../04-evaluation/first-delivery-review.md).
 **Rango de ADRs:** 0040 a 0059 (ver [CONTRIBUTING](../../CONTRIBUTING.md))
 
 > Las decisiones se tomaron eligiendo entre alternativas planteadas para cada punto; las descartadas y sus razones
@@ -150,15 +150,15 @@ Son valores iniciales de diseño, ajustables con la operación, elegidos para cu
 
 | ADR | Título | Estado |
 |---|---|---|
-| [0040](../03-adr/0040-modelo-de-lectura-del-panel.md) | Modelo de lectura del panel por usuario, actualizado en la misma transacción | Propuesta |
-| [0041](../03-adr/0041-cache-local-del-panel.md) | Caché local del panel en la app, revalidada por versión | Propuesta |
-| [0042](../03-adr/0042-particion-de-la-base-por-usuario.md) | Partición de la base por usuario en varios nodos con réplica sincrónica | Propuesta |
-| [0043](../03-adr/0043-escalado-solo-reactivo.md) | Escalado automático solo reactivo, con capacidad mínima de disponibilidad | Propuesta |
-| [0044](../03-adr/0044-novedades-y-cambios-manuales.md) | Conflictos entre novedades y cambios manuales: dueño por campo y marca de borrado | Propuesta |
-| [0045](../03-adr/0045-ciclo-de-vida-y-archivado-de-viajes.md) | Archivado diario, reactivación y eliminación al año | Propuesta |
-| [0046](../03-adr/0046-notificador-de-cambios-del-panel.md) | Notificador separado con evento propio y cola por instancia | Propuesta |
-| [0047](../03-adr/0047-priorizacion-y-degradacion-ante-sobrecarga.md) | Priorización y degradación ante sobrecarga | Propuesta |
-| [0048](../03-adr/0048-asignacion-de-reservas-a-viajes.md) | Asignación automática de reservas a viajes por fechas | Propuesta |
+| [0040](../03-adr/0040-modelo-de-lectura-del-panel.md) | Modelo de lectura del panel por usuario, actualizado en la misma transacción | Aceptada documentalmente |
+| [0041](../03-adr/0041-cache-local-del-panel.md) | Caché local del panel en la app, revalidada por versión | Aceptada documentalmente |
+| [0042](../03-adr/0042-particion-de-la-base-por-usuario.md) | Partición de la base por usuario en varios nodos con réplica sincrónica | Aceptada documentalmente |
+| [0043](../03-adr/0043-escalado-solo-reactivo.md) | Escalado automático solo reactivo, con capacidad mínima de disponibilidad | Aceptada documentalmente |
+| [0044](../03-adr/0044-novedades-y-cambios-manuales.md) | Conflictos entre novedades y cambios manuales: dueño por campo y marca de borrado | Aceptada documentalmente |
+| [0045](../03-adr/0045-ciclo-de-vida-y-archivado-de-viajes.md) | Archivado diario, reactivación y eliminación al año | Aceptada documentalmente |
+| [0046](../03-adr/0046-notificador-de-cambios-del-panel.md) | Notificador separado con evento propio y cola por instancia | Aceptada documentalmente |
+| [0047](../03-adr/0047-priorizacion-y-degradacion-ante-sobrecarga.md) | Priorización y degradación ante sobrecarga | Aceptada documentalmente |
+| [0048](../03-adr/0048-asignacion-de-reservas-a-viajes.md) | Asignación automática de reservas a viajes por fechas | Aceptada documentalmente |
 
 ## Paso 7 — Análisis
 

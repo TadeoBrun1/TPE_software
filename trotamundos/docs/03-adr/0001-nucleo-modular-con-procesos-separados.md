@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-27
 decision-makers: "Tadeo Brun, Tomas Lateana"
 consulted: ""
@@ -130,3 +130,10 @@ iteración 3, sobre el núcleo que define esta ADR.
 | Specs | — |
 | ADRs relacionadas | [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md), [0003](0003-despliegue-por-regiones-con-region-de-origen.md), [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
 | Código del prototipo | `prototype/` |
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #3](https://github.com/TadeoBrun1/TPE_software/pull/3),
+merge `05a8fd7` del 2026-10-27. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

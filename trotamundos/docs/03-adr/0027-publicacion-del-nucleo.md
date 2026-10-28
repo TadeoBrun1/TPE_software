@@ -1,7 +1,7 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-28
-decision-makers: "Tomas Lateana; revisión cruzada pendiente en PR #4"
+decision-makers: "Tomas Lateana"
 consulted: "Revisión de Tadeo Brun y asistencia de ChatGPT/Codex"
 ---
 
@@ -69,3 +69,10 @@ reentrega no repite el efecto. Verificar que una transacción fallida no deja un
 ## More Information
 
 [Contrato](../../specs/core-publication.md) · [Outbox de ingesta](0024-avance-y-publicacion-durable.md).
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4),
+merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

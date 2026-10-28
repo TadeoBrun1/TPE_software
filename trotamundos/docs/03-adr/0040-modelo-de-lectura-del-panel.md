@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-28
 decision-makers: "Tadeo Brun"
 consulted: "Tomas Lateana (impactos con la iteración 2)"
@@ -149,3 +149,10 @@ Patrones y tácticas que aplica:
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0027](0027-publicacion-del-nucleo.md), [0041](0041-cache-local-del-panel.md), [0046](0046-notificador-de-cambios-del-panel.md), [0042](0042-particion-de-la-base-por-usuario.md), [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md) |
 | Código del prototipo | `prototype/` |
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #6](https://github.com/TadeoBrun1/TPE_software/pull/6),
+merge `54122ee` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

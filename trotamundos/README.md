@@ -17,6 +17,7 @@ Trabajo Práctico Especial · Diseño de Sistemas de Software · UNICEN
 | Requerimientos, QAs, restricciones y drivers | [docs/00-requirements/](docs/00-requirements/) |
 | El proceso ADD: plan e iteraciones | [docs/01-add/](docs/01-add/) |
 | Las vistas arquitectónicas | [docs/02-views/](docs/02-views/) |
+| El cierre de primera entrega y riesgos abiertos | [docs/04-evaluation/first-delivery-review.md](docs/04-evaluation/first-delivery-review.md) |
 | Las decisiones (ADRs, formato MADR) | [docs/03-adr/](docs/03-adr/) |
 | Los contratos (spec-driven) | [specs/](specs/) |
 | El prototipo | [prototype/](prototype/) |
@@ -26,10 +27,10 @@ Trabajo Práctico Especial · Diseño de Sistemas de Software · UNICEN
 
 | # | Objetivo | Responsable | Estado | Documento |
 |---|---|---|---|---|
-| 1 | Estructura general del sistema | Ambos | En revisión (ADRs propuestas) | [iteration-1](docs/01-add/iteration-1-structure.md) |
-| 2 | Ingesta de reservas (correo + terceros) | Tomas | Pasos 2–7 revisados; viabilidad de QA-1 pendiente | [iteration-2](docs/01-add/iteration-2-ingestion.md) |
-| 3 | Consulta, latencia, disponibilidad y escala | Tadeo | Pasos 2–7 documentados; decisiones confirmadas | [iteration-3](docs/01-add/iteration-3-query-scale.md) |
-| 4 | Seguridad, compartición, i18n y analítica | Ambos | Pasos 2–7 documentados y auditados | [iteration-4](docs/01-add/iteration-4-security-evolvability.md) |
+| 1 | Estructura general del sistema | Ambos | Diseño integrado; ADRs aceptadas | [iteration-1](docs/01-add/iteration-1-structure.md) |
+| 2 | Ingesta de reservas (correo + terceros) | Tomas | Diseño integrado; viabilidad de QA-1 pendiente | [iteration-2](docs/01-add/iteration-2-ingestion.md) |
+| 3 | Consulta, latencia, disponibilidad y escala | Tadeo | Diseño integrado; validación pendiente | [iteration-3](docs/01-add/iteration-3-query-scale.md) |
+| 4 | Seguridad, compartición, i18n y analítica | Ambos | Diseño integrado; validación pendiente | [iteration-4](docs/01-add/iteration-4-security-evolvability.md) |
 
 Las iteraciones adicionales (opción avanzada A/B de la 2da entrega, refinamientos) se agregan a
 [iteration-plan.md](docs/01-add/iteration-plan.md).
@@ -56,3 +57,10 @@ Las iteraciones adicionales (opción avanzada A/B de la 2da entrega, refinamient
 ```
 
 Sobre la Wiki de GitHub, ver [docs/WIKI.md](docs/WIKI.md).
+
+## Alcance de este cierre
+
+La primera entrega aquí cerrada es la documentación arquitectónica de las cuatro iteraciones. Los contratos
+son de diseño; no hay implementación del prototipo ni pruebas de carga ejecutadas. La consigna general exige
+prototipo y una opción avanzada A o B para la segunda entrega. El alcance exigido en cada fecha debe respetar
+lo indicado por la cátedra; este estado no sustituye esa indicación.

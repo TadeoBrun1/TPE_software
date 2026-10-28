@@ -1,7 +1,7 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-27
-decision-makers: "Tomas Lateana; revisión cruzada en PR #4 pendiente"
+decision-makers: "Tomas Lateana"
 consulted: "ChatGPT/Codex y documentación primaria enlazada"
 ---
 
@@ -55,7 +55,7 @@ utilizar un broker que ya ofrece esas piezas. No se elige RabbitMQ por el tamañ
 
 El paso 7 analiza escenarios y registra riesgos. El prototipo debe comprobar publicación, confirmación del broker y ACK del consumidor, reentrega,
 reinicio y mensajes no enrutados; se declara pendiente de ejecución. Seleccionar release y digest al implementar,
-verificar compatibilidad y no usar una etiqueta móvil `latest`. Los ADR permanecen proposed hasta revisión cruzada;
+verificar compatibilidad y no usar una etiqueta móvil `latest`. Las ADR están aceptadas documentalmente por integración;
 la elección y el análisis ya están documentados, no falta elegir el producto.
 
 ## Pros and Cons of the Options
@@ -81,3 +81,10 @@ reintentos, flujo de consumidores y permisos; además puede competir con los dat
 [Iteración 2](../01-add/iteration-2-ingestion.md), [C&C ingesta](../02-views/ingestion-view.md),
 [operación y fuentes](../../specs/ingestion-operations.md), [eventos](../../specs/asyncapi/booking-change-detected.v1.yaml).
 La política de tres zonas del broker refina el mínimo zonal de ADR-0003; no agrega recuperación entre regiones.
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4),
+merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

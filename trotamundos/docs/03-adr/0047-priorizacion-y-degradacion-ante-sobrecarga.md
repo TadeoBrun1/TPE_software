@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-28
 decision-makers: "Tadeo Brun"
 consulted: ""
@@ -99,3 +99,10 @@ respondiendo, y un cliente que excede su límite recibe `429`.
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) (respuestas `429` y `503`) |
 | ADRs relacionadas | [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md), [0028](0028-rabbitmq-y-politicas.md), [0041](0041-cache-local-del-panel.md), [0043](0043-escalado-solo-reactivo.md) |
 | Código del prototipo | `prototype/` |
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #6](https://github.com/TadeoBrun1/TPE_software/pull/6),
+merge `54122ee` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

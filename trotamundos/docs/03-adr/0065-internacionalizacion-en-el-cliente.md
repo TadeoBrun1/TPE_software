@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-28
 decision-makers: "Tadeo Brun, Tomas Lateana"
 consulted: ""
@@ -100,3 +100,10 @@ publicando solo su catálogo; una clave sin traducir muestra el idioma base.
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0003](0003-despliegue-por-regiones-con-region-de-origen.md), [0040](0040-modelo-de-lectura-del-panel.md), [0041](0041-cache-local-del-panel.md) |
 | Código del prototipo | `prototype/` |
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7),
+merge `00f21b9` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

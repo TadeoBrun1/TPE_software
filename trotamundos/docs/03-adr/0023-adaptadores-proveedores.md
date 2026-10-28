@@ -1,7 +1,7 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-27
-decision-makers: "Tomas Lateana; revisión cruzada pendiente"
+decision-makers: "Tomas Lateana"
 consulted: "Asistencia de ChatGPT/Codex"
 informed: "Revisión cruzada mediante el PR de iteración 2"
 ---
@@ -69,7 +69,7 @@ Dos simuladores con campos/estados distintos deben producir el contrato común; 
 | Drivers | [Requisitos y escenarios](../00-requirements/architectural-drivers.md) |
 | Vistas | [Ingesta](../02-views/ingestion-view.md), [secuencias](../02-views/ingestion-sequences.md) |
 | Contrato | [Semántica](../../specs/ingestion-contract.md), [AsyncAPI](../../specs/asyncapi/booking-change-detected.v1.yaml) |
-| Relación con 1/3 | [Impactos](../01-add/impact-log.md); base de 1 publicada en main, revisión de integración pendiente |
+| Relación con 1/3 | [Impactos](../01-add/impact-log.md); base integrada y coordinada mediante PRs #3, #4, #6 y #7; validación de implementación pendiente |
 | ADR relacionadas | [Índice](README.md), ADR-0020 a 0024 |
 | Prototipo | [Alcance](../../prototype/README.md); implementación pendiente |
 
@@ -84,3 +84,10 @@ El recorrido de QA-9 usa un medio que no existe (ferry), porque `train` ya está
 
 El adaptador de agencia pertenece al módulo saliente de asistencia del núcleo y usa un puerto distinto del acceso
 entrante de ingesta; ver [ADR-0026](0026-integracion-agencia.md). Ningún módulo importa adaptadores del otro proceso.
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4),
+merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

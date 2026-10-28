@@ -27,3 +27,7 @@
 - [Contratos (specs)](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/specs)
 - [Prototipo](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/prototype)
 - [Registro del equipo](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/TEAM-LOG.md)
+
+**Cierre de primera entrega**
+
+- [Revisión final y riesgos](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/04-evaluation/first-delivery-review.md)

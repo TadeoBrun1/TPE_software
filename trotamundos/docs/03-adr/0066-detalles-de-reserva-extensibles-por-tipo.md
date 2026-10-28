@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-28
 decision-makers: "Tadeo Brun, Tomas Lateana"
 consulted: ""
@@ -126,3 +126,10 @@ y esquemas desconocidos, sin habilitar exposición por defecto.
 | Specs | [details-train.v1.json](../../specs/schemas/details-train.v1.json), [details-flight.v1.json](../../specs/schemas/details-flight.v1.json), [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml), [booking-change-detected.v1.yaml](../../specs/asyncapi/booking-change-detected.v1.yaml) |
 | ADRs relacionadas | [0023](0023-adaptadores-proveedores.md), [0040](0040-modelo-de-lectura-del-panel.md), [0065](0065-internacionalizacion-en-el-cliente.md) |
 | Código del prototipo | `prototype/` |
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7),
+merge `00f21b9` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

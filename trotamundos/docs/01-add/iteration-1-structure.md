@@ -2,8 +2,8 @@
 
 **Responsable:** Ambos
 **Fecha:** 2026-10-27
-**Estado:** En revisión. Las ADRs 0001, 0002, 0003 y 0004 están en `proposed` hasta que ambos las confirmen; al
-confirmarlas pasan a `accepted` y la iteración se da por cerrada.
+**Estado:** diseño integrado en `main` mediante PR #3; ADRs aceptadas documentalmente.
+Validación de implementación y riesgos pendientes según [cierre de primera entrega](../04-evaluation/first-delivery-review.md).
 **Rango de ADRs:** 0001 a 0019 (ver [CONTRIBUTING](../../CONTRIBUTING.md))
 
 ---
@@ -158,10 +158,10 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 
 | ADR | Título | Estado |
 |---|---|---|
-| [0001](../03-adr/0001-nucleo-modular-con-procesos-separados.md) | Núcleo como monolito modular, con ingesta y analítica como procesos separados | Propuesta |
-| [0002](../03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) | Comunicación asincrónica con intermediario de publicación y suscripción | Propuesta |
-| [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) | Despliegue multirregión con región de origen por usuario | Propuesta |
-| [0004](../03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) | Arquitectura de referencia: clientes ricos y puerta de entrada única | Propuesta |
+| [0001](../03-adr/0001-nucleo-modular-con-procesos-separados.md) | Núcleo como monolito modular, con ingesta y analítica como procesos separados | Aceptada documentalmente |
+| [0002](../03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) | Comunicación asincrónica con intermediario de publicación y suscripción | Aceptada documentalmente |
+| [0003](../03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) | Despliegue multirregión con región de origen por usuario | Aceptada documentalmente |
+| [0004](../03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) | Arquitectura de referencia: clientes ricos y puerta de entrada única | Aceptada documentalmente |
 
 ## Paso 7 — Análisis
 

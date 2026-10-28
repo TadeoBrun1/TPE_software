@@ -2,9 +2,8 @@
 
 **Responsable:** Ambos (Tadeo Brun y Tomas Lateana)
 **Fecha:** 2026-10-28
-**Estado:** diseño documentado y correcciones de revisión propuestas (2026-10-28). Las ADRs 0060 a 0067
-quedan en `proposed`; estas correcciones requieren revisión conjunta antes de integrarse.
-Revisada con una auditoría independiente (ver [Revisión de la iteración](#revisión-de-la-iteración)).
+**Estado:** diseño integrado en `main` mediante PR #7; ADRs aceptadas documentalmente.
+Validación de implementación y riesgos pendientes según [cierre de primera entrega](../04-evaluation/first-delivery-review.md).
 **Rango de ADRs:** 0060 a 0079 (ver [CONTRIBUTING](../../CONTRIBUTING.md))
 
 > Las decisiones se tomaron eligiendo entre alternativas planteadas para cada punto; las descartadas y sus razones
@@ -153,7 +152,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 
 | Contrato | Archivo | Cambio |
 |---|---|---|
-| API de itinerarios | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) | 0.2.0: `bearerAuth` concreto (JWT de 15 min con `emailHmac`, excepción por el canal entre regiones); ticket SSE firmado; invitaciones, aceptación, quita de permisos, viajes compartidos y referencias (`POST`/`DELETE /shared/trips`); tarjeta para redes; `POST /telemetry/panel-shown`; `correlationIds` en el evento SSE; `type` como código abierto, `details`, `arrivalLocation`, zonas IANA y `price` (ISO 4217); identificadores con prefijo de región |
+| API de itinerarios | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) | 0.3.0: `bearerAuth` concreto (JWT de 15 min con `emailHmac`, excepción por el canal entre regiones); ticket SSE firmado; invitaciones, aceptación, quita de permisos, viajes compartidos y referencias (`POST`/`DELETE /shared/trips`); tarjeta para redes; `POST /telemetry/panel-shown`; `correlationIds` en el evento SSE; `type` como código abierto, `details`, `arrivalLocation`, zonas IANA y `price` (ISO 4217); identificadores con prefijo de región |
 | Hechos de reservas para la analítica | [booking-facts.v1.yaml](../../specs/asyncapi/booking-facts.v1.yaml) | Nuevo; solo campos permitidos, sin códigos ni textos; incluye la fecha de creación de la reserva |
 | Novedades de reservas | [booking-change-detected.v1.yaml](../../specs/asyncapi/booking-change-detected.v1.yaml) | 0.2.0: tipo abierto, `arrivalLocation`, zonas IANA y `details` (cambio sobre el contrato de la iteración 2, ver el registro de impactos) |
 | Avisos de cambio del panel | [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml) | 0.2.0: `correlationIds` opcional, para medir QA-1 de punta a punta (contrato de la iteración 3) |
@@ -175,14 +174,14 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 
 | ADR | Título | Estado |
 |---|---|---|
-| [0060](../03-adr/0060-identidad-por-region-con-tokens.md) | Autenticación con un proveedor de identidad por región y tokens de vida corta | Propuesta |
-| [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) | Compartición con personas designadas con cuenta, control en el núcleo y auditoría | Propuesta |
-| [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) | Lectura remota de viajes compartidos en la región del dueño | Propuesta |
-| [0063](../03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) | Tarjeta de resumen pública para compartir en redes sociales | Propuesta |
-| [0064](../03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales, con los eventos seudonimizados al entrar | Propuesta |
-| [0065](../03-adr/0065-internacionalizacion-en-el-cliente.md) | Internacionalización: catálogos remotos, datos neutros y formato en el cliente | Propuesta |
-| [0066](../03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) | Reserva con campos comunes y detalles con esquema propio por tipo | Propuesta |
-| [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) | Observabilidad con trazas distribuidas, métricas por etapa y logs estructurados | Propuesta |
+| [0060](../03-adr/0060-identidad-por-region-con-tokens.md) | Autenticación con un proveedor de identidad por región y tokens de vida corta | Aceptada documentalmente |
+| [0061](../03-adr/0061-comparticion-con-cuenta-y-auditoria.md) | Compartición con personas designadas con cuenta, control en el núcleo y auditoría | Aceptada documentalmente |
+| [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) | Lectura remota de viajes compartidos en la región del dueño | Aceptada documentalmente |
+| [0063](../03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) | Tarjeta de resumen pública para compartir en redes sociales | Aceptada documentalmente |
+| [0064](../03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales, con los eventos seudonimizados al entrar | Aceptada documentalmente |
+| [0065](../03-adr/0065-internacionalizacion-en-el-cliente.md) | Internacionalización: catálogos remotos, datos neutros y formato en el cliente | Aceptada documentalmente |
+| [0066](../03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) | Reserva con campos comunes y detalles con esquema propio por tipo | Aceptada documentalmente |
+| [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) | Observabilidad con trazas distribuidas, métricas por etapa y logs estructurados | Aceptada documentalmente |
 
 ## Paso 7 — Análisis
 
@@ -306,8 +305,9 @@ por su sola clasificación como aceptados.
 
 ### Evaluación final de la arquitectura
 
-Antes de entregar, repasar todos los escenarios (H, H) con *Scenario Walkthrough* y hacer una sesión de
-*Risk Storming* sobre la vista C&C y la de despliegue.
+La revisión analítica transversal y el recorrido de los escenarios están registrados en
+[el cierre documental](../04-evaluation/first-delivery-review.md). Incluye riesgos sobre componentes y despliegue.
+No se atribuye una sesión grupal de Risk Storming ni pruebas de prototipo que no se hayan realizado.
 
 ### Prototipo
 
@@ -370,7 +370,8 @@ Las correcciones aplicadas fueron:
 
 ## Correcciones de revisión — preparación 2026-10-28
 
-Se proponen estos ajustes para revisión conjunta; no se registra una nueva aceptación ni pruebas de prototipo:
+Los ajustes de esta sección quedaron integrados en el PR #7. Su adopción documental no registra ejecución
+de pruebas del prototipo:
 
 | Tema | Decisión refinada | Contrato o evidencia futura |
 |---|---|---|
