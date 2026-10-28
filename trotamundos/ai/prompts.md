@@ -35,13 +35,17 @@ La IA se usó como asistente del proceso ADD, no como quien decide. Cada iteraci
 
 ## Uso por etapa
 
-| Etapa | Responsable | Herramienta | Uso de la IA | Controles humanos |
-|---|---|---|---|---|
-| Requisitos (`docs/00-requirements/`) | Tadeo Brun | Claude, con la skill `/test-qas` | Revisión de los escenarios de calidad con el template SEI de 6 partes y revisión de coherencia entre QA, restricciones y requerimientos funcionales | Cada cambio de estado y de contenido lo confirmó el integrante |
-| Iteración 1 — Estructura general | Ambos; revisión de Tadeo Brun | Asistente de IA con la persona de arquitecto | Primera versión de los pasos de ADD y de las ADRs 0001 a 0004; después, auditoría en rol de profesor que llevó a marcar arquitectura de referencia, patrones y tácticas, a quitar la matriz de decisión y a eliminar una ADR | Las decisiones de la revisión las tomó Tadeo Brun |
-| Iteración 2 — Ingesta | Tomas Lateana | ChatGPT/Codex | Redacción por pasos de la iteración, las ADRs 0020 a 0028, las vistas de ingesta y los contratos; consulta de documentación oficial (Gmail, Microsoft Graph, RabbitMQ, SEI) | Revisión cruzada de Tadeo Brun (asistida por Claude); correcciones aplicadas por Tomas Lateana |
-| Iteración 3 — Consulta y escala | Tadeo Brun | Claude | Alternativas para cada decisión, redacción de pasos, ADRs 0040 a 0048, API de itinerarios y vistas; auditoría independiente en un contexto aparte | Decisiones elegidas por Tadeo Brun y confirmadas con Tomas Lateana; revisión cruzada de Tomas Lateana |
-| Iteración 4 — Seguridad y evolución | Ambos; decisiones de Tadeo Brun | Claude | Alternativas para cada decisión, redacción de pasos, ADRs 0060 a 0067, contratos y vistas; auditoría independiente en un contexto aparte | Decisiones sobre los hallazgos de la auditoría tomadas por Tadeo Brun; revisión cruzada de Tomas Lateana en el PR |
+En todas las etapas se usaron asistentes de IA de uso general. Para los requisitos se usaron además *skills*:
+instrucciones reutilizables que le indican al asistente cómo hacer una tarea concreta siguiendo la bibliografía de
+la materia.
+
+| Etapa | Responsable | Uso de la IA | Controles humanos |
+|---|---|---|---|
+| Requisitos (`docs/00-requirements/`) | Tadeo Brun | Generación y revisión de los escenarios de calidad con el template SEI de 6 partes (`/generador-qas`, `/test-qas`), árbol de utilidad (`/arbol-utilidad`) y revisión de restricciones, conceptos y requerimientos funcionales con los marcos de Bass, Clements y Kazman (`/bass-software-architecture`) y de Keeling (`/keeling-design-it`) | Cada cambio de estado y de contenido lo confirmó el integrante |
+| Iteración 1 — Estructura general | Ambos; revisión de Tadeo Brun | Primera versión de los pasos de ADD y de las ADRs 0001 a 0004 con la persona de arquitecto; después, auditoría en rol de profesor que llevó a marcar arquitectura de referencia, patrones y tácticas, a quitar la matriz de decisión y a eliminar una ADR | Las decisiones de la revisión las tomó Tadeo Brun |
+| Iteración 2 — Ingesta | Tomas Lateana | Redacción por pasos de la iteración, las ADRs 0020 a 0028, las vistas de ingesta y los contratos; consulta de documentación oficial (Gmail, Microsoft Graph, RabbitMQ, SEI) | Revisión cruzada de Tadeo Brun, también asistida por IA; correcciones aplicadas por Tomas Lateana |
+| Iteración 3 — Consulta y escala | Tadeo Brun | Alternativas para cada decisión, redacción de pasos, ADRs 0040 a 0048, API de itinerarios y vistas; auditoría independiente en un contexto aparte | Decisiones elegidas por Tadeo Brun y confirmadas con Tomas Lateana; revisión cruzada de Tomas Lateana |
+| Iteración 4 — Seguridad y evolución | Ambos; decisiones de Tadeo Brun | Alternativas para cada decisión, redacción de pasos, ADRs 0060 a 0067, contratos y vistas; auditoría independiente en un contexto aparte | Decisiones sobre los hallazgos de la auditoría tomadas por Tadeo Brun; revisión cruzada de Tomas Lateana en el PR |
 
 ## Archivos que se le dan a la IA como contexto
 
