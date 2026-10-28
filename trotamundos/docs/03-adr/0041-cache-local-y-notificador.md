@@ -84,7 +84,7 @@ Patrones y tácticas que aplica:
 * Bad, because la app puede mostrar datos viejos durante el tiempo de revalidación (normalmente menos de un segundo).
 * Bad, because la primera apertura después de instalar no tiene caché; ahí QA-3 depende de la red (riesgo menor:
   el escenario supone sesión iniciada).
-* Bad, because hay un proceso más, con conexiones abiertas que dimensionar: se estima del 2 al 5 % de los usuarios
+* Bad, because hay un proceso más, con conexiones abiertas que dimensionar: se estima, como suposición a partir de los 2 M de usuarios activos semanales de QA-5, del 2 al 5 % de los usuarios
   activos con la app abierta a la vez (suposición).
 
 ### Confirmation

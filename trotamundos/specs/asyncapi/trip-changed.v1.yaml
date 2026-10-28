@@ -56,6 +56,7 @@ components:
             - created
             - updated
             - archived
+            - reactivated
             - deleted
           panelVersion:
             type: integer

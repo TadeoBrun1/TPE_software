@@ -100,6 +100,33 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+  /trips/{tripId}/reactivate:
+    post:
+      summary: Devolver un viaje archivado al panel
+      description: >
+        Para los casos en que el viaje sigue en curso sin que ningún proveedor lo haya informado (ADR-0045).
+      operationId: reactivateTrip
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Viaje activo nuevamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: El viaje no está archivado
+        "503":
+          $ref: "#/components/responses/Overloaded"
   /bookings:
     post:
       summary: Agregar una reserva manualmente (RF-04)

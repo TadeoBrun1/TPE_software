@@ -138,7 +138,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 | [0040](../03-adr/0040-modelo-de-lectura-del-panel.md) | Modelo de lectura del panel por usuario, actualizado en la misma transacción | Propuesta |
 | [0041](../03-adr/0041-cache-local-y-notificador.md) | Caché local en la app y notificador separado | Propuesta |
 | [0042](../03-adr/0042-particion-de-la-base-por-usuario.md) | Partición de la base por usuario con réplica sincrónica | Propuesta |
-| [0043](../03-adr/0043-escalado-reactivo-y-degradacion.md) | Escalado reactivo con capacidad mínima, priorización y degradación | Propuesta |
+| [0043](../03-adr/0043-escalado-reactivo-y-degradacion.md) | Escalado solo reactivo, priorización y degradación | Propuesta |
 | [0044](../03-adr/0044-aplicacion-de-novedades-en-el-nucleo.md) | Aplicación de novedades: dueño por campo y asignación por fechas | Propuesta |
 | [0045](../03-adr/0045-ciclo-de-vida-y-archivado-de-viajes.md) | Archivado diario por partición y eliminación al año | Propuesta |
 
@@ -155,11 +155,12 @@ mediciones: las cifras de carga son suposiciones que el prototipo y las pruebas 
 | QA-3: abre la app con sesión iniciada | Lee el panel guardado y lo muestra; en paralelo `GET /panel` con versión | Primer contenido sin esperar la red | Primera apertura sin caché depende de la red |
 | QA-4: cae una instancia del núcleo | La puerta de entrada deja de enviarle tráfico al fallar el heartbeat | Solo se pierden las solicitudes en curso; los clientes reintentan | Tiempos de heartbeat a medir |
 | QA-4: cae la primaria de una partición | El monitor lo detecta en 30 s y promueve la réplica en 60 s | Solo los usuarios de esa partición quedan sin escrituras durante la conmutación, sin pérdida de datos | Pérdida simultánea de las dos zonas: riesgo de región |
-| QA-5: pico de 5 veces | El escalado arranca al 60 % de uso; el margen mínimo cubre el arranque; las novedades esperan en el broker | El panel sigue respondiendo; QA-1 puede atrasarse | Picos predecibles dependen del margen mínimo |
+| QA-5: pico de 5 veces | El escalado arranca al 60 % de uso; mientras arrancan las instancias se prioriza el panel y las novedades esperan en el broker | El panel sigue respondiendo; QA-1 puede atrasarse | Picos predecibles dependen del margen mínimo |
 | QA-1: una novedad cambia un vuelo | Núcleo aplica (≤ 70 s incluida la espera en cola) → outbox → notificador → SSE → `GET /panel` | Cambio visible dentro de los 100 s asignados al núcleo y al cliente | Medir la etapa del notificador |
 | RF-04: el hotel cambia una fecha que el usuario editó | Se aplica la fecha del proveedor, se conservan las notas y se avisa | Panel fiel al proveedor, sin perder las anotaciones | Registrar campos editados |
 | RF-05: llega una reserva sin viaje | Se asigna al viaje cuyas fechas la cubren o se crea uno nuevo | El panel se arma solo | Viajes cercanos en fechas pueden confundirse; el usuario corrige |
 | RF-05: termina un viaje | La tarea diaria lo archiva a la fecha de fin + 2 días y lo elimina al año | Panel acotado; datos no acumulados | Hasta un día de demora para archivar |
+| RF-05: el usuario queda varado después de la fecha de fin | Si el proveedor reprograma, la novedad cambia la fecha y el viaje sigue activo (o se reactiva). Si nadie informa nada, se archiva y el usuario lo reactiva a mano | El panel no depende de que el proveedor informe todo | La fecha de fin sale de los datos de las reservas: el sistema no infiere emergencias |
 
 ### Estado de los drivers
 
@@ -168,7 +169,7 @@ mediciones: las cifras de carga son suposiciones que el prototipo y las pruebas 
 | QA-2 | Cumplido por diseño | Prueba de carga del panel en el pico |
 | QA-3 | Cumplido por diseño para aperturas con caché | Primera apertura sin caché (riesgo menor) |
 | QA-4 | Parcial | Cubierto para instancias, zonas y particiones; la falla de región sigue como riesgo aceptado |
-| QA-5 | Parcial | Validar el margen mínimo y las cifras de carga supuestas |
+| QA-5 | Parcial | Ajustar el umbral de escalado y validar las cifras de carga supuestas |
 | RF-04 | Cumplido por diseño | — |
 | RF-05 | Cumplido por diseño | Validar el margen de 2 días |
 | QA-1 (etapas del núcleo y del cliente) | Cumplido por diseño | Medir la etapa del notificador; el conflicto a escala de la iteración 2 sigue abierto |
@@ -179,7 +180,7 @@ mediciones: las cifras de carga son suposiciones que el prototipo y las pruebas 
 | Riesgo | Driver | Tratamiento |
 |---|---|---|
 | QA-1 a escala: si se pierde un aviso del proveedor de correo, las cuentas con reconciliación de 15 min o 6 h superan los 5 minutos (de la iteración 2) | QA-1 | **Aceptado.** Mitigación posible: detectar buzones que dejaron de recibir avisos y adelantar su reconciliación. Para una iteración 5 si hay tiempo |
-| Los picos predecibles pasan por los minutos de arranque del escalado reactivo | QA-5 | Aceptado; mitigado con capacidad mínima con margen. Si las pruebas muestran que no alcanza, se agrega escalado programado |
+| Los picos predecibles pasan por los minutos de arranque del escalado reactivo | QA-5 | Aceptado: los días de pico del enunciado son una expectativa, no una garantía para todas las semanas y regiones, y pagar capacidad por las dudas no se justifica en una startup. Mitigado con escalado temprano (60 %) y priorización. Si en operación se ven picos regulares, se agrega escalado programado con datos reales |
 | Las cifras de carga son suposiciones (aperturas por usuario, conexiones simultáneas) | QA-5 | Validar con pruebas de carga del prototipo |
 | La falla de una región completa deja sin servicio a sus usuarios | QA-4 | Aceptado desde la iteración 1; las particiones lo acotan pero no lo resuelven |
 | Desincronización entre tablas y panel por un error de programación | QA-2 | Único escritor, versión en el documento y reconstrucción |
@@ -187,13 +188,17 @@ mediciones: las cifras de carga son suposiciones que el prototipo y las pruebas 
 
 ### Supuestos de esta iteración
 
-| Supuesto | Uso |
-|---|---|
-| Hasta 50 aperturas del panel por usuario activo y semana | Carga de lectura (ADR-0042) |
-| Del 2 al 5 % de los usuarios activos con la app abierta a la vez | Conexiones del notificador (ADR-0041) |
-| Margen de 2 días para considerar un viaje completo | RF-05 (ADR-0045) |
-| Eliminación de viajes archivados al año | RF-05, CON-3 (ADR-0045) |
-| Capacidad mínima para el doble del promedio y escalado al 60 % de uso | QA-5 (ADR-0043) |
+Son estimaciones para dimensionar y comparar opciones, no comportamientos garantizados: el uso real solo se conoce
+con el sistema en operación. Cada una indica de qué dato del enunciado o de los QA parte.
+
+| Supuesto | De dónde parte | Uso |
+|---|---|---|
+| Cada usuario activo carga el panel hasta 50 veces por semana (abrir la app o la web, recargar, volver a la pantalla) | 2 M de usuarios activos semanales (QA-5); el enunciado no da la frecuencia de uso | Estimar las lecturas por segundo: ~165/s promedio y ~830/s con el pico de 5 veces (ADR-0042) |
+| Del 2 al 5 % de los usuarios activos tiene la app abierta al mismo tiempo | 2 M de usuarios activos semanales (QA-5) | Dimensionar las conexiones del notificador (ADR-0041) |
+| Un viaje está completo 2 días después de su última reserva | RF-05 ("una vez que el viaje se completa"); el enunciado no define cuándo | Momento del archivado (ADR-0045) |
+| Los viajes archivados se eliminan al año | RF-05 ("archivarse o eliminarse") y CON-3 (suposición) | Retención de datos (ADR-0045) |
+| El escalado arranca al 60 % de uso | QA-5 (pico de 5 veces) y el tiempo de arranque de una instancia (1 a 3 minutos) | Umbral de escalado (ADR-0043) |
+| Pico de 5 veces el promedio | Suposición ya registrada en QA-5 | Todo el dimensionamiento |
 
 ### Impacto en otras iteraciones
 

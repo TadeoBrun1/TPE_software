@@ -74,7 +74,7 @@ flowchart TB
 | Puerta de entrada por región, redundante, como único acceso | [0004](../03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
 | Particiones con réplica sincrónica y monitor de base | [0042](../03-adr/0042-particion-de-la-base-por-usuario.md) |
 | Notificador por región | [0041](../03-adr/0041-cache-local-y-notificador.md) |
-| Escalado reactivo con capacidad mínima | [0043](../03-adr/0043-escalado-reactivo-y-degradacion.md) |
+| Escalado solo reactivo, con escalado temprano | [0043](../03-adr/0043-escalado-reactivo-y-degradacion.md) |
 
 ## 5. Drivers que sustenta
 
@@ -106,8 +106,8 @@ ofrece esas tres zonas, registrar limitación y no afirmar tolerancia a la caíd
 
 | Proceso | Métrica de escalado | Capacidad mínima |
 |---|---|---|
-| Núcleo | Solicitudes por segundo y latencia del panel | Doble de la carga promedio; escala al 60 % de uso |
-| Notificador | Conexiones abiertas | Doble del promedio de conexiones |
+| Núcleo | Solicitudes por segundo y latencia del panel | Una instancia por zona; escala al 60 % de uso |
+| Notificador | Conexiones abiertas | Una instancia por zona; escala al 60 % de uso |
 | Ingesta y consumidor de novedades | Antigüedad de la cola | Según la iteración 2 |
 | Base | No escala automáticamente | Particiones dimensionadas para el pico; se amplían de forma planificada |
 

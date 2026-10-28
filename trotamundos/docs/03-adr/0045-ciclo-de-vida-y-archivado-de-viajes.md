@@ -43,9 +43,20 @@ mismas transacciones que cualquier otro cambio del núcleo.
 Reglas:
 
 * Un viaje está **completo** cuando pasó la fecha de su última reserva más **2 días** (margen para demoras y vuelos
-  de vuelta tardíos).
+  de vuelta tardíos). La fecha de fin sale **de los datos de las reservas**, que vienen de los proveedores o del
+  usuario: el sistema no infiere emergencias, demoras climáticas ni cambios de planes que nadie informó.
+* Si un proveedor cambia una fecha (por ejemplo, reprograma el vuelo de vuelta), llega una novedad, la reserva cambia
+  y el viaje deja de estar completo. Esto ya funciona con ADR-0044.
 * **Archivar:** el viaje pasa a estado `archivado`, sale de `panel_por_usuario` y queda consultable en "viajes
   anteriores". Si después llega una novedad (por ejemplo, un reembolso), se aplica igual sobre el viaje archivado.
+* **Reactivar automáticamente:** si llega una novedad para una reserva de un viaje archivado y sus fechas todavía no
+  pasaron (por ejemplo, el hotel extiende la estadía o se emite un vuelo de vuelta nuevo), el viaje vuelve a estar
+  activo y reaparece en el panel.
+* **Reactivar a mano:** el usuario puede devolver un viaje archivado al panel desde "viajes anteriores", o agregar una
+  reserva manual con fecha futura a ese viaje, lo que lo reactiva. Cubre los casos en que ningún proveedor informa el
+  cambio (por ejemplo, el usuario queda varado sin que se modifique ninguna reserva, o el proveedor tiene un error).
+  Un viaje reactivado a mano no se vuelve a archivar hasta que pase la fecha de su última reserva más 2 días, contada
+  desde la reactivación.
 * **Eliminar:** los viajes archivados se eliminan definitivamente **1 año** después de archivados, con sus reservas.
   El plazo es una suposición del equipo (el enunciado no lo fija).
 * **Mecanismo:** una vez por día, en el horario de menor carga de la región, cada partición busca en lotes los viajes
@@ -66,16 +77,20 @@ Patrones y tácticas que aplica:
 
 ### Consequences
 
-* Good, because es automático y reversible durante el año de archivo.
+* Good, because es automático y reversible durante el año de archivo: archivar solo saca el viaje del panel.
+* Good, because no depende de que un proveedor externo informe bien todos los cambios: el usuario puede corregirlo.
 * Good, because el panel queda chico y la lectura sigue siendo barata.
 * Good, because los datos personales no se acumulan indefinidamente.
 * Bad, because un viaje puede tardar hasta un día en archivarse después de completarse.
+* Bad, because si el usuario sigue de viaje sin que llegue ninguna novedad, el viaje se archiva igual y tiene que
+  reactivarlo a mano.
 * Bad, because el usuario pierde su historial después de un año.
 
 ### Confirmation
 
 Prototipo: con una fecha simulada, la tarea archiva un viaje vencido (sale del panel y publica el evento), no toca
 uno activo, y elimina un archivado de más de un año. Ejecutarla dos veces seguidas no produce cambios en la segunda.
+Una novedad con fecha futura sobre un viaje archivado lo reactiva; `POST /trips/{tripId}/reactivate` también.
 
 ## Pros and Cons of the Options
 

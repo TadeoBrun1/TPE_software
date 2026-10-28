@@ -63,7 +63,8 @@ del proveedor sin perder lo que el usuario anotó, y se arma solo, que es el obj
 1. Si las fechas de la reserva caen dentro de un viaje activo del usuario, o a menos de 2 días de su inicio o fin, se
    agrega a ese viaje. Si hay más de un candidato, se elige el más cercano en fechas.
 2. Si ningún viaje la cubre, se crea un viaje nuevo con nombre sugerido por el destino y el mes.
-3. El usuario puede mover la reserva a otro viaje; desde ese momento el viaje asignado es un campo del usuario y las
+3. Si la reserva pertenece a un viaje archivado y sus fechas todavía no pasaron, el viaje se reactiva (ADR-0045).
+4. El usuario puede mover la reserva a otro viaje; desde ese momento el viaje asignado es un campo del usuario y las
    novedades no lo cambian.
 
 Todo se aplica en una transacción local de la partición del usuario: control de entrada de la novedad, cambio,

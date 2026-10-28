@@ -43,7 +43,7 @@ Plantilla: [adr-template.md](adr-template.md).
 | [0040](0040-modelo-de-lectura-del-panel.md) | Modelo de lectura del panel por usuario en la misma transacción | proposed | 3 | QA-2, QA-5 |
 | [0041](0041-cache-local-y-notificador.md) | Caché local en la app y notificador separado | proposed | 3 | QA-3, QA-1, QA-5 |
 | [0042](0042-particion-de-la-base-por-usuario.md) | Partición de la base por usuario con réplica sincrónica | proposed | 3 | QA-5, QA-4 |
-| [0043](0043-escalado-reactivo-y-degradacion.md) | Escalado reactivo, priorización y degradación | proposed | 3 | QA-5, QA-2, QA-4 |
+| [0043](0043-escalado-reactivo-y-degradacion.md) | Escalado solo reactivo, priorización y degradación | proposed | 3 | QA-5, QA-2, QA-4 |
 | [0044](0044-aplicacion-de-novedades-en-el-nucleo.md) | Aplicación de novedades: dueño por campo y asignación por fechas | proposed | 3 | RF-04, RF-05, QA-6 |
 | [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md) | Archivado diario y eliminación al año | proposed | 3 | RF-05, QA-2, CON-3 |
 

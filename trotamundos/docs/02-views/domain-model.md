@@ -97,7 +97,7 @@ classDiagram
 | Elemento | Descripción |
 |---|---|
 | Usuario | Viajero con cuenta en la plataforma. Su región de origen decide dónde se guardan sus datos (ADR-0003) |
-| Viaje | Agrupación de reservas. Está completo cuando pasó la fecha de su última reserva más 2 días; una tarea diaria lo archiva y lo elimina un año después (ADR-0045) |
+| Viaje | Agrupación de reservas. Está completo cuando pasó la fecha de su última reserva más 2 días; una tarea diaria lo archiva y lo elimina un año después. Se reactiva si llega una novedad con fechas futuras o si el usuario lo pide (ADR-0045) |
 | Reserva | Hotel, auto, vuelo, tren o autobús; puede venir de correo, de un tercero o de carga manual. Registra qué campos editó el usuario: las novedades cambian los del proveedor y conservan los del usuario (ADR-0044). Si no se puede asociar a un viaje, queda en estado `pendiente` de resolución. Agregar un medio de transporte es agregar un valor a `tipo` y un adaptador (QA-9) |
 | PanelDeUsuario | Vista precalculada del panel (`panel_por_usuario`), con la versión del último cambio. No es una entidad de negocio: es una copia para leer, reconstruible desde viajes y reservas (ADR-0040) |
 | CuentaDeCorreo | Buzón vinculado con autorización del usuario |

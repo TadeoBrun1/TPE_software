@@ -14,8 +14,8 @@ ADR-0003 decidió que cada región guarda los datos de sus usuarios y que la reg
 partición, pero no cómo se organiza la base **dentro** de una región. Hay que decidir cómo escala esa base con la
 cantidad de cuentas y cómo se limita el efecto de una falla.
 
-Estimación de carga (suposición, a validar con pruebas): con 2 millones de usuarios activos por semana y hasta 50
-aperturas del panel por usuario y semana, la lectura global promedio es de unas 165 solicitudes/s, y con el pico de
+Estimación de carga (suposición a partir de QA-5, a validar con pruebas): con 2 millones de usuarios activos por
+semana y hasta 50 cargas del panel por usuario y semana (abrir la app o la web, recargar, volver a la pantalla), la lectura global promedio es de unas 165 solicitudes/s, y con el pico de
 5 veces, unas 830/s; una disrupción grande suma algunos cientos por segundo. Las escrituras vienen de la ingesta
 (la iteración 2 estima 50 a 250 novedades/s por región) y de los cambios manuales. Con estas cifras una sola base por
 región alcanza **hoy** en rendimiento; la decisión se toma por crecimiento y, sobre todo, por aislamiento de fallas.

@@ -6,7 +6,7 @@ consulted: ""
 informed: "Tomas Lateana"
 ---
 
-# Escalado automático reactivo con capacidad mínima, y priorización y degradación ante sobrecarga
+# Escalado automático solo reactivo, y priorización y degradación ante sobrecarga
 
 ## Context and Problem Statement
 
@@ -37,19 +37,32 @@ Qué hacer con la demanda que sobra:
 
 ## Decision Outcome
 
-Chosen options: "A2. Solo reactivo" y "B1. Limitar, priorizar y degradar", because un único mecanismo de escalado
-cubre todos los picos, y la priorización protege lo más importante para el viajero (ver su panel) durante los
-minutos en que la capacidad nueva todavía no está.
+Chosen options: "A2. Solo reactivo" y "B1. Limitar, priorizar y degradar", because se paga capacidad solo cuando
+hay demanda real, un único mecanismo cubre picos predecibles e impredecibles, y la priorización protege lo más
+importante para el viajero (ver su panel) durante los minutos en que la capacidad nueva todavía no está.
+
+**Por qué no se agrega capacidad por calendario (A1), aunque el enunciado nombra los días de pico:**
+
+* El enunciado dice que se **esperan** picos de domingo a lunes y de jueves a viernes. Es una expectativa, no una
+  garantía: nada asegura que ocurran todas las semanas, con la misma intensidad, ni en todas las regiones (cada
+  región tiene su calendario, sus feriados y su zona horaria).
+* Trotamundos es una startup con recursos limitados. Levantar instancias "por las dudas" en días fijos significa
+  pagar capacidad que puede quedar ociosa; escalar cuando la carga sube paga solo lo que se usa.
+* Si en operación las métricas muestran picos regulares y el escalado reactivo llega tarde, se agrega escalado
+  programado **con datos reales**. Ese cambio no modifica esta decisión de fondo: se suma como complemento. Es una
+  revisión que solo puede hacerse con el sistema en uso.
 
 **Escalado (A2):**
 
 * Núcleo, notificador e ingesta escalan por separado, cada uno con su métrica: solicitudes por segundo y latencia
   del panel para el núcleo, conexiones abiertas para el notificador, antigüedad de la cola para la ingesta y el
   consumidor de novedades.
-* **Capacidad mínima con margen:** cada proceso mantiene instancias para atender al menos el doble de la carga
-  promedio, y el escalado arranca al 60 % de uso, no al 100 %. Así los minutos de arranque se cubren con el margen.
-* Las particiones de la base (ADR-0042) no escalan automáticamente: se dimensionan para el pico y se amplían de forma
-  planificada.
+* **Capacidad mínima = la que exige la disponibilidad:** al menos una instancia de cada proceso por zona de falla
+  (QA-4, ADR-0003). No se reserva capacidad extra para picos.
+* **Escalado temprano:** se agregan instancias cuando el uso llega al 60 %, no al 100 %, para que el 40 % restante
+  cubra los minutos de arranque. Es un parámetro a ajustar con la operación.
+* **Excepción, la base:** las particiones (ADR-0042) no pueden agregar capacidad en minutos, porque crecer implica
+  mover datos. Por eso se dimensionan para el pico y se amplían de forma planificada.
 
 **Sobrecarga (B1):**
 
@@ -80,9 +93,9 @@ Patrones y tácticas que aplica:
 
 * Good, because el mismo mecanismo cubre picos predecibles e impredecibles.
 * Good, because en el peor momento el viajero sigue viendo su panel.
-* Bad, because los picos predecibles también pasan por los minutos de arranque: dependen del margen mínimo. **Riesgo
-  aceptado**; si las pruebas muestran que no alcanza, se agrega escalado programado sin cambiar esta decisión.
-* Bad, because mantener el margen mínimo tiene un costo permanente.
+* Good, because no se paga capacidad ociosa en días que quizás no tengan pico.
+* Bad, because los picos predecibles también pasan por los minutos de arranque: dependen del escalado temprano y de
+  la priorización. **Riesgo aceptado**; si en operación no alcanza, se agrega escalado programado con datos reales.
 * Bad, because durante un pico fuerte QA-1 puede atrasarse para algunas actualizaciones.
 
 ### Confirmation
@@ -95,8 +108,11 @@ Patrones y tácticas que aplica:
 
 ### A1. Programado más reactivo
 
-* Good, because los picos conocidos no esperan al arranque de instancias.
-* Bad, because hay que mantener un calendario y ajustarlo; para las disrupciones igual hace falta el reactivo.
+* Good, because si el pico ocurre, la capacidad ya está lista.
+* Bad, because los días de pico son una expectativa del enunciado, no una garantía para todas las semanas y regiones:
+  se paga capacidad que puede quedar ociosa.
+* Bad, because hay que mantener un calendario por región; para las disrupciones igual hace falta el reactivo.
+* Neutral, because puede agregarse después como complemento si la operación muestra picos regulares.
 
 ### A3. Sobredimensionar
 

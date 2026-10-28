@@ -223,7 +223,7 @@ Ver el [índice completo de ADRs](03-adr/README.md).
 | [0040](03-adr/0040-modelo-de-lectura-del-panel.md) | Modelo de lectura del panel por usuario, actualizado en la misma transacción. | proposed |
 | [0041](03-adr/0041-cache-local-y-notificador.md) | Caché local en la app y notificador separado. | proposed |
 | [0042](03-adr/0042-particion-de-la-base-por-usuario.md) | Partición de la base por usuario con réplica sincrónica. | proposed |
-| [0043](03-adr/0043-escalado-reactivo-y-degradacion.md) | Escalado reactivo, priorización y degradación. | proposed |
+| [0043](03-adr/0043-escalado-reactivo-y-degradacion.md) | Escalado solo reactivo, priorización y degradación. | proposed |
 | [0044](03-adr/0044-aplicacion-de-novedades-en-el-nucleo.md) | Aplicación de novedades: dueño por campo y asignación por fechas. | proposed |
 | [0045](03-adr/0045-ciclo-de-vida-y-archivado-de-viajes.md) | Archivado diario y eliminación al año. | proposed |
 
@@ -236,7 +236,7 @@ Las decisiones de la segunda y la tercera iteración se revisan conjuntamente an
 | QA-1 | 1 y 2, coordinadas con 3 | 0001, 0002, 0020, 0024 | Tiempo completo desde generación externa hasta visualización. |
 | QA-2 y QA-3 | 3 | 0040, 0041, 0043 | Prueba de carga del panel y primer contenido móvil con caché. |
 | QA-4 | 1 y 3 | 0001, 0002, 0003, 0004, 0042, 0043 | Conmutación de particiones e instancias; presupuesto mensual. |
-| QA-5 | 1 y 3 | 0001, 0003, 0004, 0042, 0043 | Capacidad mínima, escalado y particiones ante picos. |
+| QA-5 | 1 y 3 | 0001, 0003, 0004, 0042, 0043 | Umbral de escalado reactivo y particiones ante picos. |
 | QA-6 | 2 y 3 | 0022, 0023, 0024 | Normalización, duplicaciones, desorden y conciliación. |
 | QA-8 | 2 | 0021 | Autorización, renovación, revocación y datos conservados. |
 | QA-9 | 1, 2 y 4 | 0001, 0002, 0023 | Incorporar una integración y evaluar impacto. |
@@ -257,7 +257,7 @@ Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 | La caída de una zona puede consumir el presupuesto mensual. | Heartbeat y conmutación de particiones en 30 s y 60 s (ADR-0042); falta medirlos. | Iteración 3 (diseñado) |
 | La caída de una región completa no tiene recuperación diseñada. | Riesgo aceptado: no está en el estímulo de QA-4; las particiones acotan a quiénes afecta. | Aceptado |
 | QA-1 a escala: avisos perdidos con reconciliación lenta. | Riesgo aceptado en la iteración 3; mitigación candidata para la iteración 5. | Aceptado |
-| Picos predecibles con escalado solo reactivo. | Capacidad mínima con margen; escalado programado si las pruebas lo piden. | Iteración 3 (aceptado) |
+| Picos predecibles con escalado solo reactivo. | Escalado temprano y priorización; escalado programado solo si la operación muestra picos regulares. | Iteración 3 (aceptado) |
 | Región de origen y región más cercana pueden diferir. | Evaluar atención de viajeros y acceso compartido entre regiones. | Iteraciones 3 y 4 |
 | Un cambio confirmado puede no publicarse si el proceso falla. | Persistencia y publicación recuperable coordinadas. | Iteraciones 2 y 3 |
 | Dos componentes pueden mantener estados contradictorios de una autorización. | Definir fuente autoritativa y coordinación de revocación. | Iteraciones 2 y 3 |
@@ -322,7 +322,7 @@ tres zonas; esto refina el mínimo general de ADR-0003. Ver el estado actual en 
 El panel se lee por clave desde un documento por usuario que se actualiza en la misma transacción que cada cambio
 (ADR-0040). La app muestra su copia local al abrir y revalida con la versión; un notificador separado avisa los
 cambios por SSE o push (ADR-0041). La base de cada región se divide en particiones por usuario con réplica
-sincrónica en otra zona (ADR-0042). El escalado es reactivo con capacidad mínima, y ante sobrecarga se prioriza el
+sincrónica en otra zona (ADR-0042). El escalado es solo reactivo, sin capacidad reservada por calendario, y ante sobrecarga se prioriza el
 panel (ADR-0043). El núcleo aplica las novedades con dueño por campo y asigna reservas a viajes por fechas
 (ADR-0044); una tarea diaria archiva los viajes completos y elimina los archivados al año (ADR-0045).
 Ver [iteración 3](01-add/iteration-3-query-scale.md).
