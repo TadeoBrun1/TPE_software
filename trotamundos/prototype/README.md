@@ -1,50 +1,22 @@
-# Prototipo
+# Prototipo — implementación pendiente
 
-Demuestra que la arquitectura es viable. Tiene que ser **acotado** (el enunciado pide gestionar bien el tiempo y el
-alcance), **trazable** a las ADRs y **consistente** con los contratos de [`specs/`](../specs/).
+**Estado al cierre documental:** no hay servicios implementados, docker-compose ni resultados de ejecución.
+Este directorio conserva el plan de validación, no un prototipo ejecutable. Los contratos y las ADRs orientan la
+implementación futura. No hay un comando de arranque disponible todavía.
 
-## Alcance
+## Escenarios previstos
 
-Elegir pocos escenarios y hacerlos bien. Completar esta tabla en la iteración 1.
+| Recorrido candidato | Contrato | Decisiones | Evidencia futura |
+|---|---|---|---|
+| Novedad de correo sin versión externa y reserva consultable | [ingestion-contract.md](../specs/ingestion-contract.md) | ADR-0020, 0024, 0027 y 0040 | Datos sintéticos, persistencia, outbox y lectura |
+| Reentrega y recuperación ante caída | [ingestion-operations.md](../specs/ingestion-operations.md) | ADR-0024, 0027 y 0028 | Un efecto durable y publicación recuperable |
+| Consulta del panel y aviso SSE | [itinerary-api.v1.yaml](../specs/openapi/itinerary-api.v1.yaml) | ADR-0040, 0041 y 0046 | Versión, ready, revalidación y reconexión |
+| Compartición con autorización y auditoría | [access-audit.md](../specs/access-audit.md) | ADR-0060, 0061 y 0062 | Actor permitido, rechazado y permiso quitado |
+| Hechos analíticos idempotentes | [analytics-processing.md](../specs/analytics-processing.md) | ADR-0064 | Reentrega, commit y cambio de período |
 
-| Escenario o driver | ¿Se implementa? | Cómo se demuestra |
-|---|---|---|
-| QA-1: correo de reserva visible en menos de 5 min | `<sí/no>` | `<prueba, script o demo>` |
-| QA-2: consulta del panel en 800 ms | `<sí/no>` |  |
-| QA-4: caída de una instancia sin cortar el servicio | `<sí/no>` |  |
-| QA-6: cancelación de un tercero procesada | `<sí/no>` |  |
-| QA-7: acceso no designado rechazado | `<sí/no>` |  |
+El conjunto definitivo se acotará antes de implementar. Estos son candidatos, no una afirmación de que la cátedra
+aceptó ese alcance. Ver [plan de validación de ingesta](ingestion-validation.md),
+[medición de calidad](../specs/quality-measurement.md) y [cierre documental](../docs/04-evaluation/first-delivery-review.md).
 
-## Estructura sugerida
-
-```
-prototype/
-├── README.md
-├── docker-compose.yml        # para levantar todo en local
-├── <servicio-ingesta>/       # iteración 2
-├── <servicio-consulta>/      # iteración 3
-├── <simulador-terceros>/     # simula aerolíneas y proveedores de correo
-└── tests/
-    └── contract/             # pruebas contra specs/
-```
-
-Cada servicio tiene su propio README con: qué spec implementa, qué ADRs materializa, cómo se corre y cómo se prueba.
-
-## Trazabilidad
-
-| Servicio o módulo | Spec | ADRs | Vista | Iteración |
-|---|---|---|---|---|
-|  |  |  |  |  |
-
-## Cómo correrlo
-
-```bash
-# Completar cuando exista el docker-compose
-docker compose up
-```
-
-## Reglas
-
-- No se implementa nada que no esté contemplado en una spec o una ADR. Si hace falta, primero se documenta.
-- Las pruebas de contrato validan que los servicios cumplen `specs/`.
-- No se suben credenciales ni datos reales de correo: se usan simuladores.
+Cada servicio futuro deberá indicar cómo se ejecuta, qué contrato implementa, qué decisiones materializa y qué
+pruebas se ejecutaron, con versión y resultados. Se usarán datos sintéticos y simuladores; no credenciales reales.

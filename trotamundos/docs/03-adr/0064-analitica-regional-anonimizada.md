@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-28
 decision-makers: "Tadeo Brun, Tomas Lateana"
 consulted: ""
@@ -156,3 +156,10 @@ La evaluación de reidentificación debe considerar ciudades, fechas, proveedor,
 conjuntos de datos. Destruir claves no basta para afirmar anonimato; la política de agregados de 20 reservas es una
 hipótesis de divulgación, no una prueba. Mantener controles de acceso y retención hasta validar ese riesgo. Ver
 [NIST SP 800-188](https://csrc.nist.gov/pubs/sp/800/188/final). El diseño de almacenes regionales se conserva.
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7),
+merge `00f21b9` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

@@ -1,7 +1,7 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-10-28
-decision-makers: "Tomas Lateana; revisión cruzada pendiente en PR #4"
+decision-makers: "Tomas Lateana"
 consulted: "Revisión de Tadeo Brun y asistencia de ChatGPT/Codex"
 ---
 
@@ -80,3 +80,10 @@ QA-1; incluir cuentas inactivas en la prueba, sin cambiar silenciosamente el alc
 Fuentes: [Gmail push](https://developers.google.com/workspace/gmail/api/guides/push),
 [Microsoft Graph](https://learn.microsoft.com/en-us/graph/outlook-change-notifications-overview),
 [ciclo de vida Graph](https://learn.microsoft.com/en-us/graph/change-notifications-lifecycle-events).
+
+## Estado de integración documental
+
+Esta decisión forma parte del diseño integrado mediante [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4),
+merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
+la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
+ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.

@@ -1,7 +1,7 @@
 # Plan de iteraciones
 
 **Qué es:** qué iteraciones haremos, con qué objetivo y en qué orden.
-**Mantiene:** ambos. **Estado:** PROPUESTA para discutir.
+**Mantiene:** ambos. **Estado:** iteraciones 1 a 4 integradas; seguimiento de validaciones en el cierre documental.
 
 El enunciado pide 4 iteraciones como mínimo. Las dos primeras reglas de ordenamiento son: la 1ra estructura el
 sistema, y las siguientes atacan los drivers de mayor prioridad, empezando por lo que sostiene el negocio.

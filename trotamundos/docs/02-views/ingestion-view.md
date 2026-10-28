@@ -1,6 +1,6 @@
 # Vista de ingesta — componentes y conectores
 
-**Iteración:** 2. **Estado:** propuesta para revisión. **Mantiene:** responsable de ingesta.
+**Iteración:** 2. **Estado:** diseño integrado; validación de implementación pendiente. **Mantiene:** responsable de ingesta.
 **Propósito:** mostrar cómo las novedades externas se convierten en mensajes para el núcleo, con permisos y
 publicación durable. Complementa la vista general sin reemplazar el trabajo de la iteración 1.
 

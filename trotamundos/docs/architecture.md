@@ -2,7 +2,7 @@
 
 **Mantienen:** Tadeo Brun y Tomas Lateana.
 
-**Estado:** iteraciones 1, 2 y 3 integradas; iteración 4 documentada (pasos 2 a 7) por ambos integrantes y revisada con una auditoría independiente. QA-1 a escala queda como riesgo aceptado. Prototipo y aceptación conjunta pendientes.
+**Estado:** iteraciones 1 a 4 integradas en main; decisiones adoptadas documentalmente. Cierre de primera entrega arquitectónica registrado; implementación, mediciones y riesgos abiertos detallados en docs/04-evaluation/first-delivery-review.md.
 
 Este documento resume la arquitectura y enlaza al detalle de requisitos, iteraciones, decisiones, vistas y contratos.
 
@@ -16,8 +16,8 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 
 | Iteración | Estado | Aporte |
 |---|---|---|
-| [1 — Estructura general](01-add/iteration-1-structure.md) | En revisión; ADRs propuestas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
-| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Pasos 2–7 revisados; viabilidad de QA-1 y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
+| [1 — Estructura general](01-add/iteration-1-structure.md) | Diseño integrado; ADRs aceptadas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
+| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Diseño integrado; QA-1 a escala y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
 | [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; decisiones confirmadas por ambos | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
 | [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pasos 2–7 documentados y auditados; decisiones de ambos integrantes | Identidad por región, compartición con cuenta y auditoría, lectura entre regiones, tarjeta para redes, analítica regional seudonimizada, internacionalización en el cliente, detalles por tipo de reserva y observabilidad. |
 
@@ -199,51 +199,51 @@ Ver el [índice completo de ADRs](03-adr/README.md).
 
 | ADR | Decisión | Estado |
 |---|---|---|
-| [0001](03-adr/0001-nucleo-modular-con-procesos-separados.md) | Núcleo modular con ingesta y analítica separadas. | proposed |
-| [0002](03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) | Comunicación asincrónica con publicación y suscripción. | proposed |
-| [0003](03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) | Despliegue regional con región de origen por usuario. | proposed |
-| [0004](03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) | Clientes ricos y puerta de entrada única por región. | proposed |
+| [0001](03-adr/0001-nucleo-modular-con-procesos-separados.md) | Núcleo modular con ingesta y analítica separadas. | accepted |
+| [0002](03-adr/0002-mensajeria-persistente-con-publicacion-suscripcion.md) | Comunicación asincrónica con publicación y suscripción. | accepted |
+| [0003](03-adr/0003-despliegue-por-regiones-con-region-de-origen.md) | Despliegue regional con región de origen por usuario. | accepted |
+| [0004](03-adr/0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) | Clientes ricos y puerta de entrada única por región. | accepted |
 
 ### Segunda iteración
 
-| ADR | Decisión propuesta | Estado |
+| ADR | Decisión adoptada | Estado |
 |---|---|---|
-| [0020](03-adr/0020-obtener-novedades.md) | Avisos principales y reconciliación adaptable de correo. | proposed |
-| [0021](03-adr/0021-autorizacion-correo.md) | Autorización delegada del correo y mínimo privilegio. | proposed |
-| [0022](03-adr/0022-tuberia-ingesta.md) | Procesamiento mediante etapas internas. | proposed |
-| [0023](03-adr/0023-adaptadores-proveedores.md) | Adaptadores para contratos y formatos externos. | proposed |
-| [0024](03-adr/0024-avance-y-publicacion-durable.md) | Avance de sincronización y publicación durable coordinados. | proposed |
-| [0025](03-adr/0025-enrutamiento-de-avisos.md) | Directorio mínimo y enrutamiento regional. | proposed |
-| [0026](03-adr/0026-integracion-agencia.md) | Asistencia saliente del núcleo. | proposed |
-| [0027](03-adr/0027-publicacion-del-nucleo.md) | Outbox de cambios confirmados del núcleo. | proposed |
-| [0028](03-adr/0028-rabbitmq-y-politicas.md) | RabbitMQ con colas quorum y políticas. | proposed |
+| [0020](03-adr/0020-obtener-novedades.md) | Avisos principales y reconciliación adaptable de correo. | accepted |
+| [0021](03-adr/0021-autorizacion-correo.md) | Autorización delegada del correo y mínimo privilegio. | accepted |
+| [0022](03-adr/0022-tuberia-ingesta.md) | Procesamiento mediante etapas internas. | accepted |
+| [0023](03-adr/0023-adaptadores-proveedores.md) | Adaptadores para contratos y formatos externos. | accepted |
+| [0024](03-adr/0024-avance-y-publicacion-durable.md) | Avance de sincronización y publicación durable coordinados. | accepted |
+| [0025](03-adr/0025-enrutamiento-de-avisos.md) | Directorio mínimo y enrutamiento regional. | accepted |
+| [0026](03-adr/0026-integracion-agencia.md) | Asistencia saliente del núcleo. | accepted |
+| [0027](03-adr/0027-publicacion-del-nucleo.md) | Outbox de cambios confirmados del núcleo. | accepted |
+| [0028](03-adr/0028-rabbitmq-y-politicas.md) | RabbitMQ con colas quorum y políticas. | accepted |
 
 ### Tercera iteración
 
-| ADR | Decisión propuesta | Estado |
+| ADR | Decisión adoptada | Estado |
 |---|---|---|
-| [0040](03-adr/0040-modelo-de-lectura-del-panel.md) | Modelo de lectura del panel por usuario, actualizado en la misma transacción. | proposed |
-| [0041](03-adr/0041-cache-local-del-panel.md) | Caché local del panel en la app, revalidada por versión. | proposed |
-| [0042](03-adr/0042-particion-de-la-base-por-usuario.md) | Partición de la base por usuario en varios nodos con réplica sincrónica. | proposed |
-| [0043](03-adr/0043-escalado-solo-reactivo.md) | Escalado automático solo reactivo. | proposed |
-| [0044](03-adr/0044-novedades-y-cambios-manuales.md) | Novedades y cambios manuales: dueño por campo y marca de borrado. | proposed |
-| [0045](03-adr/0045-ciclo-de-vida-y-archivado-de-viajes.md) | Archivado diario, reactivación y eliminación al año. | proposed |
-| [0046](03-adr/0046-notificador-de-cambios-del-panel.md) | Notificador separado con evento propio y cola por instancia. | proposed |
-| [0047](03-adr/0047-priorizacion-y-degradacion-ante-sobrecarga.md) | Priorización y degradación ante sobrecarga. | proposed |
-| [0048](03-adr/0048-asignacion-de-reservas-a-viajes.md) | Asignación automática de reservas a viajes por fechas. | proposed |
+| [0040](03-adr/0040-modelo-de-lectura-del-panel.md) | Modelo de lectura del panel por usuario, actualizado en la misma transacción. | accepted |
+| [0041](03-adr/0041-cache-local-del-panel.md) | Caché local del panel en la app, revalidada por versión. | accepted |
+| [0042](03-adr/0042-particion-de-la-base-por-usuario.md) | Partición de la base por usuario en varios nodos con réplica sincrónica. | accepted |
+| [0043](03-adr/0043-escalado-solo-reactivo.md) | Escalado automático solo reactivo. | accepted |
+| [0044](03-adr/0044-novedades-y-cambios-manuales.md) | Novedades y cambios manuales: dueño por campo y marca de borrado. | accepted |
+| [0045](03-adr/0045-ciclo-de-vida-y-archivado-de-viajes.md) | Archivado diario, reactivación y eliminación al año. | accepted |
+| [0046](03-adr/0046-notificador-de-cambios-del-panel.md) | Notificador separado con evento propio y cola por instancia. | accepted |
+| [0047](03-adr/0047-priorizacion-y-degradacion-ante-sobrecarga.md) | Priorización y degradación ante sobrecarga. | accepted |
+| [0048](03-adr/0048-asignacion-de-reservas-a-viajes.md) | Asignación automática de reservas a viajes por fechas. | accepted |
 
 ### Cuarta iteración
 
-| ADR | Decisión propuesta | Estado |
+| ADR | Decisión adoptada | Estado |
 |---|---|---|
-| [0060](03-adr/0060-identidad-por-region-con-tokens.md) | Proveedor de identidad por región y tokens de vida corta; directorio global mínimo; ticket SSE. | proposed |
-| [0061](03-adr/0061-comparticion-con-cuenta-y-auditoria.md) | Compartición con personas designadas con cuenta, control en el núcleo y auditoría. | proposed |
-| [0062](03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) | Lectura remota de viajes compartidos en la región del dueño. | proposed |
-| [0063](03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) | Tarjeta de resumen pública para redes sociales. | proposed |
-| [0064](03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales con seudonimización al entrar. | proposed |
-| [0065](03-adr/0065-internacionalizacion-en-el-cliente.md) | Catálogos de textos remotos, datos neutros del backend y formato en el cliente. | proposed |
-| [0066](03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) | Campos comunes y detalles con esquema propio por tipo de reserva. | proposed |
-| [0067](03-adr/0067-observabilidad-con-trazas-y-metricas.md) | Trazas distribuidas, métricas por etapa y logs estructurados. | proposed |
+| [0060](03-adr/0060-identidad-por-region-con-tokens.md) | Proveedor de identidad por región y tokens de vida corta; directorio global mínimo; ticket SSE. | accepted |
+| [0061](03-adr/0061-comparticion-con-cuenta-y-auditoria.md) | Compartición con personas designadas con cuenta, control en el núcleo y auditoría. | accepted |
+| [0062](03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) | Lectura remota de viajes compartidos en la región del dueño. | accepted |
+| [0063](03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) | Tarjeta de resumen pública para redes sociales. | accepted |
+| [0064](03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales con seudonimización al entrar. | accepted |
+| [0065](03-adr/0065-internacionalizacion-en-el-cliente.md) | Catálogos de textos remotos, datos neutros del backend y formato en el cliente. | accepted |
+| [0066](03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) | Campos comunes y detalles con esquema propio por tipo de reserva. | accepted |
+| [0067](03-adr/0067-observabilidad-con-trazas-y-metricas.md) | Trazas distribuidas, métricas por etapa y logs estructurados. | accepted |
 
 Las decisiones de la segunda, la tercera y la cuarta iteración se revisan conjuntamente antes de aceptarse.
 
@@ -315,7 +315,7 @@ El plazo del trabajo práctico y los recursos del grupo acotan el prototipo; no 
 
 Los impactos se registran en [impact-log.md](01-add/impact-log.md).
 
-Para aceptar el diseño revisado de la segunda iteración, deben revisarse conjuntamente:
+Como seguimiento de implementación y validación de la segunda iteración, deben verificarse:
 
 - Su alineación con la primera iteración actualizada.
 - El contrato ingesta-núcleo.
@@ -337,7 +337,7 @@ Agencia, enrutamiento y outbox del núcleo tienen contratos semánticos propuest
 Pasos 2 a 7 documentados, con RabbitMQ, políticas operativas y recorrido analítico de escenarios. Ver
 [ADR-0028](03-adr/0028-rabbitmq-y-politicas.md), [políticas](../specs/ingestion-operations.md),
 [autorización](../specs/ingestion-authorization.md) y [validación futura](../prototype/ingestion-validation.md).
-Los ADR permanecen proposed hasta revisión real; prototipo y aceptación del equipo no se inventan.
+Las ADR reflejan adopción documental por integración en main; el prototipo no tiene resultados ejecutados.
 
 ## Refinamiento posterior a revisión de iteración 2
 
@@ -375,7 +375,7 @@ comunes y un bloque de detalles con esquema propio por tipo, para agregar medios
 los procesos envían trazas, métricas y logs a un colector por región, con el `correlationId` de punta a punta hasta la
 app (ADR-0067). Ver [iteración 4](01-add/iteration-4-security-evolvability.md).
 
-## Correcciones propuestas de revisión de iteración 4
+## Correcciones integradas de revisión de iteración 4
 
 El principal es regional y los tokens tienen validación completa de emisor, audiencia, tipo y vigencia (ADR-0060).
 La vista compartida omite details; su respuesta transita a la región del lector sin persistencia en las puertas,
@@ -383,4 +383,9 @@ con Cache-Control no-store. Eliminar un marcador se ejecuta siempre en la regió
 La analítica aplica recepción idempotente y códigos por período de committedAt; no se afirma anonimato por destruir
 claves. Ver [procesamiento](../specs/analytics-processing.md). La auditoría cubre también rechazos sin token a rutas
 del dueño; [medición de calidad](../specs/quality-measurement.md) separa tiempo de caída de tasa de éxito y declara
-telemetría faltante. Las correcciones quedan propuestas para revisión conjunta, sin pruebas de prototipo ejecutadas.
+telemetría faltante. Las correcciones quedaron integradas mediante PR #7; no hay pruebas de prototipo ejecutadas.
+
+## Cierre de primera entrega
+
+Ver [revisión final y matriz de riesgos](04-evaluation/first-delivery-review.md). Es un cierre documental, con
+pendientes identificados; no una certificación de rendimiento, seguridad o disponibilidad del sistema ejecutado.

@@ -2,7 +2,7 @@
 
 **Tipo:** Soporte (vocabulario)
 **Actualizada en la iteración:** 4
-**Mantiene:** Ambos. **Estado:** BORRADOR (propuesta inicial a discutir)
+**Mantiene:** Ambos. **Estado:** vocabulario del diseño integrado; implementación y validación pendientes.
 
 ## 1. Propósito
 

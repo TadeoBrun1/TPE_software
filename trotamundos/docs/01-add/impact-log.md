@@ -35,16 +35,16 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 | Tema | Resolución documental actual | Estado |
 |---|---|---|
 | Numeración | Despliegue ADR-0003 y puerta de entrada ADR-0004; referencias corregidas | Actualizado |
-| Entrada de avisos | Entrada global, Gateway y receptor interno; ADR-0025 | Propuesto para revisión |
-| Identificación de región | Directorio mínimo de suscripción y vigencia; ADR-0025 y contrato regional | Propuesto para revisión |
-| Correo sin versión | Versión externa opcional; datos insuficientes van a resolución | Propuesto para revisión |
-| Identidad | eventId, identidad de reserva y versión de esquema separados en contrato | Propuesto para revisión |
-| Desorden | Núcleo compara versión si existe y conserva conflictos o cancelaciones pendientes | Propuesto para revisión con 3 |
-| Vinculaciones | Núcleo es autoridad; ingesta conserva cursor, suscripción y estado técnico | Propuesto para revisión con 3 |
-| Agencia | Módulo de asistencia saliente del núcleo con trabajador acotado; ADR-0026 | Propuesto para revisión con 3 |
-| Eventos confirmados | Outbox transaccional del núcleo y contrato; ADR-0027 | Propuesto para revisión con 3 |
+| Entrada de avisos | Entrada global, Gateway y receptor interno; ADR-0025 | Integrado documentalmente; validación pendiente |
+| Identificación de región | Directorio mínimo de suscripción y vigencia; ADR-0025 y contrato regional | Integrado documentalmente; validación pendiente |
+| Correo sin versión | Versión externa opcional; datos insuficientes van a resolución | Integrado documentalmente; validación pendiente |
+| Identidad | eventId, identidad de reserva y versión de esquema separados en contrato | Integrado documentalmente; validación pendiente |
+| Desorden | Núcleo compara versión si existe y conserva conflictos o cancelaciones pendientes | Coordinación documental integrada; implementación pendiente |
+| Vinculaciones | Núcleo es autoridad; ingesta conserva cursor, suscripción y estado técnico | Coordinación documental integrada; implementación pendiente |
+| Agencia | Módulo de asistencia saliente del núcleo con trabajador acotado; ADR-0026 | Coordinación documental integrada; implementación pendiente |
+| Eventos confirmados | Outbox transaccional del núcleo y contrato; ADR-0027 | Coordinación documental integrada; implementación pendiente |
 | Analítica | Flujo de cambios confirmados disponible; el almacenamiento se resolvió en la iteración 4 (ADR-0064) | Delimitado; diseño de almacén fuera de 2 |
-| Broker | RabbitMQ, topología y políticas; ADR-0028 | Propuesto para revisión |
+| Broker | RabbitMQ, topología y políticas; ADR-0028 | Integrado documentalmente; validación pendiente |
 
 ## Impactos que requieren coordinación
 
@@ -53,8 +53,8 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 | 2, ADR-0028 | Tres miembros del broker en tres zonas por región | 1 y 3 | Refina el mínimo general de al menos dos zonas de ADR-0003; no lo contradice. No modifica despliegue de otros elementos ni agrega recuperación regional | Aceptado por 3 (2026-10-28, merge del PR #4) |
 | 2, ADR-0026 | Asistencia pertenece al núcleo; ingesta conserva función entrante | 1 y 3 | Módulo con trabajador acotado y contrato separado; medir competencia por recursos. Ante sobrecarga, la asistencia es prioridad baja (ADR-0047) | Aceptado por 3 (2026-10-28, merge del PR #4) |
 | 2, ADR-0020 | Avisos de correo principales y reconciliación por cuotas | 1, 3 y QA-1/5 | Modelo de consultas y renovaciones documentado. Perfil lento incumple cinco minutos al perder avisos | Viabilidad universal de QA-1 abierta |
-| 2, ADR-0024/0027 | Outboxes distintas, control de entrada y resultado atómicos | 3 y 4 | Implementar contratos sin compartir tablas | Propuesto para revisión |
-| 2, ADR-0021 | Autoridad y barrera de revocación | 3 y 4 | Aplicar protocolo de autorización y probar carreras | Propuesto para revisión |
+| 2, ADR-0024/0027 | Outboxes distintas, control de entrada y resultado atómicos | 3 y 4 | Implementar contratos sin compartir tablas | Integrado documentalmente; validación pendiente |
+| 2, ADR-0021 | Autoridad y barrera de revocación | 3 y 4 | Aplicar protocolo de autorización y probar carreras | Integrado documentalmente; validación pendiente |
 | 2, ADR-0028 | Consumo por usuario y presupuesto de aplicación y cliente | 3 | La iteración 3 mantiene 8 shards con un consumidor activo cada uno (no escala con el núcleo, ADR-0043); cada novedad se aplica en una transacción de la partición del usuario, así que shards y particiones no necesitan alinearse (ADR-0042); acepta 40 s de espera, 30 s de aplicación y 30 s de cliente | Coordinado (2026-10-28) |
 | 2, ADR-0023 | QA-9 se evalúa incorporando trenes | 3 y 4 | Registrar esfuerzo ≤10 días-persona y verificar medios existentes sin cambios. La iteración 4 usa un medio que no existe (ferry), porque `train` ya está en el vocabulario, y agrega esquemas de detalles por tipo (ADR-0066) | Validación pendiente |
 
@@ -78,15 +78,15 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 
 | Fecha | Origen | Cambio o decisión | Afecta | Tratamiento | Estado |
 |---|---|---|---|---|---|
-| 2026-10-28 | 4, ADR-0060 | La entrada global usa `homeRegion` del token para enrutar y un directorio global `HMAC(email) → región` para el login (HMAC calculado en la entrada global); sin token, enruta por el prefijo de región del recurso | 1 | Refina ADR-0003 y ADR-0004 sin cambiarlas; el directorio sigue el criterio del de suscripciones (ADR-0025) | Propuesto para revisión |
-| 2026-10-28 | 4, ADR-0062 | La puerta de entrada reenvía por mTLS a otra región los recursos con su prefijo; los identificadores de viajes e invitaciones llevan la región del dueño | 1 y 3 | Nuevo conector entre regiones; la respuesta autorizada transita sin persistirse en las puertas; tabla de enrutamiento por método en ADR-0062 | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0060 | La entrada global usa `homeRegion` del token para enrutar y un directorio global `HMAC(email) → región` para el login (HMAC calculado en la entrada global); sin token, enruta por el prefijo de región del recurso | 1 | Refina ADR-0003 y ADR-0004 sin cambiarlas; el directorio sigue el criterio del de suscripciones (ADR-0025) | Integrado documentalmente; validación pendiente |
+| 2026-10-28 | 4, ADR-0062 | La puerta de entrada reenvía por mTLS a otra región los recursos con su prefijo; los identificadores de viajes e invitaciones llevan la región del dueño | 1 y 3 | Nuevo conector entre regiones; la respuesta autorizada transita sin persistirse en las puertas; tabla de enrutamiento por método en ADR-0062 | Integrado documentalmente; validación pendiente |
 | 2026-10-28 | 4, ADR-0066 | `booking.change.detected.v1` pasa a 0.2.0: tipo abierto, `arrivalLocation` y `details` según `specs/schemas/` | 2 | Contrato de diseño 0.x sin consumidores en producción; los adaptadores producen `details` y el núcleo lo valida. Reglas de productor y consumidor en `ingestion-contract.md` (cambios de la 0.2.0) y nota en ADR-0023 | Coordinado con 2 (2026-10-28) |
-| 2026-10-28 | 4, ADR-0064 | El núcleo publica `booking.facts.v1` desde su outbox; la analítica consume además `trip.changed.v1`. `booking.changed.v1` queda sin consumidores en la primera entrega | 2 y 3 | Nueva cola quorum de la analítica en `travel.domain` (ADR-0028) | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0064 | El núcleo publica `booking.facts.v1` desde su outbox; la analítica consume además `trip.changed.v1`. `booking.changed.v1` queda sin consumidores en la primera entrega | 2 y 3 | Nueva cola quorum de la analítica en `travel.domain` (ADR-0028) | Integrado documentalmente; validación pendiente |
 | 2026-10-28 | 4, ADR-0067 | Además del `correlationId`, los mensajes llevan el contexto de traza (`traceparent`) en sus encabezados | 2 y 3 | Todos los productores y consumidores propagan el contexto con la biblioteca `observabilidad`; el contexto se guarda en la outbox. Reglas en `ingestion-operations.md` (sección 5) y `core-publication.md` | Coordinado con 2 (2026-10-28) |
-| 2026-10-28 | 4, ADR-0067 | `panel.changed.v1` pasa a 0.2.0 con `correlationIds` (opcional) y el evento SSE `panel-changed` lo incluye; nuevo `POST /telemetry/panel-shown` | 3 | Cambio compatible sobre contratos de la iteración 3 (campo opcional) | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0067 | `panel.changed.v1` pasa a 0.2.0 con `correlationIds` (opcional) y el evento SSE `panel-changed` lo incluye; nuevo `POST /telemetry/panel-shown` | 3 | Cambio compatible sobre contratos de la iteración 3 (campo opcional) | Integrado documentalmente; validación pendiente |
 | 2026-10-28 | 4, ADR-0065 | Las reservas llevan la zona horaria IANA (`timeZone`, `arrivalTimeZone`) en la API y en `booking.change.detected.v1` | 2 y 3 | Campos opcionales; los adaptadores los informan solo cuando la fuente los tiene, sin inferirlos (regla de `ingestion-contract.md`) | Coordinado con 2 (2026-10-28) |
-| 2026-10-28 | 4, ADR-0061 | El registro de auditoría de cada región se opera como un nodo más de la base: mismo monitor de base y misma conmutación | 3 | Amplía lo que vigila el monitor de ADR-0042; no cambia su funcionamiento | Propuesto para revisión |
-| 2026-10-28 | 4, ADR-0063 | El núcleo sirve una única página HTML (tarjeta para redes) con texto en el idioma del dueño | 1 | Excepción acotada a ADR-0004 (el núcleo no genera pantallas) y a ADR-0065 | Propuesto para revisión |
+| 2026-10-28 | 4, ADR-0061 | El registro de auditoría de cada región se opera como un nodo más de la base: mismo monitor de base y misma conmutación | 3 | Amplía lo que vigila el monitor de ADR-0042; no cambia su funcionamiento | Integrado documentalmente; validación pendiente |
+| 2026-10-28 | 4, ADR-0063 | El núcleo sirve una única página HTML (tarjeta para redes) con texto en el idioma del dueño | 1 | Excepción acotada a ADR-0004 (el núcleo no genera pantallas) y a ADR-0065 | Integrado documentalmente; validación pendiente |
 | 2026-10-28 | 4, ADR-0060 a 0064 | Notas agregadas en ADR-0001, ADR-0003 y ADR-0004 que remiten a las ADRs de la iteración 4 que resolvieron sus pendientes | 1 | Solo referencias | Compatible |
 | 2026-10-28 | 4, ADR-0045 | ADR-0045 remitía a la iteración 4 la anonimización de los eventos de viajes eliminados | 3 | Nota agregada en ADR-0045 que remite a ADR-0064 | Compatible |
 | 2026-10-28 | 4, ADR-0064 | **Segunda entrega (opción A, recomendación):** el almacén analítico no tiene datos por usuario | 2da entrega | Un sistema de recomendación tendrá que guardar su propio perfil resumido por usuario (métricas comprimidas), calculado desde los datos operativos, en la región del usuario y eliminado junto con su cuenta | Para la segunda entrega |
@@ -106,13 +106,20 @@ estado documental. QA-1 a escala permanece abierto hasta resolver la recuperaci�
 
 | Cambio | Afecta | Tratamiento | Estado |
 |---|---|---|---|
-| Perfil JWT y principal homeRegion + userId | 1, 3 y 4 | ADR-0060 y bearerAuth; permisos comparan principal completo | Propuesto para revisión |
-| SharedBooking omite details; respuesta compartida no-store | 3 y 4 | ADR-0061/0066 y API 0.3.0; no cambia el bloque original del dueño | Propuesto para revisión |
-| Auditoría de rechazos en rutas del dueño y de reservas | 1, 3 y 4 | access-audit.md; no consultar propiedad para decidir si auditar un rechazo sin token | Propuesto para revisión |
-| GET remoto y DELETE local de marcadores | 1, 3 y 4 | Tabla por método y ruta de ADR-0062 | Propuesto para revisión |
-| Analítica idempotente y período de commit | 2, 3 y 4 | analytics-processing.md; outbox conserva eventId; hecho y recepción atómicos | Propuesto para revisión |
-| Medición temporal y cobertura de telemetría | 2, 3 y 4 | quality-measurement.md; 202 durable, reintentos y muestras faltantes declaradas | Propuesto para revisión |
-| Persistencia regional y tránsito; seudonimización | 1 y 4 | ADR-0062/0064; CON-3 y retención aún requieren validar el criterio elegido | Propuesto para revisión |
+| Perfil JWT y principal homeRegion + userId | 1, 3 y 4 | ADR-0060 y bearerAuth; permisos comparan principal completo | Integrado documentalmente; validación pendiente |
+| SharedBooking omite details; respuesta compartida no-store | 3 y 4 | ADR-0061/0066 y API 0.3.0; no cambia el bloque original del dueño | Integrado documentalmente; validación pendiente |
+| Auditoría de rechazos en rutas del dueño y de reservas | 1, 3 y 4 | access-audit.md; no consultar propiedad para decidir si auditar un rechazo sin token | Integrado documentalmente; validación pendiente |
+| GET remoto y DELETE local de marcadores | 1, 3 y 4 | Tabla por método y ruta de ADR-0062 | Integrado documentalmente; validación pendiente |
+| Analítica idempotente y período de commit | 2, 3 y 4 | analytics-processing.md; outbox conserva eventId; hecho y recepción atómicos | Integrado documentalmente; validación pendiente |
+| Medición temporal y cobertura de telemetría | 2, 3 y 4 | quality-measurement.md; 202 durable, reintentos y muestras faltantes declaradas | Integrado documentalmente; validación pendiente |
+| Persistencia regional y tránsito; seudonimización | 1 y 4 | ADR-0062/0064; CON-3 y retención aún requieren validar el criterio elegido | Integrado documentalmente; validación pendiente |
 
 Esta preparación no registra aprobación humana nueva ni ejecución del prototipo. Se mantienen los riesgos previos
 que no resuelven estas correcciones, en particular QA-1 de detección a escala y QA-10 de latencia internacional.
+
+## Cierre documental de primera entrega
+
+Las decisiones de las iteraciones 1 a 4 están integradas mediante PRs #3, #4, #6 y #7. El estado de integración
+se distingue de la validación del requisito. QA-1 a escala y los demás riesgos de la
+[revisión final](../04-evaluation/first-delivery-review.md) continúan abiertos. El registro histórico de propuestas
+no implica que todas las pruebas estén realizadas; las nuevas decisiones se incorporarán mediante su PR.
