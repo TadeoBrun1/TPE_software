@@ -35,13 +35,14 @@ sequenceDiagram
     participant B as Broker
     participant NT as Notificador
     App->>App: Muestra el panel guardado (versión 42)
+    App->>G: Abre SSE /panel/events
+    G->>NT: Conexión del usuario
+    NT-->>App: ready
     App->>G: GET /panel con If-None-Match 42
     G->>N: Solicitud (prioridad alta)
     N->>DB: Lee panel_por_usuario por clave
     DB-->>N: Documento versión 42
     N-->>App: 304 sin cambios
-    App->>G: Abre SSE /panel/events
-    G->>NT: Conexión del usuario
     Note over N,DB: Más tarde se aplica una novedad
     N->>DB: Transacción con reserva, panel versión 43 y outbox
     N->>B: Publica el evento de la outbox
@@ -50,10 +51,13 @@ sequenceDiagram
     NT-->>App: panel-changed, versión 43
     App->>G: GET /panel con If-None-Match 42
     N-->>App: 200 con el panel versión 43
+    Note over App,NT: Si la conexión SSE se corta, al reconectar llega ready y la app revalida de nuevo
 ```
 
 **Qué representa:** la app muestra contenido sin esperar la red (QA-3), la lectura es por clave (QA-2) y un cambio
-llega a la pantalla sin consultas periódicas (etapa de cliente de QA-1). ADR-0040, ADR-0041 y ADR-0046.
+llega a la pantalla sin consultas periódicas (etapa de cliente de QA-1). La app abre SSE **antes** de revalidar, para
+que un cambio entre ambos pasos no se pierda, y revalida de nuevo cada vez que SSE reconecta. ADR-0040, ADR-0041 y
+ADR-0046.
 
 ## SEQ-4 — Falla la primaria de un nodo de la base
 

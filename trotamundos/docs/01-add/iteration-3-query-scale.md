@@ -169,15 +169,17 @@ mediciones: las cifras de carga son suposiciones que el prototipo y las pruebas 
 
 | Escenario | Recorrido | Resultado esperado | Límite o riesgo |
 |---|---|---|---|
-| QA-2: el viajero abre el panel en la web | Entrada global → puerta de entrada → núcleo → lectura por clave en su partición → respuesta | Una lectura por clave; el tiempo queda dominado por la red | Usuarios lejanos de su región suman latencia de red (QA-10) |
-| QA-3: abre la app con sesión iniciada | Lee el panel guardado y lo muestra; en paralelo `GET /panel` con versión | Primer contenido sin esperar la red | Primera apertura sin caché depende de la red |
+| QA-2: el viajero abre el panel en la web | Entrada global → puerta de entrada → núcleo → lectura por clave en su partición → respuesta comprimida | Una lectura por clave, sin uniones; con un panel típico (hasta 20 KB) el tiempo queda dominado por la red | El costo crece con el tamaño del documento: se acota a 15 viajes completos (ADR-0040). Usuarios lejanos de su región suman latencia de red (QA-10) |
+| QA-3: abre la app con sesión iniciada | Con caché: muestra el panel guardado y revalida en paralelo. Sin caché (instalación, dispositivo nuevo, caché borrada): espera `GET /panel` comprimido | Con caché, primer contenido sin esperar la red | Las aperturas sin caché cuentan dentro del 95 %; se supone que son menos del 5 % (cobertura pendiente) |
 | QA-4: cae una instancia del núcleo | La puerta de entrada deja de enviarle tráfico tras 15 s sin respuesta | Solo se pierden las solicitudes en curso; los clientes reintentan | — |
 | QA-4: cae la primaria de un nodo de la base | El monitor lo detecta en 30 s y, con acuerdo de dos de tres, promueve la réplica en 60 s | Los usuarios de **ese nodo** quedan sin lecturas ni escrituras durante la conmutación, sin pérdida de datos; los demás nodos no se afectan | Con pocos nodos al principio, cada nodo tiene una fracción grande de los usuarios |
-| QA-4: cae una zona entera | Las réplicas de la otra zona se promueven; las réplicas nuevas se crean en la zona C | Servicio restablecido en 60 s | Hasta terminar la copia, esos nodos tienen una sola copia |
+| QA-4: cae una zona entera, o solo una réplica | Las réplicas de la otra zona se promueven (o la primaria sigue sola); se suspende la confirmación sincrónica y se reconstruye la réplica (en la zona C si cayó una zona) | Servicio restablecido en 60 s; se siguen aceptando escrituras | Durabilidad reducida hasta terminar la copia: una segunda falla en esa ventana pierde datos |
 | QA-5: pico de 5 veces | El escalado arranca al 60 % de uso; mientras arrancan instancias se prioriza el panel y las novedades esperan en el broker | Un aumento de hasta 1,67 veces la carga del momento se absorbe sin perder QA-2 | Un escalón mayor puede **incumplir QA-2** hasta que llega la capacidad nueva, y atrasar QA-1 |
 | QA-1: una novedad cambia un vuelo | Núcleo aplica (espera en cola ≤ 40 s + aplicación ≤ 30 s) → outbox → `panel.changed.v1` → notificador → SSE → `GET /panel` | Cambio visible dentro de los 100 s asignados al núcleo y al cliente | Medir la etapa del notificador |
+| QA-1: la app se conecta o reconecta mientras ocurre un cambio | Abre SSE, recibe `ready` y recién entonces revalida; al reconectar revalida otra vez; con SSE caído revalida cada 60 s | Ningún cambio queda sin ver por una carrera entre la consulta y la suscripción ni por una desconexión | Con SSE caído, la etapa de cliente puede llegar a 60 s |
 | RF-04: el hotel cambia una fecha que el usuario editó | Se aplica la fecha del proveedor, se conservan las notas, se agrega un aviso y se envía push | Panel fiel al proveedor, sin perder anotaciones | — |
 | RF-04: el usuario borró una reserva y llega una novedad | La marca de borrado descarta la novedad | La reserva no reaparece | Si la borró por error, no ve cambios posteriores |
+| RF-04: un cambio manual y una novedad del mismo usuario llegan a la vez | Cada transacción bloquea la fila del panel del usuario; la segunda espera a la primera | El panel termina con los dos cambios y la versión aumenta de a uno | Los cambios de un mismo usuario esperan en fila (son pocos por minuto) |
 | RF-05: llega una reserva sin viaje | Con fechas: se asigna o se crea un viaje. Sin fechas: queda en "sin asignar" | El panel se arma solo cuando hay datos | Viajes cercanos en fechas pueden confundirse; el usuario corrige |
 | RF-05: termina un viaje | La tarea diaria lo archiva a la fecha de fin + 2 días y lo elimina al año | Panel acotado; datos no acumulados | Hasta un día de demora para archivar |
 | RF-05: el usuario queda varado después de la fecha de fin | Si el proveedor reprograma, el viaje sigue activo o se reactiva. Si nadie informa nada, se archiva y el usuario lo reactiva; no se vuelve a archivar por 7 días | El panel no depende de que el proveedor informe todo | La fecha de fin sale de los datos de las reservas: el sistema no infiere emergencias |
@@ -186,13 +188,13 @@ mediciones: las cifras de carga son suposiciones que el prototipo y las pruebas 
 
 | Driver | Estado | Qué falta |
 |---|---|---|
-| QA-2 | Cumplido por diseño en carga normal | Puede incumplirse durante el arranque de instancias ante un escalón mayor a 1,67 veces (riesgo aceptado); prueba de carga |
-| QA-3 | Cumplido por diseño para aperturas con caché | Primera apertura sin caché (riesgo menor) |
+| QA-2 | Cumplido por diseño en carga normal | Puede incumplirse durante el arranque de instancias ante un escalón mayor a 1,67 veces (riesgo aceptado); prueba de carga con paneles típicos, grandes y en el límite |
+| QA-3 | Parcial | Cumplido por diseño para aperturas con caché; las aperturas sin caché cuentan en el 95 % y su proporción y tiempo están pendientes de medir (cobertura pendiente) |
 | QA-4 | Parcial | Cubierto para instancias, nodos y zonas; la falla de región sigue como riesgo aceptado; medir los tiempos |
 | QA-5 | Parcial | Ajustar el umbral de escalado y validar las cifras de carga supuestas |
 | RF-04 | Cumplido por diseño | — |
 | RF-05 | Cumplido por diseño | Validar los márgenes de 2 y 7 días |
-| QA-1 (etapas del núcleo y del cliente) | Cumplido por diseño en carga normal | Medir la etapa del notificador; el conflicto a escala de la iteración 2 sigue abierto |
+| QA-1 (etapas del núcleo y del cliente) | Cumplido por diseño en carga normal | Medir la etapa del notificador; con SSE caído la etapa de cliente puede llegar a 60 s; el conflicto a escala de la iteración 2 sigue abierto |
 | QA-6 (lado consumidor) | Cumplido por diseño | Pruebas de reentrega, conflictos y marcas de borrado |
 
 ### Riesgos
@@ -203,9 +205,10 @@ mediciones: las cifras de carga son suposiciones que el prototipo y las pruebas 
 | Un escalón de carga mayor a 1,67 veces durante el arranque de instancias | QA-2, QA-5 | Aceptado por CON-5: los días de pico del enunciado son una expectativa, no una garantía. Mitigado con priorización. Si en operación hay picos regulares, se agrega escalado programado con datos reales |
 | Las cifras de carga son suposiciones | QA-5 | Validar con pruebas de carga del prototipo |
 | Falla de una región completa | QA-4 | Aceptado desde la iteración 1 |
-| Ventana con una sola copia después de perder una zona | QA-4 | Aceptado; la réplica nueva se crea en la zona C |
+| Ventana con durabilidad reducida cuando un nodo de la base queda con una sola copia (cae la primaria, la réplica o una zona) | QA-4 | Aceptado: se priorizan las escrituras disponibles sobre bloquearlas; la réplica se reconstruye de inmediato y el tiempo en esa situación genera alerta |
 | Desincronización entre tablas y panel por un error de programación | QA-2 | Único escritor, versión en el documento y reconstrucción |
-| Primera apertura de la app sin caché | QA-3 | Aceptado; el escenario supone sesión iniciada |
+| Push duplicado si el trabajador envía y cae antes de registrar el envío | QA-1 | Aceptado: la clave de colapso hace que el dispositivo muestre uno solo |
+| Aperturas de la app sin caché | QA-3 | Cobertura pendiente: cuentan en el 95 %; se supone que son menos del 5 %; si no, se agrega la respuesta mínima |
 
 ### Supuestos de esta iteración
 
@@ -215,6 +218,8 @@ con el sistema en operación. Cada una indica de qué dato del enunciado o de lo
 | Supuesto | De dónde parte | Uso |
 |---|---|---|
 | Cada usuario activo carga el panel hasta 50 veces por semana (abrir la app o la web, recargar, volver a la pantalla) | 2 M de usuarios activos semanales (QA-5); el enunciado no da la frecuencia de uso | Estimar lecturas: ~165/s promedio y ~830/s con el pico de 5 veces, globales (ADR-0042) |
+| Un panel típico tiene hasta 3 viajes activos y 20 reservas (hasta 20 KB); uno grande, hasta 15 viajes y 150 reservas (hasta 150 KB) | Ninguno del enunciado; uso esperado de un panel de viajes | Tamaño del documento y prueba de QA-2 (ADR-0040) |
+| Las aperturas sin caché son menos del 5 % del total | La caché solo se pierde al instalar, cambiar de dispositivo o si el sistema la borra | Cobertura de QA-3 (ADR-0041) |
 | Del 2 al 5 % de los usuarios activos tiene la app abierta al mismo tiempo | 2 M de usuarios activos semanales (QA-5) | Conexiones del notificador y de la puerta de entrada (ADR-0046) |
 | La red 4G suma entre 600 y 1000 ms a una solicitud | Condición de red de QA-3; el enunciado no la cuantifica | Justificar la caché local (ADR-0041) |
 | Una instancia tarda de 1 a 3 minutos en arrancar | Depende de la plataforma, que se elige al implementar | Umbral de escalado (ADR-0043) |
@@ -249,8 +254,9 @@ a escala queda para una iteración 5 si hay tiempo.
 | Qué demuestra | Cómo | Spec | ADRs |
 |---|---|---|---|
 | Panel por lectura por clave y coherencia en la misma transacción | `GET /panel`; un cambio manual y una novedad actualizan el documento | `itinerary-api.v1.yaml` | 0040, 0044 |
+| Concurrencia por usuario | Un cambio manual y una novedad del mismo usuario al mismo tiempo: el panel tiene los dos y la versión sube en 2 | `itinerary-api.v1.yaml` | 0040 |
 | Revalidación por versión | `GET /panel` con `If-None-Match` devuelve `304` | `itinerary-api.v1.yaml` | 0041 |
-| Aviso de cambios | Un cliente SSE recibe la versión nueva tras un commit; con dos instancias del notificador, solo la que tiene la conexión la envía | `panel-changed.v1.yaml` | 0046 |
+| Aviso de cambios | Un cliente SSE recibe la versión nueva tras un commit; con dos instancias del notificador, solo la que tiene la conexión la envía; un cambio entre la suscripción y la revalidación, o durante una desconexión, termina visible | `panel-changed.v1.yaml` | 0046 |
 | Dueño por campo y marca de borrado | Pruebas sobre el módulo `reservas` | `booking-change-detected.v1.yaml` | 0044 |
 | Asignación a viajes | Pruebas sobre el módulo `viajes`, con y sin fechas | `booking-change-detected.v1.yaml` | 0048 |
 | Archivado y reactivación | Tarea con fecha simulada; `POST /trips/{tripId}/reactivate` | `trip-changed.v1.yaml` | 0045 |
@@ -274,3 +280,12 @@ correcciones aplicadas fueron:
 * los nombres de tácticas según Bass (4ta edición);
 * los códigos `429` y `503`;
 * la marca de suposición en las cifras, y documentos desactualizados.
+
+Después, la revisión cruzada de Tomas Lateana agregó:
+
+* el orden de conexión SSE antes de revalidar, la revalidación al reconectar y el respaldo con SSE caído (ADR-0046);
+* la política de escrituras cuando un nodo de la base queda con una sola copia (ADR-0042);
+* el bloqueo por usuario y la versión creciente del panel (ADR-0040);
+* la deduplicación de los push y la configuración de las colas del notificador (ADR-0046, `ingestion-operations.md`);
+* los tamaños de referencia del panel y la estrategia para paneles grandes (ADR-0040);
+* las aperturas sin caché dentro del 95 % de QA-3 (ADR-0041).

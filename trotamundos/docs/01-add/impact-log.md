@@ -72,6 +72,7 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 | 2026-10-28 | 3, ADR-0042 | Todo lo de un usuario vive en su partición; ninguna transacción cruza particiones | 4 | La lectura de un itinerario compartido se hace en la partición del dueño del viaje | Para la iteración 4 |
 | 2026-10-28 | 3, ADR-0045 | Los viajes archivados se eliminan al año | 4 | La analítica decide cómo anonimizar los eventos que ya recibió | Para la iteración 4 |
 | 2026-10-28 | 3 | `bearerAuth` y la autenticación de la conexión SSE quedan genéricas en la API | 4 | Se definen con QA-7 | Para la iteración 4 |
+| 2026-10-28 | 3, ADR-0046 | Colas del notificador: las de avisos por instancia son *classic*, exclusivas y temporales (única excepción a las colas quorum); `notifier.push` es quorum y durable | 2 | Agregado a `specs/ingestion-operations.md` a pedido de Tomas Lateana (revisión cruzada) | Aceptado por ambos (2026-10-28) |
 
 ## Criterio para resolver un impacto
 

@@ -51,12 +51,16 @@ paths:
     get:
       summary: Avisos de cambio del panel (Server-Sent Events)
       description: >
-        Conexión SSE servida por el notificador (ADR-0046). Cada evento informa solo la nueva versión del panel;
-        el cliente pide luego GET /panel. No transporta datos de reservas.
+        Conexión SSE servida por el notificador (ADR-0046). Al conectarse (y en cada reconexión) el servidor envía
+        el evento `ready`; recién entonces el cliente revalida con GET /panel e If-None-Match, para no perder cambios
+        ocurridos antes de la suscripción o durante una desconexión. Luego cada evento `panel-changed` informa solo
+        la nueva versión del panel; si es mayor que la del cliente, este pide GET /panel. El servidor no guarda
+        avisos de conexiones caídas: reconectar no los recupera, la revalidación sí. Mientras la conexión está caída,
+        el cliente revalida cada 60 s. No transporta datos de reservas.
       operationId: streamPanelChanges
       responses:
         "200":
-          description: Flujo de eventos `panel-changed` con cuerpo {"panelVersion":<entero>}
+          description: Flujo de eventos `ready` (sin cuerpo) y `panel-changed` con cuerpo {"panelVersion":<entero>}
           content:
             text/event-stream:
               schema:
@@ -103,6 +107,32 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
         "503":
           $ref: "#/components/responses/Overloaded"
+  /trips/{tripId}:
+    get:
+      summary: Detalle de un viaje
+      description: >
+        Para los viajes que el panel muestra solo en resumen cuando el usuario tiene más de 15 viajes activos, y para
+        los viajes archivados (ADR-0040). Prioridad alta, igual que el panel.
+      operationId: getTrip
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Viaje con todas sus reservas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
   /trips/{tripId}/archive:
     post:
       summary: Archivar un viaje a mano
@@ -354,8 +384,17 @@ components:
           format: date-time
     Trip:
       type: object
-      required: [id, name, status, bookings]
+      required: [id, name, status]
+      description: >
+        En el panel, los 15 viajes activos más próximos vienen completos (con bookings); el resto viene en resumen
+        (summaryOnly true, bookingCount, sin bookings) y su detalle se pide con GET /trips/{tripId} (ADR-0040).
       properties:
+        summaryOnly:
+          type: boolean
+          default: false
+        bookingCount:
+          type: integer
+          minimum: 0
         id:
           type: string
         name:

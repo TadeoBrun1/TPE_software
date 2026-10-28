@@ -18,9 +18,17 @@ a exponer AMQP en Internet. TLS y credenciales por servicio se mantienen fuera d
 | Exchange durable | Routing keys | Colas / consumidor |
 |---|---|---|
 | `travel.ingestion` | `booking.change.detected.v1.s0` a `.s7` | `core.bookings.s0` a `.s7`, una por shard de usuario |
-| `travel.domain` | `booking.changed.v1` | Cola independiente por consumidor autorizado, inicialmente analítica |
+| `travel.domain` | `booking.changed.v1`, `trip.changed.v1` | Cola independiente por consumidor autorizado, inicialmente analítica |
+| `travel.domain` | `panel.changed.v1` | Una cola por instancia del notificador (ver abajo) y la cola compartida `notifier.push` (iteración 3, ADR-0046) |
 | `travel.assistance` | `assistance.requested.v1`, `assistance.result.v1` | Solicitudes para trabajador de asistencia del núcleo; resultados para seguimiento |
 | `travel.errors` | `ingestion.error.v1` | Operación/revisión con acceso restringido, referencia mínima al caso durable |
+
+Colas del notificador (iteración 3, ADR-0046):
+
+| Cola | Tipo | Durabilidad | Consumidores | Por qué |
+|---|---|---|---|---|
+| `notifier.instance.<id>` (una por instancia) | *classic*, exclusiva, se borra al desconectar la instancia | No durable; mensajes no persistentes; TTL de 60 s y largo máximo acotado | Solo esa instancia | **Única excepción a las colas quorum.** Los avisos SSE solo sirven en el momento: si se pierden, la app revalida el panel al reconectar, así que no hace falta replicarlos |
+| `notifier.push` | *quorum* | Durable, como el resto | Trabajadores de push que compiten, *prefetch* bajo, ACK manual después del envío | Un push perdido no se recupera; la deduplicación por `eventId` y dispositivo cubre las reentregas |
 
 El nombre lógico del evento y su routing key no son lo mismo. Shard del usuario: interpretar los primeros 16
 hexadecimales de SHA-256(UTF-8 de JSON compacto `[homeRegion,userId]`) como entero y módulo 8. Todos los cambios

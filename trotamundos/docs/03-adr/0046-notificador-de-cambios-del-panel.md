@@ -66,10 +66,36 @@ Funcionamiento:
 * **App abierta:** la app abre `GET /panel/events` (SSE) a través de la puerta de entrada y queda conectada a una
   instancia del notificador. Cada instancia tiene una cola exclusiva en el exchange `travel.domain` enlazada a
   `panel.changed.v1`; al recibir un aviso de un usuario conectado le envía `panel-changed` con la versión, y la app
-  pide `GET /panel` (ADR-0041).
+  pide `GET /panel` (ADR-0041) si esa versión es mayor que la que tiene.
+* **Orden de conexión, para no perder cambios:** la app **primero** abre la conexión SSE y espera la confirmación
+  (evento `ready`), y **después** revalida el panel con `GET /panel` e `If-None-Match`. Así, un cambio que ocurra
+  entre ambos pasos llega por SSE o queda incluido en la revalidación. Si se hiciera al revés, un cambio entre la
+  revalidación y la conexión se perdería y la app quedaría con la versión vieja.
+* **Reconexión:** SSE reconecta solo, pero el notificador no guarda los avisos de una conexión caída (no hay
+  historial por usuario), así que reconectar no recupera lo perdido. Por eso, **cada vez que la conexión se
+  restablece** (evento `ready`), la app vuelve a revalidar el panel. Como el aviso solo informa una versión, alcanza
+  con revalidar una vez: no hace falta recuperar cada aviso perdido.
+* **Respaldo mientras SSE está caído:** con la app abierta y sin conexión SSE, la app revalida el panel cada 60 s
+  (con espera creciente si también falla la API) hasta que SSE vuelve. Es una consulta condicional barata (`304` si
+  no cambió) y solo ocurre durante la caída. Mientras dure, la etapa de cliente de QA-1 puede pasar de 30 s a 60 s.
 * **App cerrada:** solo los avisos con relevancia `important` (cancelación, cambio de horario, novedad que pisó una
   edición del usuario) generan un push del sistema operativo. Para no enviarlo una vez por instancia, esos avisos
   también van a una cola compartida `notifier.push` con consumidores que compiten entre sí.
+* **Push repetidos:** la cola compartida evita que cada instancia envíe su copia, pero **no** garantiza un solo envío.
+  El mismo aviso puede llegar dos veces (la outbox republica tras una caída, el broker reentrega si el trabajador
+  cae después de enviar y antes de confirmar), y los servicios de push del sistema operativo tampoco garantizan una
+  sola entrega. Se mitiga así:
+  * cada push tiene una identidad estable: `eventId` + dispositivo destinatario;
+  * el trabajador registra los push enviados (con vencimiento de 24 h) y descarta los que ya figuran;
+  * cada push lleva una clave de colapso (`apns-collapse-id`, `collapse_key`) derivada de esa identidad, para que si
+    igual llega dos veces el dispositivo muestre una sola notificación.
+
+  Queda un caso sin cubrir: si el trabajador envía y cae antes de registrar el envío, se repite. Se acepta, porque un
+  aviso duplicado (que además el dispositivo colapsa) es mucho menos grave que uno perdido.
+* **Configuración de las colas** (detalle en `specs/ingestion-operations.md`): las colas de avisos por instancia son
+  la única excepción a las colas *quorum* de ADR-0028. Son *classic*, exclusivas, no durables y se borran solas
+  cuando la instancia se desconecta, porque perder un aviso no pierde datos (la app revalida al reconectar). La cola
+  `notifier.push` sí es *quorum* y durable, como el resto.
 * El texto del aviso al usuario (por ejemplo, "el hotel cambió la fecha que habías modificado") queda en el panel, en
   la lista `notices` (ADR-0044), y se lee por la API autenticada.
 * Si el notificador cae, nadie pierde datos: la app sigue mostrando su caché y revalida al abrir o recargar.
@@ -80,7 +106,8 @@ Patrones y tácticas que aplica:
 |---|---|---|
 | Patrón *Publish-Subscribe* (ADR-0002) | El notificador se suscribe a `panel.changed.v1` sin que el núcleo lo conozca | QA-1, QA-5 |
 | Patrón *Transactional Outbox* (ADR-0027) | El aviso se publica solo si el cambio se confirmó | QA-1 |
-| Patrón *Competing Consumers* | Cola compartida para los push, para enviar cada uno una sola vez | QA-1 |
+| Patrón *Competing Consumers* | Cola compartida para los push: cada push lo procesa un solo trabajador | QA-1 |
+| Patrón *Idempotent Receiver* | Registro de push enviados por `eventId` y dispositivo, más clave de colapso | QA-1 |
 | Táctica *aumentar recursos* (performance) | El notificador escala por conexiones abiertas, separado del núcleo | QA-5 |
 | Táctica *degradación elegante* (disponibilidad) | Sin notificador, la app funciona con caché y revalidación | QA-4 |
 
@@ -93,13 +120,21 @@ Patrones y tácticas que aplica:
   activos semanales de QA-5, que del 2 al 5 % tiene la app abierta a la vez. Las mismas conexiones pasan por la
   puerta de entrada, que también hay que dimensionar.
 * Bad, because con la cola por instancia el tráfico interno crece con la cantidad de instancias.
+* Bad, because un push puede llegar duplicado en un caso de falla puntual (mitigado con la clave de colapso).
+* Bad, because mientras SSE está caído, la app consulta cada 60 s y la etapa de cliente de QA-1 puede llegar a 60 s.
 * Bad, because el núcleo publica un evento más por cada cambio.
 
 ### Confirmation
 
 Prototipo: un cliente SSE conectado recibe la versión nueva después de un commit en el núcleo; con dos instancias del
-notificador, el aviso llega a la que tiene la conexión y la otra lo descarta; un aviso `important` genera un solo
-push simulado. Medir el tiempo entre el commit y la recepción del aviso contra los 30 s de la etapa de cliente.
+notificador, el aviso llega a la que tiene la conexión y la otra lo descarta. Casos de prueba:
+
+* un cambio que ocurre entre la apertura de SSE y la revalidación termina visible;
+* después de cortar y reconectar SSE, la app revalida y obtiene la versión que cambió mientras estaba desconectada;
+* con SSE caído, la app revalida cada 60 s;
+* un aviso `important` reentregado no genera un segundo push (y si se fuerza el envío, el dispositivo lo colapsa).
+
+Medir el tiempo entre el commit y la recepción del aviso contra los 30 s de la etapa de cliente.
 
 ## Pros and Cons of the Options
 

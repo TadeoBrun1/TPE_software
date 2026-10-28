@@ -42,6 +42,18 @@ la app muestra contenido sin esperar nada externo.
 * La versión es la del documento `panel_por_usuario` (ADR-0040), así que la validación es una comparación barata.
 * La web aplica lo mismo con el almacenamiento del navegador cuando está disponible.
 
+**Cobertura de QA-3: aperturas sin caché.** Tener la sesión iniciada no garantiza tener caché: la primera apertura
+después de instalar, un dispositivo nuevo, una reinstalación o que el sistema operativo borre el almacenamiento de
+la app dejan la sesión sin panel guardado. El escenario QA-3 no excluye esos casos, así que **cuentan dentro del
+95 %**:
+
+* Suposición (a validar con métricas de uso): las aperturas sin caché son menos del 5 % del total, porque la caché
+  se conserva entre aperturas y solo se pierde en esos casos puntuales. Si es así, el 95 % se puede cumplir aunque
+  esas aperturas tarden más.
+* Para que también sean rápidas, la respuesta del panel va comprimida y un panel típico pesa hasta 20 KB (ADR-0040).
+* Si las mediciones muestran que superan el 5 %, o que tardan demasiado, se agrega la respuesta mínima con el
+  próximo viaje (opción C). Queda como **cobertura pendiente** de QA-3.
+
 Patrones y tácticas que aplica:
 
 | Patrón o táctica | Cómo se aplica | Driver |
@@ -56,13 +68,14 @@ Patrones y tácticas que aplica:
   para quien está viajando.
 * Good, because las revalidaciones sin cambios son baratas para el servidor.
 * Bad, because la app puede mostrar datos viejos durante la revalidación (normalmente menos de un segundo).
-* Bad, because la primera apertura después de instalar no tiene caché; ahí QA-3 depende de la red. Riesgo menor:
-  el escenario supone sesión iniciada.
+* Bad, because las aperturas sin caché (instalación, dispositivo nuevo, caché borrada) dependen de la red y cuentan
+  dentro del 95 % de QA-3; su cumplimiento depende de que sean pocas (suposición a validar).
 
 ### Confirmation
 
 Prototipo: una app o cliente de prueba muestra el panel guardado antes de recibir la respuesta; `GET /panel` con la
-versión vigente devuelve `304`. Medición del primer contenido con red 4G simulada.
+versión vigente devuelve `304`. Medición del primer contenido con red 4G simulada, con y sin caché, y medición en
+uso real de qué porcentaje de las aperturas no tiene caché.
 
 ## Pros and Cons of the Options
 

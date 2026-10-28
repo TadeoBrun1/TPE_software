@@ -58,9 +58,22 @@ Reglas:
 * **Monitor sin punto único de falla:** tres instancias, una en cada zona (A, B y la zona C que ya existe por el
   broker, ADR-0028). Una promoción necesita el acuerdo de dos de las tres, lo que evita que dos réplicas se promuevan
   a la vez (*split-brain*).
-* **Pérdida de una zona entera:** las réplicas de la otra zona se promueven. Hasta reconstruir la réplica, esos nodos
-  quedan con una sola copia; la réplica nueva se crea en la zona C. Durante la copia inicial, una segunda falla sí
-  perdería datos (riesgo registrado).
+* **Escrituras cuando un nodo se queda con una sola copia.** Pasa en dos casos: (a) cae la primaria y se promueve
+  la réplica, o cae una zona entera; (b) cae solo la réplica y la primaria sigue viva. En ambos casos no hay segunda
+  copia que confirme, y hay que elegir entre bloquear las escrituras hasta tener réplica (más durabilidad, pero los
+  usuarios del nodo no pueden escribir durante minutos u horas) o seguir aceptándolas con una sola copia.
+  **Política elegida: se siguen aceptando escrituras con durabilidad reducida**, porque QA-4 pide que el servicio
+  siga disponible, y bloquear escrituras durante toda la reconstrucción consumiría el presupuesto mensual de 5
+  minutos muchas veces. Concretamente:
+  * la confirmación sincrónica se suspende para ese nodo (el monitor lo marca como "con una sola copia");
+  * se crea de inmediato una réplica nueva (en la zona C si cayó una zona entera, o en la misma zona si solo cayó la
+    réplica); mientras se copia, recibe las escrituras nuevas en forma asincrónica;
+  * cuando la réplica nueva alcanza a la primaria, se vuelve a exigir la confirmación en las dos copias;
+  * el tiempo en esa situación se mide y genera alerta.
+
+  Así, los "60 s" restablecen el **servicio**; la **durabilidad completa** se recupera cuando termina la copia. Si
+  durante esa ventana falla también la única copia que queda, se pierden las escrituras confirmadas que todavía no
+  llegaron a la réplica nueva (riesgo aceptado y registrado).
 * Todo lo de un usuario (viajes, reservas, `panel_por_usuario`, outbox, control de novedades) vive en su partición.
 * Relación con el consumo de novedades (iteración 2): los 8 shards de RabbitMQ y las particiones de la base usan
   funciones de hash distintas. No hace falta alinearlas, porque cada novedad es de un solo usuario y se aplica en
@@ -89,13 +102,18 @@ Patrones y tácticas que aplica:
 * Bad, because mover particiones entre nodos es una operación delicada que hay que automatizar.
 * Bad, because las consultas que cruzan usuarios tocan varios nodos. El caso conocido es un itinerario compartido
   (iteración 4): la lectura se hace en la partición del dueño del viaje.
-* Bad, because después de perder una zona, hay una ventana con una sola copia hasta reconstruir la réplica.
+* Bad, because cuando un nodo queda con una sola copia (cae la primaria, la réplica o una zona), hay una ventana con
+  durabilidad reducida hasta reconstruir la réplica: el servicio sigue, pero una segunda falla en esa ventana pierde
+  datos.
 
 ### Confirmation
 
 * Revisión de la [vista de despliegue](../02-views/deployment-view.md).
 * Prototipo: dos particiones lógicas en un mismo motor de base, con ruteo por hash de usuario. La conmutación entre
-  zonas y el monitor se documentan, pero no se simulan en el prototipo local.
+  zonas, el monitor y la suspensión de la confirmación sincrónica se documentan, pero no se simulan en el prototipo
+  local.
+* En una prueba de infraestructura: apagar solo la réplica y verificar que la primaria sigue aceptando escrituras;
+  apagar la primaria y verificar la promoción en 60 s; medir cuánto dura la reconstrucción.
 
 ## Pros and Cons of the Options
 

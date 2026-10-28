@@ -34,7 +34,7 @@ el panel para cumplir los 800 ms de QA-2 de forma estable.
 ## Decision Outcome
 
 Chosen option: "C. Modelo de lectura por usuario en la misma base, actualizado en la misma transacción", because
-convierte la lectura del panel en una búsqueda por clave, cuyo costo no depende de la cantidad de reservas, y
+convierte la lectura del panel en una búsqueda por clave, sin uniones ni ordenamientos en cada apertura, y
 mantiene coherencia fuerte sin agregar componentes: el núcleo es un monolito con una base por región (ADR-0001,
 ADR-0003), así que el cambio y la copia del panel se pueden confirmar juntos.
 
@@ -48,9 +48,28 @@ Reglas:
   piden la actualización; ninguno escribe la tabla directamente (regla de dependencia en la vista de módulos).
 * **Reconstruible:** las tablas normalizadas son la fuente de verdad. El panel de un usuario se puede regenerar desde
   cero en cualquier momento (por ejemplo, ante un error o un cambio de formato).
-* **Versionado:** el documento guarda la versión del último cambio aplicado. Se usa para detectar desvíos y como
-  `ETag` de la API (ADR-0041) y en el aviso al cliente (ADR-0046).
-* Los viajes archivados no están en el documento (ADR-0045), así que su tamaño queda acotado.
+* **Concurrencia por usuario:** "único escritor" dice qué módulo escribe, pero ese módulo corre en varias instancias
+  a la vez, y un cambio manual y una novedad del mismo usuario pueden llegar al mismo tiempo. Por eso, cada
+  transacción que modifica algo de un usuario **toma primero un bloqueo sobre la fila de `panel_por_usuario` de ese
+  usuario** (bloqueo pesimista, del tipo `SELECT ... FOR UPDATE`). Las transacciones del mismo usuario quedan en fila
+  una detrás de otra; las de usuarios distintos no se esperan. Si una espera más de 2 s, se aborta y se reintenta
+  (hasta 3 veces), y si igual falla, el cambio manual responde `503` y la novedad vuelve a la cola.
+* **Versionado:** dentro de esa transacción, la versión del panel pasa a `versión anterior + 1`, así que crece de a uno
+  y nunca se repite ni retrocede. Se usa para detectar desvíos, como `ETag` de la API (ADR-0041) y en el aviso al
+  cliente (ADR-0046).
+* **Tamaño del panel:** leer por clave evita las uniones, pero leer, serializar y enviar el documento cuesta más
+  cuanto más grande es. Los viajes archivados no están en el documento (ADR-0045), pero siguen creciendo las
+  reservas activas, futuras y sin asignar. Tamaños de referencia (suposición, a validar):
+
+  | Caso | Viajes activos | Reservas | Tamaño aproximado del documento |
+  |---|---|---|---|
+  | Típico | 1 a 3 | hasta 20 | hasta 20 KB |
+  | Grande (viajero frecuente) | hasta 15 | hasta 150 | hasta 150 KB |
+  | Límite | más de 15 viajes o más de 150 reservas | — | Se aplica la estrategia de abajo |
+
+  **Estrategia para paneles grandes:** el documento guarda completos los 15 viajes activos más próximos; del resto
+  guarda solo un resumen (nombre, fechas, cantidad de reservas), y su detalle se pide con `GET /trips/{tripId}`. Las
+  respuestas van comprimidas (gzip). Así el documento queda acotado aunque el usuario acumule viajes.
 
 Patrones y tácticas que aplica:
 
@@ -60,23 +79,30 @@ Patrones y tácticas que aplica:
 | Patrón *Materialized View* | El documento del panel es una vista precalculada | QA-2, QA-5 |
 | Táctica *mantener múltiples copias de los datos* (performance) | Segunda representación de los mismos datos, optimizada para leer | QA-2 |
 | Táctica *reducir la sobrecarga computacional* (performance) | Se elimina el armado del panel en cada lectura | QA-2, QA-5 |
+| Táctica *limitar el tiempo de ejecución* / acotar el tamaño (performance) | Documento acotado a 15 viajes completos; el resto en resumen | QA-2 |
+| Bloqueo pesimista por usuario | Serializa las transacciones de un mismo usuario | QA-2, RF-04 |
 
 ### Consequences
 
-* Good, because la lectura del panel es una búsqueda por clave dentro del shard del usuario (ADR-0042): su latencia es
-  estable aunque crezcan las reservas.
+* Good, because la lectura del panel es una búsqueda por clave dentro de la partición del usuario (ADR-0042), sin
+  uniones; su costo crece con el tamaño del documento, que queda acotado por la estrategia de paneles grandes.
 * Good, because hay coherencia fuerte: no existe un momento en que la reserva cambió y el panel todavía no.
 * Good, because no agrega ningún componente de infraestructura.
 * Bad, because cada escritura hace más trabajo (cambio + documento + outbox).
 * Bad, because hay dos representaciones de los mismos datos; un error de programación puede desincronizarlas. Se
   mitiga con el único escritor, la versión y la reconstrucción.
+* Bad, because los cambios de un mismo usuario se serializan por el bloqueo; si llegan muchos a la vez, esperan.
+  Es aceptable porque los cambios de un mismo usuario son pocos por minuto.
+* Bad, because un usuario con muchos viajes ve el detalle de los más lejanos con una solicitud más.
 
 ### Confirmation
 
 * Revisión de la [vista de módulos](../02-views/module-view.md): solo el proyector escribe `panel_por_usuario`.
 * Prototipo: el endpoint del panel responde con una lectura por clave; un cambio manual y una novedad aplicada
   actualizan el documento en la misma transacción; regenerar el panel desde las tablas da el mismo resultado.
-* Prueba de carga del panel contra QA-2 en el escenario de pico.
+* Prueba de concurrencia: un cambio manual y una novedad sobre reservas distintas del mismo usuario, al mismo
+  tiempo, terminan con el panel conteniendo los dos cambios y la versión aumentada en 2.
+* Prueba de carga del panel contra QA-2 en el escenario de pico, con paneles de tamaño típico, grande y en el límite.
 
 ## Pros and Cons of the Options
 
