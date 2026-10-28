@@ -44,13 +44,17 @@ Las iteraciones adicionales (opción avanzada A/B de la 2da entrega, refinamient
 ├── TEAM-LOG.md              # registro de aportes por integrante
 ├── docs/
 │   ├── README.md            # mapa del proceso y herramientas
+│   ├── WIKI.md              # cómo se publica la Wiki
 │   ├── architecture.md      # documento central
 │   ├── 00-requirements/     # contexto, RF, QAs (SEI), árbol de utilidad, drivers
 │   ├── 01-add/              # ADD.md, plan, iteraciones, registro de impactos
 │   ├── 02-views/            # una vista por archivo
 │   ├── 03-adr/              # ADRs en formato MADR
-│   └── images/
-├── specs/                   # OpenAPI / AsyncAPI (el contrato manda)
+│   └── 04-evaluation/       # cierre de la primera entrega y riesgos abiertos
+├── specs/                   # contratos (el contrato manda)
+│   ├── openapi/             # API REST
+│   ├── asyncapi/            # eventos y mensajes
+│   └── schemas/             # detalles por tipo de reserva (JSON Schema)
 ├── prototype/               # código que demuestra la arquitectura
 ├── ai/                      # persona y prompts usados con IA
 └── wiki/                    # Home y Sidebar para publicar en la Wiki de GitHub

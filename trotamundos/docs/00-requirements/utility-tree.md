@@ -1,7 +1,7 @@
 # Árbol de utilidad
 
 **Qué es:** escenarios de calidad organizados por atributo y refinamiento, con (Importancia, Dificultad).
-**Mantiene:** ambos. **Estado:** COMPLETADO (coincide con los escenarios revisados con `/test-QAs`).
+**Mantiene:** ambos. **Estado:** COMPLETADO (coincide con los escenarios revisados con `/test-qas`).
 
 Las prioridades de esta tabla son **propuestas a validar** (ningún stakeholder las confirmó todavía).
 

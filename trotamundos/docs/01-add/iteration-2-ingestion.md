@@ -1,7 +1,7 @@
 # Iteración 2 — Ingesta de reservas
 
 **Responsable de la iteración:** Tomas Lateana (integrante A).
-**Preparación documental:** 2026-10-27, con asistencia de ChatGPT/Codex.
+**Preparación documental:** 2026-10-27, con asistencia de IA.
 **Estado:** diseño integrado en `main` mediante PR #4; ADRs aceptadas documentalmente.
 Validación de implementación y riesgos pendientes según [cierre de primera entrega](../04-evaluation/first-delivery-review.md).
 **ADRs:** 0020 a 0028, dentro del bloque 0020–0039.

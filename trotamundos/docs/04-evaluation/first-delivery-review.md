@@ -1,8 +1,9 @@
 # Cierre documental de primera entrega — Trotamundos
 
 **Fecha:** 2026-10-28. **Base revisada:** main, commit `00f21b9`.
-**Preparación:** revisión analítica asistida por ChatGPT/Codex, solicitada por Tomas Lateana. La revisión de este
-cierre por el equipo se registra mediante el PR que lo integre. No se afirma una reunión grupal de Risk Storming.
+**Preparación:** revisión analítica de ambos integrantes, con asistencia de IA (ver [uso de IA](../../ai/prompts.md)).
+La revisión de este cierre por el equipo se registra mediante el PR que lo integra. No se afirma una reunión grupal de
+Risk Storming.
 
 ## Alcance y evidencia de integración
 
@@ -31,12 +32,11 @@ elimina los riesgos ni valida automáticamente las suposiciones de requisitos.
 | Mermaid | Sintaxis de 18 diagramas aceptada por el parser; no equivale a prueba de comportamiento ni a garantía de legibilidad en toda pantalla |
 | OpenAPI y JSON Schema | Validación estructural correcta; referencias internas YAML existentes |
 | Navegación | Sin enlaces Markdown locales rotos; tablas con separadores y diff sin errores de formato |
-| Correcciones de iteración 4 | Los 26 archivos del script coinciden con la versión incorporada mediante PR #7 |
-| Wiki publicada | Revisión detectó _Sidebar.md.md y portada sin salto final; la sincronización local preparada por el script debe confirmarse y publicarse por separado |
+| Correcciones de iteración 4 | Las correcciones de la auditoría y de la revisión cruzada están incorporadas en `main` mediante PR #7 |
+| Wiki | Las páginas `Home` y `_Sidebar` se mantienen en la carpeta `wiki/` del repositorio y se copian a la Wiki de GitHub; sus links apuntan a archivos existentes en `main` |
 | Autoría | Historial Git y TEAM-LOG muestran aportes de ambos integrantes; este cierre no agrega aprobaciones ni pruebas ficticias |
 
-Las verificaciones son sobre artefactos, no pruebas del prototipo. El estado local que deje un script no demuestra
-que se haya realizado un push ni que la Wiki remota ya esté corregida.
+Las verificaciones son sobre artefactos, no pruebas del prototipo.
 
 ## Recorrido transversal de escenarios
 
@@ -87,6 +87,6 @@ Esta es una revisión analítica de riesgos, no una sesión grupal registrada ni
 
 ## Publicación del cierre
 
-El script modifica archivos locales y puede preparar una copia local de la Wiki. El cierre se vuelve visible al
-docente cuando el PR de estas correcciones se integra a main y se publica el commit separado de la Wiki. Antes de
-enviar el enlace, abrir la portada, las cuatro iteraciones y este documento desde la Wiki publicada.
+El cierre es visible para el docente en `main` y en la Wiki de GitHub, que se actualiza copiando `wiki/Home.md` y
+`wiki/_Sidebar.md`. Antes de enviar el enlace, abrir desde la Wiki publicada la portada, las cuatro iteraciones y este
+documento, y comprobar que el menú lateral se muestra.

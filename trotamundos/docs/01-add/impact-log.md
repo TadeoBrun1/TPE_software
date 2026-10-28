@@ -70,7 +70,7 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 | 2026-10-28 | 3, ADR-0043 | Se agrega CON-5 (startup con recursos limitados) a las restricciones | 1, 2 y 4 | Restricción de negocio, en estado de suposición | Aceptado por ambos (2026-10-28) |
 | 2026-10-28 | 3, ADR-0040 | La transacción del núcleo incluye además el documento del panel | 2 | No cambia el contrato; la etapa "aplicación" (30 s) incluye actualizar el panel | Compatible |
 | 2026-10-28 | 3, ADR-0042 | Todo lo de un usuario vive en su partición; ninguna transacción cruza particiones | 4 | La lectura de un itinerario compartido se hace en la partición del dueño del viaje | Resuelto en la iteración 4 (ADR-0061, ADR-0062) |
-| 2026-10-28 | 3, ADR-0045 | Los viajes archivados se eliminan al año | 4 | La analítica decide cómo anonimizar los eventos que ya recibió | Resuelto en la iteración 4: anonimización al entrar con clave anual (ADR-0064) |
+| 2026-10-28 | 3, ADR-0045 | Los viajes archivados se eliminan al año | 4 | La analítica decide cómo anonimizar los eventos que ya recibió | Resuelto en la iteración 4: seudonimización al entrar con clave anual (ADR-0064) |
 | 2026-10-28 | 3 | `bearerAuth` y la autenticación de la conexión SSE quedan genéricas en la API | 4 | Se definen con QA-7 | Resuelto en la iteración 4: token de 15 min y ticket SSE (ADR-0060) |
 | 2026-10-28 | 3, ADR-0046 | Colas del notificador: las de avisos por instancia son *classic*, exclusivas y temporales (única excepción a las colas quorum); `notifier.push` es quorum y durable | 2 | Agregado a `specs/ingestion-operations.md` a pedido de Tomas Lateana (revisión cruzada) | Aceptado por ambos (2026-10-28) |
 

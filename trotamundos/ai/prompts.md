@@ -133,19 +133,3 @@ gravedad e indicá si cada uno es un error o una decisión discutible.
 5. **No se atribuyen a los integrantes pruebas, mediciones ni aprobaciones que no ocurrieron.** El estado de cada
    documento dice qué está diseñado, qué está revisado y qué falta validar.
 6. **Los aportes se registran a nombre de quien los hizo** en el TEAM-LOG, incluidas las revisiones cruzadas.
-
-## 2026-10-28 — Preparación de script para correcciones de iteración 4
-
-Tomas solicitó un script para aplicar las observaciones de revisión sobre iteracion4, commit a141983. La asistencia
-preparó perfil JWT, proyección compartida sin details, auditoría de todas las rutas, enrutamiento por método,
-recepción analítica idempotente, período de claves, medición temporal y cobertura de telemetría, y precisiones de
-persistencia, tránsito y seudonimización. Se prueban formato y aplicación sobre una copia. La revisión humana de
-estas propuestas y la implementación del prototipo siguen pendientes; no se atribuye aceptación nueva al equipo.
-
-## 2026-10-28 — Preparación de cierre documental
-
-Tomas confirmó la integración de iteracion4 y solicitó un script para los ajustes finales. Se contrastaron los
-PRs #3, #4, #6 y #7 integrados, se preparó la actualización de estados de adopción documental, un recorrido
-transversal y registro de riesgos, y la sincronización de Home y Sidebar. La revisión de sintaxis de Mermaid,
-OpenAPI, JSON Schema y enlaces se distingue de las pruebas inexistentes del prototipo. No se registra una sesión
-grupal de Risk Storming ni un push de la Wiki que no hayan ocurrido.

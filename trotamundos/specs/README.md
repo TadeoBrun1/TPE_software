@@ -40,10 +40,11 @@ npx @asyncapi/cli validate specs/asyncapi/*.yaml
 ## Contrato propuesto de iteración 2
 
 * [Semántica, errores y coordinación con el núcleo](ingestion-contract.md).
-* [AsyncAPI de novedad detectada](asyncapi/booking-change-detected.v1.yaml), borrador 0.1.0.
+* [AsyncAPI de novedad detectada](asyncapi/booking-change-detected.v1.yaml), borrador 0.1.0 (la iteración 4 lo amplió
+  a 0.2.0; ver abajo).
 
 No reemplaza con el mismo significado al ejemplo `booking-events.example.yaml`: distingue detectar una novedad
-de confirmar un cambio. Revisión con la iteración 3 pendiente. RabbitMQ/AMQP y políticas se fijan en ADR-0028; contratos de APIs reales por proveedor se concretan al implementar. Validar sintaxis/esquemas no demuestra comportamiento ni cumplimiento temporal.
+de confirmar un cambio. Revisado con la iteración 3 (el núcleo lo consume sin cambios, ADR-0044). RabbitMQ/AMQP y políticas se fijan en ADR-0028; contratos de APIs reales por proveedor se concretan al implementar. Validar sintaxis/esquemas no demuestra comportamiento ni cumplimiento temporal.
 
 ## Alineación de contratos de ingesta
 

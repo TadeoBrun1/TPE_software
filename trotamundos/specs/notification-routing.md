@@ -1,6 +1,6 @@
 # Enrutamiento de avisos y configuración de vinculaciones
 
-**Estado:** propuesta de integración, iteración 2; revisión con 3/4 pendiente. **ADR:** 0025.
+**Estado:** diseño de la iteración 2, revisado con las iteraciones 3 y 4 e integrado en `main`; implementación pendiente. **ADR:** 0025.
 
 ## Entrada
 

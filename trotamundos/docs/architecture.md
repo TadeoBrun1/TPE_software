@@ -77,7 +77,7 @@ La arquitectura separa tres clases de trabajo:
 |---|---|
 | Núcleo modular | Consultar y gestionar viajes, reservas, usuarios y permisos. Es el único dueño del estado oficial. |
 | Ingesta | Obtener información externa autorizada, normalizarla y publicar novedades. |
-| Analítica | Ejecutar procesamiento analítico separado de las operaciones habituales, con un almacén por región y los datos seudonimizados al entrar ([ADR-0064](03-adr/0064-analitica-regional-anonimizada.md)). |
+| Analítica | Ejecutar procesamiento analítico separado de las operaciones habituales, con un almacén por región y los datos seudonimizados al entrar ([ADR-0064](03-adr/0064-analitica-regional-seudonimizada.md)). |
 
 El núcleo es inicialmente un único desplegable con módulos internos.
 
@@ -240,7 +240,7 @@ Ver el [índice completo de ADRs](03-adr/README.md).
 | [0061](03-adr/0061-comparticion-con-cuenta-y-auditoria.md) | Compartición con personas designadas con cuenta, control en el núcleo y auditoría. | accepted |
 | [0062](03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) | Lectura remota de viajes compartidos en la región del dueño. | accepted |
 | [0063](03-adr/0063-tarjeta-de-resumen-para-redes-sociales.md) | Tarjeta de resumen pública para redes sociales. | accepted |
-| [0064](03-adr/0064-analitica-regional-anonimizada.md) | Almacenes analíticos regionales con seudonimización al entrar. | accepted |
+| [0064](03-adr/0064-analitica-regional-seudonimizada.md) | Almacenes analíticos regionales con seudonimización al entrar. | accepted |
 | [0065](03-adr/0065-internacionalizacion-en-el-cliente.md) | Catálogos de textos remotos, datos neutros del backend y formato en el cliente. | accepted |
 | [0066](03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) | Campos comunes y detalles con esquema propio por tipo de reserva. | accepted |
 | [0067](03-adr/0067-observabilidad-con-trazas-y-metricas.md) | Trazas distribuidas, métricas por etapa y logs estructurados. | accepted |
