@@ -227,5 +227,8 @@ Alcance acotado: demuestra la estructura, no la operación global.
 | Degradación elegante: con la ingesta detenida, la consulta responde | Prueba con la ingesta apagada | `specs/openapi/` | 0001 |
 | Mensajes que esperan en el broker mientras el núcleo está caído | Prueba con el núcleo apagado | `specs/asyncapi/` | 0002 |
 
-La multirregión, la entrada global y la puerta de entrada se documentan en las vistas, pero no se simulan en el
-prototipo.
+Estado: implementado. Las dos pruebas de degradación están en `prototype/tests/test_iteracion2_ingesta.py`
+(`test_consultas_con_la_ingesta_detenida` y `test_nucleo_detenido_la_ingesta_sigue_publicando`) y `docker compose`
+levanta los procesos por separado. Al sumar las iteraciones 3 y 4, el prototipo terminó simulando también dos
+regiones, la entrada global y la puerta de entrada; las zonas y el escalado se documentan, pero no se simulan.
+Ver [prototype/README.md](../../prototype/README.md).

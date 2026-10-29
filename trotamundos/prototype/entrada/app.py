@@ -4,8 +4,8 @@
   busca en el directorio global mínimo (`HMAC(email) → región`). Responde igual exista o no la cuenta: si no
   existe, deriva a la región del país indicado, donde se puede crear. Tiene límite de tasa.
 * Resto de las solicitudes: elige la región por `homeRegion` del token (sin validar la firma, solo para elegir) o,
-  sin token, por el prefijo de región del recurso (ticket SSE, tarjeta, viaje, invitación). La validación la hace
-  la puerta de entrada de esa región.
+  sin token, por el prefijo de región del recurso (ticket SSE, tarjeta, viaje, invitación). Si no hay ninguno de
+  los dos, usa la región más cercana. La validación la hace la puerta de entrada de esa región.
 """
 from __future__ import annotations
 
@@ -100,7 +100,10 @@ class EntradaGlobal:
     async def enrutar(self, request: Request):
         region = self._region(request)
         if region not in self.regiones:
-            return JSONResponse({"code": "unknown_region", "message": "No se pudo elegir la región"}, status_code=400)
+            # Sin token ni prefijo de región (o con una región que no existe): va a la región más cercana, que en el
+            # prototipo es la primera configurada. Su puerta rechaza con 401 y, en las rutas de recurso, audita el
+            # rechazo como pide access-audit.md; la entrada global no rechaza por su cuenta.
+            region = next(iter(self.regiones))
         encabezados = {k: v for k, v in request.headers.items() if k.lower() not in ("host", "content-length")}
         ruta = request.url.path + (f"?{request.url.query}" if request.url.query else "")
         try:

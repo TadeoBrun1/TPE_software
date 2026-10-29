@@ -1,8 +1,8 @@
 # Prototipo de Trotamundos
 
-**Estado (2026-10-28):** implementado en la rama `Prototipo`. Cubre las iteraciones 2 (ingesta idempotente),
+**Estado (2026-10-29):** integrado en `main` mediante PR #10. Cubre las iteraciones 2 (ingesta idempotente),
 3 (panel, SSE y cambios) y 4 (compartición, autenticación y auditoría). La analítica, la tarjeta para redes, la
-asistencia de agencia y el medio nuevo (ferry) quedan fuera del alcance. Las 50 pruebas automáticas pasan en un
+asistencia de agencia y el medio nuevo (ferry) quedan fuera del alcance. Las 51 pruebas automáticas pasan en un
 solo proceso, con SQLite y un broker en memoria. Los adaptadores de PostgreSQL y RabbitMQ y el `docker-compose.yml`
 están escritos, pero no se ejecutaron en el entorno donde se armó el prototipo (no había Docker). Sí se probó a
 mano una región con cada proceso por separado, comunicados por HTTP (con SQLite y un broker en memoria por proceso).
@@ -18,7 +18,7 @@ Requisitos: Python 3.12 o superior (se probó con 3.13). Desde `trotamundos/prot
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q          # 50 pruebas, unos 10 segundos
+python -m pytest -q          # 51 pruebas, unos 10 segundos
 python demo.py               # recorrido por la API con dos regiones; --logs muestra los logs JSON
 python sistema.py            # entrada global en http://localhost:8080, dos regiones en un proceso
 ```
@@ -104,7 +104,7 @@ de auditoría de su región con su propio código, según el formato de `access-
 |---|---|---|
 | `test_iteracion2_ingesta.py` | Escenarios de [ingestion-validation.md](ingestion-validation.md) (tabla siguiente), avisos firmados por la puerta, reserva sin fechas que queda sin asignar, dueño por campo con aviso importante y push sin repetir, marca de borrado, consultas con la ingesta detenida y novedades que esperan con el núcleo detenido | QA-1, QA-4, QA-6, QA-8; 0001, 0002, 0020 a 0028, 0044 |
 | `test_iteracion3_panel.py` | Panel versionado con ETag y `304`, igual al regenerado desde las tablas; Idempotency-Key; asignación por fechas; 15 viajes completos y el resto en resumen; dos cambios concurrentes del mismo usuario (versión + 2); `If-Match` 400/412; `details` validado; archivado diario, reactivación por 7 días y eliminación al año; prioridades ante sobrecarga; 429 auditado; SSE `ready` y `panel-changed` a través de la entrada global; dos instancias del notificador; ticket SSE vencido o usado como token; telemetría del panel mostrado deduplicada | QA-1, QA-2, QA-3, QA-4, QA-5, RF-04, RF-05; 0040 a 0048, 0066, 0067 |
-| `test_iteracion4_comparticion.py` | Invitar, aceptar y leer entre regiones con `no-store` y sin campos privados; invitación idempotente; rechazos auditados (`email_mismatch`, `secret_mismatch`, `no_permission`, `owner_endpoint`, `unauthenticated`, `removed`, `owner_region_unavailable`, `bad_region`, `not_found`); sin auditoría no hay acceso (503); tokens con otra audiencia, tipo, emisor, firma, algoritmo o región, vencidos o fuera del canal; el mismo `userId` en otra región no comparte permisos; un solo salto entre puertas | QA-7; 0060, 0061, 0062, 0067 |
+| `test_iteracion4_comparticion.py` | Invitar, aceptar y leer entre regiones con `no-store` y sin campos privados; invitación idempotente; rechazos auditados (`email_mismatch`, `secret_mismatch`, `no_permission`, `owner_endpoint`, `unauthenticated`, `removed`, `owner_region_unavailable`, `bad_region`, `not_found`); sin auditoría no hay acceso (503); tokens con otra audiencia, tipo, emisor, firma, algoritmo o región, vencidos o fuera del canal; sin token ni prefijo, rechazo auditado en la región más cercana; el mismo `userId` en otra región no comparte permisos; un solo salto entre puertas | QA-7; 0060, 0061, 0062, 0067 |
 | `test_contratos.py` | Todo lo publicado cumple su AsyncAPI y lleva `traceparent`; respuestas contra la OpenAPI; regla de shards; topología (colas quorum con un consumidor activo y la cola del notificador como única excepción); esquemas de `details` registrados | 0002, 0028, 0066, 0067 |
 
 Cobertura de los escenarios de [ingestion-validation.md](ingestion-validation.md):
@@ -167,6 +167,9 @@ Lo que apareció al implementar y la documentación no resolvía del todo:
    cubre los avisos que el proveedor no reintente.
 7. **SSE a través de la entrada global.** La entrada global tiene que reenviar el flujo a medida que llega; si
    espera la respuesta completa, la conexión nunca devuelve el `ready`.
+8. **Solicitud sin token ni prefijo de región.** ADR-0060 no dice adónde va, por ejemplo, un `DELETE /bookings/{id}`
+   sin token (los identificadores de reservas no llevan región). El prototipo supone que la entrada global la manda
+   a la región más cercana, cuya puerta rechaza con `401` y audita el rechazo.
 
 Los hallazgos 1 y 3 necesitan una decisión del equipo; el resto está registrado en el
 [registro de impactos](../docs/01-add/impact-log.md).

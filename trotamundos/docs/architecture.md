@@ -306,8 +306,9 @@ El prototipo debe demostrar recorridos acotados y trazables a contratos y decisi
 - Archivar y reactivar viajes con una fecha simulada.
 
 Estado: el prototipo implementa las iteraciones 2 a 4 y sus pruebas automáticas cubren estos objetivos en un solo
-proceso, salvo la autorización del correo: se simula sin OAuth y la revocación se cubre en parte (detalle y escenarios pendientes en
-[prototype/README.md](../prototype/README.md)). Son pruebas de comportamiento y de contratos, no mediciones de los QA.
+proceso, salvo la autorización del correo: se simula sin OAuth y la revocación se cubre en parte (detalle y
+escenarios pendientes en [prototype/README.md](../prototype/README.md)). Son pruebas de comportamiento y de
+contratos, no mediciones de los QA.
 
 Una ejecución local no demuestra capacidad para millones de usuarios, independencia real entre zonas ni disponibilidad global mensual.
 

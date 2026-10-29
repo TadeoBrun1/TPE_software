@@ -127,7 +127,7 @@ no implica que todas las pruebas estén realizadas; las nuevas decisiones se inc
 ## Hallazgos del prototipo — 2026-10-28
 
 El [prototipo](../../prototype/README.md) implementa las iteraciones 2, 3 y 4 (sin analítica, tarjeta para redes,
-asistencia ni medio nuevo) en la rama `Prototipo`. Sus pruebas comprueban comportamiento y contratos en un solo
+asistencia ni medio nuevo), integrado mediante PR #10. Sus pruebas comprueban comportamiento y contratos en un solo
 proceso; no miden QA ni reemplazan las validaciones con infraestructura real.
 
 | Hallazgo | Afecta | Tratamiento | Estado |
@@ -139,3 +139,4 @@ proceso; no miden QA ni reemplazan las validaciones con infraestructura real.
 | Invitación cuando falla la auditoría | 4 | La invitación se audita dentro de su transacción: si falla, no se crea ni se envía el correo | Implementado, coherente con ADR-0061 |
 | Aviso de proveedor con la ingesta caída | 2 | La puerta responde `503` con `Retry-After`; la reconciliación cubre lo que el proveedor no reintente | Implementado |
 | SSE a través de la entrada global | 3 | La entrada global reenvía el flujo a medida que llega, no la respuesta completa | Implementado |
+| Solicitud sin token ni prefijo de región (por ejemplo, `DELETE /bookings/{id}` sin token) | 3 y 4 | ADR-0060 no dice adónde va; la entrada global la manda a la región más cercana, cuya puerta rechaza con `401` y la audita | Suposición del prototipo |

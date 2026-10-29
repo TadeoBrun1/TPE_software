@@ -262,8 +262,11 @@ a escala queda para una iteración 5 si hay tiempo.
 | Archivado y reactivación | Tarea con fecha simulada; `POST /trips/{tripId}/reactivate` | `trip-changed.v1.yaml` | 0045 |
 | Priorización | Las operaciones de baja prioridad reciben `503` antes que el panel | `itinerary-api.v1.yaml` | 0047 |
 
-La partición se demuestra con dos particiones lógicas en un mismo motor; la conmutación entre zonas, el monitor, el
-escalado y la multirregión se documentan, pero no se simulan en el prototipo local.
+Estado: implementado, con pruebas en `prototype/tests/test_iteracion3_panel.py`. La concurrencia se probó con dos
+cambios manuales simultáneos y el aviso con dos instancias del notificador. La revalidación de la app después del
+`ready` o de una desconexión no se prueba, porque el prototipo no tiene cliente. La partición usa 256 particiones
+lógicas en dos bases del mismo motor; la conmutación entre zonas, el monitor y el escalado se documentan, pero no
+se simulan. La multirregión sí se simula (dos regiones, iteración 4).
 
 ### Revisión de la iteración
 

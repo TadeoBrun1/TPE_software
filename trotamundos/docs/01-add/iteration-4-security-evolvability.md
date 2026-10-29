@@ -321,8 +321,11 @@ No se atribuye una sesión grupal de Risk Storming ni pruebas de prototipo que n
 | Medio nuevo | Agregar `ferry` con su esquema y un adaptador simulado, y verificar en el historial que no cambió código de los otros medios | `specs/schemas/` | 0066 |
 | Trazas | Una novedad simulada genera una traza con el mismo `correlationId` en ingesta, núcleo y notificador, y el cliente de prueba la cierra con `POST /telemetry/panel-shown` | `panel-changed.v1.yaml`, `itinerary-api.v1.yaml` | 0067 |
 
-El directorio global, el canal mTLS real y el despliegue multirregión se documentan, pero no se simulan en el
-prototipo local.
+Estado: implementados los tokens, el ticket SSE, la compartición con auditoría, la lectura entre regiones y las
+trazas, con pruebas en `prototype/tests/test_iteracion4_comparticion.py` y `test_contratos.py`. La seudonimización
+y el medio nuevo (`ferry`) quedaron fuera del alcance del prototipo, así que QA-9 sigue sin medición de esfuerzo. El
+prototipo simula dos regiones y el directorio global (en la entrada global); el canal entre regiones usa una clave
+compartida en lugar de mTLS. Ver [prototype/README.md](../../prototype/README.md).
 
 ### Revisión de la iteración
 
