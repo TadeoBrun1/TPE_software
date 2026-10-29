@@ -106,6 +106,15 @@ def test_sin_token_la_puerta_audita_el_rechazo(sistema, cliente, compartido):
     assert registro["actor_user_id"] is None
 
 
+def test_sin_token_ni_prefijo_rechaza_la_region_mas_cercana(sistema, cliente):
+    """Sin token ni prefijo, la entrada global no puede elegir la región del usuario: la elige por cercanía y esa
+    puerta rechaza con 401, auditando las rutas de recurso (`/bookings/{id}` no lleva región)."""
+    assert cliente.http.get("/panel").status_code == 401
+    assert cliente.http.delete("/bookings/000-" + "0" * 32).status_code == 401
+    assert cliente.http.get("/shared/trips/ap-south:000-" + "0" * 32).status_code == 401
+    assert motivos(sistema, "sa-east", "share.gateway_reject") == ["unauthenticated", "unauthenticated"]
+
+
 def test_quitar_permiso_y_borrar_el_marcador(sistema, juan, ana, compartido, invitacion):
     assert juan.delete(f"/trips/{compartido}/shares/{invitacion['shareId']}").status_code == 204
     assert ana.get(f"/shared/trips/{compartido}").status_code == 404

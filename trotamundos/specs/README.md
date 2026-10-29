@@ -50,12 +50,12 @@ de confirmar un cambio. Revisado con la iteración 3 (el núcleo lo consume sin 
 
 [Enrutamiento y configuración](notification-routing.md), [agencia](agency-assistance.md),
 [publicación del núcleo](core-publication.md). El esquema de novedades permite correo sin versión externa si los
-datos son suficientes. RabbitMQ y políticas definidos en ADR-0028; pruebas del sistema pendientes.
+datos son suficientes. RabbitMQ y políticas definidos en ADR-0028; el prototipo cubre parte de las pruebas.
 
 ## Operación y cierre de diseño de ingesta
 
 [RabbitMQ y políticas](ingestion-operations.md), [autorización coordinada](ingestion-authorization.md),
-[eventos confirmados](asyncapi/booking-confirmed.v1.yaml). Paso 7 analizado; [prototipo y evidencia futura](../prototype/ingestion-validation.md).
+[eventos confirmados](asyncapi/booking-confirmed.v1.yaml). Paso 7 analizado; [validación del prototipo](../prototype/ingestion-validation.md).
 
 ## Contratos de la iteración 3
 

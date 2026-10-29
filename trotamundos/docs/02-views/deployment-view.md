@@ -114,10 +114,12 @@ flowchart TB
 
 ## 6. Prototipo
 
-El prototipo corre una sola región en una máquina con `docker compose` (núcleo, notificador, ingesta, broker y una
-base con dos particiones lógicas). La iteración 4 agrega un proveedor de identidad local y una segunda instancia que
-hace de otra región para probar el reenvío. La multirregión real, las zonas, el monitor, el directorio global y el
-escalado se documentan acá, pero no se simulan.
+El prototipo levanta dos regiones en una máquina con `docker compose`. Cada región tiene PostgreSQL (dos bases que
+hacen de nodos de la partición, más auditoría, ingesta, identidad y push), RabbitMQ y los procesos núcleo,
+notificador, ingesta, proveedor de identidad y puerta de entrada; la entrada global, con el directorio, es común a
+las dos. Las zonas, la réplica sincrónica, el monitor de base, el quórum de tres miembros y el escalado se
+documentan acá, pero no se simulan. Las pruebas automáticas corren las mismas dos regiones en un solo proceso (ver
+[prototype/README.md](../../prototype/README.md)).
 
 ## 7. Vistas relacionadas
 

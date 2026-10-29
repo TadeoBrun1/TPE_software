@@ -67,5 +67,6 @@ Sobre la Wiki de GitHub, ver [docs/WIKI.md](docs/WIKI.md).
 La primera entrega aquí cerrada es la documentación arquitectónica de las cuatro iteraciones. Los contratos
 son de diseño. Después del cierre se implementó el [prototipo](prototype/README.md) de las iteraciones 2 a 4, con
 pruebas automáticas de comportamiento y de contratos; no hay pruebas de carga ni mediciones de los QA con
-infraestructura real. La consigna general exige prototipo y una opción avanzada A o B para la segunda entrega. El alcance exigido en cada fecha debe respetar
+infraestructura real. La consigna general exige prototipo y una opción avanzada A o B para la segunda entrega. El
+alcance exigido en cada fecha debe respetar
 lo indicado por la cátedra; este estado no sustituye esa indicación.

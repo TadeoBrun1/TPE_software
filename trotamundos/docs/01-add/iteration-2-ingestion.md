@@ -179,7 +179,9 @@ oficiales; no se dejan como elecciones arquitectónicas abiertas de broker.
 
 [Plan de validación](../../prototype/ingestion-validation.md). Debe cubrir correo sin versión, dos fuentes,
 duplicado, cancelación antes del alta, caídas antes/después de commit/confirm, mensaje no enrutado, revocación
-concurrente, agencia con resultado incierto y carga de referencia. Resultados aún no ejecutados.
+concurrente, agencia con resultado incierto y carga de referencia. El prototipo cubre V01 a V08 y V11, y V09 y V16
+en parte, con pruebas automáticas en un proceso; la agencia (V10), las pruebas con infraestructura real (V12 a V15)
+y el medio nuevo (V17) siguen pendientes ([cobertura](../../prototype/README.md#3-qué-demuestran-las-pruebas)).
 
 ### ¿Se sigue iterando?
 

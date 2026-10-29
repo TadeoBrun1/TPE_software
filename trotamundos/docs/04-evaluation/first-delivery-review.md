@@ -80,7 +80,8 @@ Esta es una revisión analítica de riesgos, no una sesión grupal registrada ni
 * Las cifras de percentiles, pico 5x y otros valores identificados como supuestos requieren validación.
 * QA-1 a escala, QA-3 sin caché, QA-5 durante arranque y QA-10 internacional conservan su estado parcial.
 * CON-3 no tiene normativa concreta validada; no se afirma cumplimiento legal ni anonimato demostrado.
-* El prototipo y sus pruebas todavía no existen; el plan está en prototype/README.md y sus documentos enlazados.
+* Al cierre, el prototipo y sus pruebas todavía no existían. Se integraron después mediante PR #10; ver
+  [prototype/README.md](../../prototype/README.md).
 * No se registra una sesión de Risk Storming del equipo si no ocurrió. Si la realizan, agregar participantes,
   fecha, escenarios revisados y acuerdos reales.
 * Confirmar alcance por fecha con lo indicado por la cátedra y seleccionar la opción avanzada de la segunda entrega.

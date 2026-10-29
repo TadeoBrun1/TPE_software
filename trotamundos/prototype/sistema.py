@@ -136,7 +136,8 @@ class Sistema:
 if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
+    puerto = int(os.environ.get("PUERTO", "8080"))
     sistema = Sistema(os.environ.get("DATOS", "datos-locales"))
     sistema.iniciar()
-    print("Entrada global en http://localhost:8080 (regiones:", ", ".join(sistema.regiones), ")")
-    uvicorn.run(sistema.entrada.app, host="127.0.0.1", port=int(os.environ.get("PUERTO", "8080")), log_level="warning")
+    print(f"Entrada global en http://localhost:{puerto} (regiones: {', '.join(sistema.regiones)})")
+    uvicorn.run(sistema.entrada.app, host="127.0.0.1", port=puerto, log_level="warning")
