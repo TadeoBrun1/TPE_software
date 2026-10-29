@@ -71,7 +71,7 @@ Dos simuladores con campos/estados distintos deben producir el contrato común; 
 | Contrato | [Semántica](../../specs/ingestion-contract.md), [AsyncAPI](../../specs/asyncapi/booking-change-detected.v1.yaml) |
 | Relación con 1/3 | [Impactos](../01-add/impact-log.md); base integrada y coordinada mediante PRs #3, #4, #6 y #7; validación de implementación pendiente |
 | ADR relacionadas | [Índice](README.md), ADR-0020 a 0024 |
-| Prototipo | [Alcance](../../prototype/README.md); implementación pendiente |
+| Prototipo | [Adaptadores](../../prototype/ingesta/adaptadores/acceso.py); pruebas V02 y V11 en [prototype/README.md](../../prototype/README.md) |
 
 ### Relación con la iteración 4
 

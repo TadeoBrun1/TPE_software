@@ -123,3 +123,19 @@ Las decisiones de las iteraciones 1 a 4 están integradas mediante PRs #3, #4, #
 se distingue de la validación del requisito. QA-1 a escala y los demás riesgos de la
 [revisión final](../04-evaluation/first-delivery-review.md) continúan abiertos. El registro histórico de propuestas
 no implica que todas las pruebas estén realizadas; las nuevas decisiones se incorporarán mediante su PR.
+
+## Hallazgos del prototipo — 2026-10-28
+
+El [prototipo](../../prototype/README.md) implementa las iteraciones 2, 3 y 4 (sin analítica, tarjeta para redes,
+asistencia ni medio nuevo) en la rama `Prototipo`. Sus pruebas comprueban comportamiento y contratos en un solo
+proceso; no miden QA ni reemplazan las validaciones con infraestructura real.
+
+| Hallazgo | Afecta | Tratamiento | Estado |
+|---|---|---|---|
+| `booking.changed.v1` no tiene consumidor y, con `mandatory`, dejaría la outbox del núcleo trabada | 2 y 4 | El prototipo no lo publica; los cambios confirmados (también los manuales) salen en `booking.facts.v1` | Decisión pendiente: retirar el contrato o publicarlo cuando exista un consumidor |
+| Puertos de base, broker, outbox y HTTP repetidos en los tres procesos | 1 a 4 | Biblioteca técnica `comun/infraestructura`, sin dominio; [vista de módulos](../02-views/module-view.md) actualizada | Integrado |
+| Descarte por sobrecarga (ADR-0047) sobre una ruta de recurso sin motivo en `access-audit.md` | 3 y 4 | El prototipo no lo audita; queda en métricas | Decisión pendiente: agregar un motivo o declararlo excepción |
+| Cancelación anterior al alta | 2 y 3 | Al llegar el alta se asocia la cancelación pendiente: con versiones ordenadas gana la mayor; sin orden, la confirmación también queda para conciliar | Interpretación de `ingestion-contract.md` implementada |
+| Invitación cuando falla la auditoría | 4 | La invitación se audita dentro de su transacción: si falla, no se crea ni se envía el correo | Implementado, coherente con ADR-0061 |
+| Aviso de proveedor con la ingesta caída | 2 | La puerta responde `503` con `Retry-After`; la reconciliación cubre lo que el proveedor no reintente | Implementado |
+| SSE a través de la entrada global | 3 | La entrada global reenvía el flujo a medida que llega, no la respuesta completa | Implementado |

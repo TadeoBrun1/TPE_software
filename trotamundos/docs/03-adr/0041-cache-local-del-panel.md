@@ -106,7 +106,7 @@ uso real de qué porcentaje de las aperturas no tiene caché.
 | Vistas afectadas | [sequence-views](../02-views/sequence-views.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md), [0040](0040-modelo-de-lectura-del-panel.md), [0046](0046-notificador-de-cambios-del-panel.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/nucleo/api/rutas.py` (ETag y `304`); la caché de la app no está en el alcance |
 
 ## Estado de integración documental
 

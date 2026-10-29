@@ -191,7 +191,7 @@ distintas con el mismo identificador local no comparten permisos.
 | Vistas afectadas | [cc-view](../02-views/cc-view.md), [deployment-view](../02-views/deployment-view.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0003](0003-despliegue-por-regiones-con-region-de-origen.md), [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md), [0025](0025-enrutamiento-de-avisos.md), [0046](0046-notificador-de-cambios-del-panel.md), [0061](0061-comparticion-con-cuenta-y-auditoria.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/identidad/` (simulación del proveedor) y `prototype/puerta/autenticacion.py` |
 
 ## Estado de integración documental
 

@@ -20,7 +20,7 @@ Trabajo Práctico Especial · Diseño de Sistemas de Software · UNICEN
 | El cierre de primera entrega y riesgos abiertos | [docs/04-evaluation/first-delivery-review.md](docs/04-evaluation/first-delivery-review.md) |
 | Las decisiones (ADRs, formato MADR) | [docs/03-adr/](docs/03-adr/) |
 | Los contratos (spec-driven) | [specs/](specs/) |
-| El prototipo | [prototype/](prototype/) |
+| El prototipo (código, pruebas, demo y docker compose) | [prototype/](prototype/README.md) |
 | Quién hizo qué | [TEAM-LOG.md](TEAM-LOG.md) |
 
 ## Estado de las iteraciones ADD
@@ -55,7 +55,7 @@ Las iteraciones adicionales (opción avanzada A/B de la 2da entrega, refinamient
 │   ├── openapi/             # API REST
 │   ├── asyncapi/            # eventos y mensajes
 │   └── schemas/             # detalles por tipo de reserva (JSON Schema)
-├── prototype/               # código que demuestra la arquitectura
+├── prototype/               # prototipo en Python: servicios, pruebas, demo y docker compose
 ├── ai/                      # persona y prompts usados con IA
 └── wiki/                    # Home y Sidebar para publicar en la Wiki de GitHub
 ```
@@ -65,6 +65,7 @@ Sobre la Wiki de GitHub, ver [docs/WIKI.md](docs/WIKI.md).
 ## Alcance de este cierre
 
 La primera entrega aquí cerrada es la documentación arquitectónica de las cuatro iteraciones. Los contratos
-son de diseño; no hay implementación del prototipo ni pruebas de carga ejecutadas. La consigna general exige
-prototipo y una opción avanzada A o B para la segunda entrega. El alcance exigido en cada fecha debe respetar
+son de diseño. Después del cierre se implementó el [prototipo](prototype/README.md) de las iteraciones 2 a 4, con
+pruebas automáticas de comportamiento y de contratos; no hay pruebas de carga ni mediciones de los QA con
+infraestructura real. La consigna general exige prototipo y una opción avanzada A o B para la segunda entrega. El alcance exigido en cada fecha debe respetar
 lo indicado por la cátedra; este estado no sustituye esa indicación.

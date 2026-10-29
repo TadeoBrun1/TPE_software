@@ -124,7 +124,7 @@ QA-8 seguridad de correos). Queda registrado en el [registro de impactos](../01-
 | Vistas afectadas | [cc-view](../02-views/cc-view.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | `specs/asyncapi/` |
 | ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0003](0003-despliegue-por-regiones-con-region-de-origen.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/comun/infraestructura/broker.py`, `prototype/contratos/topologia.py`; prueba `test_nucleo_detenido_la_ingesta_sigue_publicando` |
 
 ## Estado de integración documental
 

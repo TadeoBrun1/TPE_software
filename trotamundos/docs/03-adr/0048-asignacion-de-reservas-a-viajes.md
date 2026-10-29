@@ -89,7 +89,7 @@ una sin fechas queda en "sin asignar"; mover una reserva y recibir otra novedad 
 | Vistas afectadas | [module-view](../02-views/module-view.md), [domain-model](../02-views/domain-model.md) |
 | Specs | [booking-change-detected.v1.yaml](../../specs/asyncapi/booking-change-detected.v1.yaml), [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0040](0040-modelo-de-lectura-del-panel.md), [0044](0044-novedades-y-cambios-manuales.md), [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/nucleo/viajes/asignacion.py` |
 
 ## Estado de integración documental
 

@@ -71,7 +71,7 @@ Casos por etapa: correo irrelevante, remitente permitido con formato desconocido
 | Contrato | [Semántica](../../specs/ingestion-contract.md), [AsyncAPI](../../specs/asyncapi/booking-change-detected.v1.yaml) |
 | Relación con 1/3 | [Impactos](../01-add/impact-log.md); base integrada y coordinada mediante PRs #3, #4, #6 y #7; validación de implementación pendiente |
 | ADR relacionadas | [Índice](README.md), ADR-0020 a 0024 |
-| Prototipo | [Alcance](../../prototype/README.md); implementación pendiente |
+| Prototipo | [Tubería](../../prototype/ingesta/procesamiento/tuberia.py); pruebas V01 a V04 en [prototype/README.md](../../prototype/README.md) |
 
 ## Estado de integración documental
 

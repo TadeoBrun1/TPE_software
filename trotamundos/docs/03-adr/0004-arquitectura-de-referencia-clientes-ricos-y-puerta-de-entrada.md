@@ -117,7 +117,7 @@ accede a un proceso interno sin pasar por la puerta de entrada. La API de itiner
 | Vistas afectadas | [cc-view](../02-views/cc-view.md), [deployment-view](../02-views/deployment-view.md) |
 | Specs | `specs/openapi/` |
 | ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0003](0003-despliegue-por-regiones-con-region-de-origen.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/puerta/` (simulación de la puerta de entrada) y `prototype/entrada/` |
 
 ## Estado de integración documental
 

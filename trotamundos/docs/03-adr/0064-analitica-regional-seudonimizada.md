@@ -148,7 +148,7 @@ antes del ACK y cambio de período según [analytics-processing.md](../../specs/
 | Vistas afectadas | [cc-view](../02-views/cc-view.md), [deployment-view](../02-views/deployment-view.md) |
 | Specs | [booking-facts.v1.yaml](../../specs/asyncapi/booking-facts.v1.yaml), [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml) |
 | ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0027](0027-publicacion-del-nucleo.md), [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | — (fuera del alcance del prototipo; el núcleo sí publica `booking.facts.v1`) |
 
 ### Límite de la seudonimización
 

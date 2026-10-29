@@ -189,7 +189,7 @@ Medir el tiempo entre el commit y la recepción del aviso contra los 30 s de la 
 | Vistas afectadas | [cc-view](../02-views/cc-view.md), [deployment-view](../02-views/deployment-view.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml), [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md), [0027](0027-publicacion-del-nucleo.md), [0028](0028-rabbitmq-y-politicas.md), [0040](0040-modelo-de-lectura-del-panel.md), [0041](0041-cache-local-del-panel.md), [0044](0044-novedades-y-cambios-manuales.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/notificador/` |
 
 ## Estado de integración documental
 

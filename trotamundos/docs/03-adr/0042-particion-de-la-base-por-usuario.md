@@ -109,9 +109,9 @@ Patrones y tácticas que aplica:
 ### Confirmation
 
 * Revisión de la [vista de despliegue](../02-views/deployment-view.md).
-* Prototipo: dos particiones lógicas en un mismo motor de base, con ruteo por hash de usuario. La conmutación entre
-  zonas, el monitor y la suspensión de la confirmación sincrónica se documentan, pero no se simulan en el prototipo
-  local.
+* Prototipo: 256 particiones lógicas repartidas en dos nodos (dos bases del mismo motor), con ruteo por hash de
+  usuario. La conmutación entre zonas, el monitor y la suspensión de la confirmación sincrónica se documentan, pero
+  no se simulan en el prototipo local.
 * En una prueba de infraestructura: apagar solo la réplica y verificar que la primaria sigue aceptando escrituras;
   apagar la primaria y verificar la promoción en 60 s; medir cuánto dura la reconstrucción.
 
@@ -147,7 +147,7 @@ Patrones y tácticas que aplica:
 | Vistas afectadas | [deployment-view](../02-views/deployment-view.md), [cc-view](../02-views/cc-view.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | — |
 | ADRs relacionadas | [0003](0003-despliegue-por-regiones-con-region-de-origen.md), [0028](0028-rabbitmq-y-politicas.md), [0040](0040-modelo-de-lectura-del-panel.md), [0043](0043-escalado-solo-reactivo.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/nucleo/datos/ruteo.py` (256 particiones en dos nodos) |
 
 ## Estado de integración documental
 

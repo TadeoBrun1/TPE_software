@@ -145,7 +145,7 @@ auditoría.
 | Vistas afectadas | [module-view](../02-views/module-view.md), [domain-model](../02-views/domain-model.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml), [access-audit.md](../../specs/access-audit.md) |
 | ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md), [0060](0060-identidad-por-region-con-tokens.md), [0062](0062-lectura-de-viajes-compartidos-entre-regiones.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/nucleo/comparticion/`, `prototype/nucleo/auditoria/` y `prototype/puerta/auditoria.py` |
 
 ## Estado de integración documental
 

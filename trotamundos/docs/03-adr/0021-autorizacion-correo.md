@@ -71,7 +71,7 @@ Simular vinculación válida, expiración, renovación inválida, revocación co
 | Contrato | [Semántica](../../specs/ingestion-contract.md), [AsyncAPI](../../specs/asyncapi/booking-change-detected.v1.yaml) |
 | Relación con 1/3 | [Impactos](../01-add/impact-log.md); base integrada y coordinada mediante PRs #3, #4, #6 y #7; validación de implementación pendiente |
 | ADR relacionadas | [Índice](README.md), ADR-0020 a 0024 |
-| Prototipo | [Alcance](../../prototype/README.md); implementación pendiente |
+| Prototipo | [Código](../../prototype/ingesta/vinculaciones/gestor.py) y selección por remitente en la [tubería](../../prototype/ingesta/procesamiento/tuberia.py); OAuth simulado; pruebas en [prototype/README.md](../../prototype/README.md) |
 
 ### Propiedad de la configuración
 

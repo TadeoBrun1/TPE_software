@@ -98,7 +98,7 @@ respondiendo, y un cliente que excede su límite recibe `429`.
 | Vistas afectadas | [cc-view](../02-views/cc-view.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) (respuestas `429` y `503`) |
 | ADRs relacionadas | [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md), [0028](0028-rabbitmq-y-politicas.md), [0041](0041-cache-local-del-panel.md), [0043](0043-escalado-solo-reactivo.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/puerta/limites.py` |
 
 ## Estado de integración documental
 

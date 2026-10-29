@@ -4,7 +4,8 @@
 **Actualizada en la iteración:** 4
 **Mantiene:** Ambos
 **Estado:** refinada en las iteraciones 2 (ingesta y asistencia), 3 (panel, ruteo de particiones y notificador) y 4
-(compartición, auditoría, esquemas por tipo, analítica y observabilidad).
+(compartición, auditoría, esquemas por tipo, analítica y observabilidad). Ajustada con el prototipo (biblioteca
+técnica común y directorios implementados).
 
 ## 1. Propósito
 
@@ -56,6 +57,7 @@ flowchart TD
 
     RRG["resolución regional en entrada global"]
     OBS["observabilidad<br/>(biblioteca común: trazas,<br/>métricas, logs)"]
+    INF["infraestructura<br/>(biblioteca técnica común:<br/>base, broker, outbox, HTTP)"]
 
     CON["contratos<br/>(generados desde specs/)"]
 
@@ -125,6 +127,7 @@ Leyenda: la flecha significa "puede usar".
 | analítica/seudonimizador | Reemplaza identificadores según período committedAt, descarta campos fuera de la lista permitida; riesgo residual de reidentificación | `analitica/seudonimizacion` |
 | analítica/almacen-analitico | Escritura y consultas pesadas del almacén analítico regional | `analitica/almacen` |
 | observabilidad | Biblioteca común: propaga `correlationId` y `traceparent` (también en los mensajes), métricas por etapa y logs estructurados sin datos personales (ADR-0067) | `comun/observabilidad` |
+| infraestructura | Biblioteca técnica común: puertos y adaptadores de base de datos, broker, outbox, HTTP interno, reloj y límite por cliente. Sin lógica de dominio (hallazgo del prototipo) | `comun/infraestructura` |
 | núcleo/suscriptor-novedades | Recibe novedades del broker y las pasa a reservas | `nucleo/mensajeria` |
 | núcleo/publicador-eventos | Publica los eventos de dominio de cada cambio confirmado, incluido `booking.facts.v1` (ADR-0064) | `nucleo/mensajeria` |
 | núcleo/asistencia | Autoriza asistencia, conserva seguimiento y limita trabajadores salientes | `nucleo/asistencia` |
@@ -141,29 +144,36 @@ Leyenda: la flecha significa "puede usar".
 | notificador/conexiones-sse | Mantiene las conexiones SSE de los usuarios conectados a la instancia (ADR-0046) | `notificador/sse` |
 | notificador/consumidor-avisos | Lee `panel.changed.v1` de la cola de la instancia y avisa solo a los usuarios conectados | `notificador/avisos` |
 | notificador/envio-push | Lee la cola compartida `notifier.push` y envía el push del sistema operativo | `notificador/push` |
-| contratos | Tipos generados a partir de `specs/`; único código que comparten núcleo, ingesta y notificador | `contratos/` |
+| contratos | Validadores y tipos generados a partir de `specs/`; único código compartido que conoce los mensajes y la API (además de las bibliotecas técnicas) | `contratos/` |
 
 ## 4. Reglas de dependencia
 
-* El núcleo y la ingesta **solo comparten** el módulo `contratos`. Ninguno importa código del otro.
+* El núcleo y la ingesta **solo comparten** el módulo `contratos` y las bibliotecas comunes. Ninguno importa código
+  del otro.
 * Un adaptador no depende de otro adaptador: agregar un medio es agregar un adaptador, un esquema de `details` y su
   registro por configuración (ADR-0066).
 * `viajes`, `panel` y la lógica de `reservas` usan solo los campos comunes; ningún módulo del núcleo interpreta los
   campos de `details` (ADR-0066).
 * Todo pedido sobre un viaje ajeno, por cualquier endpoint, pasa por `comparticion`, que siempre escribe en
   `auditoria` antes de responder (ADR-0061).
-* La analítica no importa código del núcleo ni accede a su base: solo `contratos` (ADR-0064).
-* `observabilidad` es la única biblioteca común además de `contratos`; no contiene lógica de dominio.
+* La analítica no importa código del núcleo ni accede a su base: solo `contratos` y las bibliotecas comunes (ADR-0064).
+* Las únicas bibliotecas comunes además de `contratos` son `observabilidad` e `infraestructura`; ninguna contiene
+  lógica de dominio ni conoce tablas o reglas de un proceso. La regla se amplió con el prototipo: los puertos de
+  base, broker y outbox se repetían igual en los tres procesos.
 * Los módulos de dominio del núcleo (viajes, reservas, usuarios, comparticion) no dependen de `api` ni de la
   mensajería.
 * Los adaptadores de mensajería (publicadores y consumidores) conocen el broker; los módulos de dominio usan puertos.
-* El notificador no importa código del núcleo: solo `contratos`. No accede a la base del núcleo.
+* El notificador no importa código del núcleo: solo `contratos` y las bibliotecas comunes. No accede a la base del
+  núcleo.
 * La API, el consumidor de novedades y la tarea diaria de `viajes` llegan a la base a través de `ruteo-particiones`.
 * Resolución regional pertenece a entrada global, no al dominio ni al procesador de ingesta.
 * Asistencia invoca su puerto saliente con recursos acotados y no importa código de ingesta.
 * Solo `panel` escribe `panel_por_usuario`; `reservas` y `viajes` le piden la actualización dentro de su transacción (ADR-0040).
 * Ningún módulo abre una transacción que abarque más de una partición (ADR-0042).
-* Los directorios de la tabla son organización propuesta; no afirman código ya implementado.
+* Los directorios de la tabla son los del [prototipo](../../prototype/README.md). Están implementados los del
+  núcleo (salvo `asistencia`), la ingesta, el notificador, la entrada global y las bibliotecas comunes; `analitica`
+  y `nucleo/asistencia` siguen como organización propuesta. La puerta de entrada y el proveedor de identidad son
+  productos en la arquitectura; el prototipo los simula en `puerta/` e `identidad/`.
 
 ## 5. Rationale
 

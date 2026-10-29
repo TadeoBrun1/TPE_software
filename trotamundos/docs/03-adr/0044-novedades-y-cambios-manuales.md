@@ -120,7 +120,7 @@ cambia nada.
 | Vistas afectadas | [module-view](../02-views/module-view.md), [domain-model](../02-views/domain-model.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | [booking-change-detected.v1.yaml](../../specs/asyncapi/booking-change-detected.v1.yaml), [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0024](0024-avance-y-publicacion-durable.md), [0027](0027-publicacion-del-nucleo.md), [0040](0040-modelo-de-lectura-del-panel.md), [0046](0046-notificador-de-cambios-del-panel.md), [0048](0048-asignacion-de-reservas-a-viajes.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/nucleo/reservas/novedades.py` y `manuales.py` |
 
 ## Estado de integración documental
 
