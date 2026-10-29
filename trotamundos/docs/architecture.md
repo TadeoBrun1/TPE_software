@@ -168,7 +168,7 @@ Son componentes lógicos de la ingesta, no microservicios obligatoriamente indep
 
 Se actualizaron receptor por Gateway, referencias ADR-0003/0004, versión externa opcional, propiedad de
 vinculaciones, asistencia de agencia y publicación confirmada. Ver ADR-0020 a 0028 y contratos de ingesta.
-Son decisiones propuestas; broker y parámetros se definen en ADR-0028 y el paso 7 está analizado; ejecución del prototipo pendiente.
+Son decisiones propuestas; broker y parámetros se definen en ADR-0028 y el paso 7 está analizado; el prototipo cubre parte de la validación.
 
 
 ## 9. Interfaces y secuencias
@@ -305,7 +305,9 @@ El prototipo debe demostrar recorridos acotados y trazables a contratos y decisi
 - Aplicar dueño por campo, marca de borrado y asignación a viajes.
 - Archivar y reactivar viajes con una fecha simulada.
 
-Son objetivos de validación, no pruebas ejecutadas.
+Estado: el prototipo implementa las iteraciones 2 a 4 y sus pruebas automáticas cubren estos objetivos en un solo
+proceso, salvo la autorización del correo: se simula sin OAuth y la revocación se cubre en parte (detalle y escenarios pendientes en
+[prototype/README.md](../prototype/README.md)). Son pruebas de comportamiento y de contratos, no mediciones de los QA.
 
 Una ejecución local no demuestra capacidad para millones de usuarios, independencia real entre zonas ni disponibilidad global mensual.
 
@@ -336,8 +338,9 @@ Agencia, enrutamiento y outbox del núcleo tienen contratos semánticos propuest
 
 Pasos 2 a 7 documentados, con RabbitMQ, políticas operativas y recorrido analítico de escenarios. Ver
 [ADR-0028](03-adr/0028-rabbitmq-y-politicas.md), [políticas](../specs/ingestion-operations.md),
-[autorización](../specs/ingestion-authorization.md) y [validación futura](../prototype/ingestion-validation.md).
-Las ADR reflejan adopción documental por integración en main; el prototipo no tiene resultados ejecutados.
+[autorización](../specs/ingestion-authorization.md) y [validación](../prototype/ingestion-validation.md).
+Las ADR reflejan adopción documental por integración en main; el prototipo cubre parte de esos escenarios
+(ver su README).
 
 ## Refinamiento posterior a revisión de iteración 2
 
@@ -383,7 +386,8 @@ con Cache-Control no-store. Eliminar un marcador se ejecuta siempre en la regió
 La analítica aplica recepción idempotente y códigos por período de committedAt; no se afirma anonimato por destruir
 claves. Ver [procesamiento](../specs/analytics-processing.md). La auditoría cubre también rechazos sin token a rutas
 del dueño; [medición de calidad](../specs/quality-measurement.md) separa tiempo de caída de tasa de éxito y declara
-telemetría faltante. Las correcciones quedaron integradas mediante PR #7; no hay pruebas de prototipo ejecutadas.
+telemetría faltante. Las correcciones quedaron integradas mediante PR #7. Las pruebas del prototipo cubren el perfil
+de tokens, la vista compartida sin `details` con no-store y la auditoría de rechazos; la analítica no está en su alcance.
 
 ## Cierre de primera entrega
 

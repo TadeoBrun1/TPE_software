@@ -148,7 +148,7 @@ Patrones y tácticas que aplica:
 | Vistas afectadas | [module-view](../02-views/module-view.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0027](0027-publicacion-del-nucleo.md), [0041](0041-cache-local-del-panel.md), [0046](0046-notificador-de-cambios-del-panel.md), [0042](0042-particion-de-la-base-por-usuario.md), [0045](0045-ciclo-de-vida-y-archivado-de-viajes.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/nucleo/panel/`, `prototype/nucleo/api/rutas.py` |
 
 ## Estado de integración documental
 

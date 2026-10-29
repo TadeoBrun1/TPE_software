@@ -125,7 +125,7 @@ y esquemas desconocidos, sin habilitar exposición por defecto.
 | Vistas afectadas | [domain-model](../02-views/domain-model.md), [module-view](../02-views/module-view.md) |
 | Specs | [details-train.v1.json](../../specs/schemas/details-train.v1.json), [details-flight.v1.json](../../specs/schemas/details-flight.v1.json), [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml), [booking-change-detected.v1.yaml](../../specs/asyncapi/booking-change-detected.v1.yaml) |
 | ADRs relacionadas | [0023](0023-adaptadores-proveedores.md), [0040](0040-modelo-de-lectura-del-panel.md), [0065](0065-internacionalizacion-en-el-cliente.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/nucleo/esquemas/registro.py` y `prototype/contratos/esquemas.py` |
 
 ## Estado de integración documental
 

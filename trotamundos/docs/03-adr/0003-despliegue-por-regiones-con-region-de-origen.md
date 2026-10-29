@@ -86,8 +86,8 @@ Queda sin resolver, y se trata en otras iteraciones:
 
 ### Confirmation
 
-Revisión de la [vista de despliegue](../02-views/deployment-view.md). En el prototipo se demuestra la falla de una
-instancia del núcleo sin interrumpir la consulta; la multirregión se documenta, pero no se simula en el prototipo.
+Revisión de la [vista de despliegue](../02-views/deployment-view.md). El prototipo simula dos regiones completas que
+solo se comunican por el canal entre puertas; la falla de una instancia del núcleo no se simula (hay una por región).
 
 ## Pros and Cons of the Options
 
@@ -125,7 +125,7 @@ instancia del núcleo sin interrumpir la consulta; la multirregión se documenta
 | Vistas afectadas | [deployment-view](../02-views/deployment-view.md) |
 | Specs | `specs/openapi/` |
 | ADRs relacionadas | [0001](0001-nucleo-modular-con-procesos-separados.md), [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/entrada/`, `prototype/sistema.py` y `prototype/docker-compose.yml` (dos regiones) |
 
 ## Estado de integración documental
 

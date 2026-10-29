@@ -41,7 +41,7 @@ responsable y sus ADRs.
 ### Código y seguimiento
 
 - [Contratos (specs)](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/specs): OpenAPI (API de itinerarios) y AsyncAPI (novedades, cambios confirmados y avisos del panel)
-- [Prototipo](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/prototype)
+- [Prototipo](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/prototype): servicios en Python de las iteraciones 2 a 4, pruebas automáticas, demo por terminal y docker compose con dos regiones
 - [Registro de trabajo del equipo](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/TEAM-LOG.md): qué hizo cada integrante y cuándo; ahí se sigue el avance del trabajo
 
 ### Cierre de primera entrega

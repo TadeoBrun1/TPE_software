@@ -1,0 +1,206 @@
+# Prototipo de Trotamundos con dos regiones (sa-east y eu-west), cada una con PostgreSQL y RabbitMQ propios.
+#
+#   docker compose up --build        (desde trotamundos/prototype)
+#
+# Entrada global: http://localhost:8080. Puertas de entrada regionales (avisos de proveedores):
+# http://localhost:8081 (sa-east) y http://localhost:8082 (eu-west). Los endpoints de simulación del núcleo y de la
+# ingesta de sa-east quedan en 127.0.0.1:9001 y 127.0.0.1:9002 (ver README). El volumen `datos` guarda el directorio
+# global y los buzones simulados de invitaciones. Las claves son solo de desarrollo: en un
+# despliegue real salen de un gestor de secretos y no del archivo.
+
+x-claves: &claves
+  CLAVE_EMAIL_HMAC: ${CLAVE_EMAIL_HMAC:-solo-desarrollo-email-hmac-no-usar-en-produccion}
+  CLAVE_INTERNA_DIRECTORIO: ${CLAVE_INTERNA_DIRECTORIO:-solo-desarrollo-directorio-interno-no-usar-en-produccion}
+  CLAVE_ADMIN: ${CLAVE_ADMIN:-solo-desarrollo-admin-no-usar-en-produccion}
+
+x-servicio: &servicio
+  build:
+    context: ..
+    dockerfile: prototype/Dockerfile
+  image: trotamundos-prototipo
+  restart: on-failure
+  volumes:
+    - datos:/datos
+
+x-emisores: &emisores "https://id.sa-east.trotamundos.example,sa-east,http://identidad-sa-east:8000/jwks;https://id.eu-west.trotamundos.example,eu-west,http://identidad-eu-west:8000/jwks"
+
+x-postgres: &postgres
+  image: postgres:16-alpine
+  environment:
+    POSTGRES_USER: trotamundos
+    POSTGRES_PASSWORD: trotamundos
+  volumes:
+    - ./despliegue/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U trotamundos"]
+    interval: 5s
+    retries: 20
+
+x-rabbitmq: &rabbitmq
+  image: rabbitmq:3.13-alpine
+  healthcheck:
+    test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+    interval: 10s
+    retries: 20
+
+services:
+  # ------------------------------------------------------------------ global
+  entrada:
+    <<: *servicio
+    command: python -m entrada
+    ports: ["8080:8000"]
+    environment:
+      <<: *claves
+      BASE_DIRECTORIO: sqlite:////datos/directorio.db
+      CLAVE_DIRECTORIO: ${CLAVE_DIRECTORIO:-solo-desarrollo-directorio-no-usar-en-produccion}
+      REGIONES: sa-east=http://puerta-sa-east:8000;eu-west=http://puerta-eu-west:8000
+      IDENTIDAD: sa-east=http://identidad-sa-east:8000;eu-west=http://identidad-eu-west:8000
+
+  # ------------------------------------------------------------------ región sa-east
+  postgres-sa-east: *postgres
+  rabbitmq-sa-east: *rabbitmq
+
+  identidad-sa-east:
+    <<: *servicio
+    command: python -m identidad
+    environment:
+      <<: *claves
+      REGION: sa-east
+      BASE_IDENTIDAD: postgresql://trotamundos:trotamundos@postgres-sa-east/identidad
+      URL_DIRECTORIO: http://entrada:8000/internal/directory
+    depends_on:
+      postgres-sa-east: {condition: service_healthy}
+
+  nucleo-sa-east:
+    <<: *servicio
+    command: python -m nucleo
+    ports: ["127.0.0.1:9001:8000"]
+    environment:
+      <<: *claves
+      REGION: sa-east
+      NODOS: postgresql://trotamundos:trotamundos@postgres-sa-east/nodo0,postgresql://trotamundos:trotamundos@postgres-sa-east/nodo1
+      BASE_AUDITORIA: postgresql://trotamundos:trotamundos@postgres-sa-east/auditoria
+      BROKER: amqp://guest:guest@rabbitmq-sa-east:5672/
+      CLAVE_PUERTA: ${CLAVE_PUERTA_SA:-solo-desarrollo-puerta-sa-no-usar-en-produccion}
+      BUZON_SIMULADO: /datos/buzon-sa-east.jsonl
+    depends_on:
+      postgres-sa-east: {condition: service_healthy}
+      rabbitmq-sa-east: {condition: service_healthy}
+
+  notificador-sa-east:
+    <<: *servicio
+    command: python -m notificador
+    environment:
+      REGION: sa-east
+      BASE_PUSH: postgresql://trotamundos:trotamundos@postgres-sa-east/push
+      BROKER: amqp://guest:guest@rabbitmq-sa-east:5672/
+      CLAVE_PUERTA: ${CLAVE_PUERTA_SA:-solo-desarrollo-puerta-sa-no-usar-en-produccion}
+    depends_on:
+      nucleo-sa-east: {condition: service_started}
+
+  ingesta-sa-east:
+    <<: *servicio
+    command: python -m ingesta
+    ports: ["127.0.0.1:9002:8000"]
+    environment:
+      <<: *claves
+      REGION: sa-east
+      BASE_INGESTA: postgresql://trotamundos:trotamundos@postgres-sa-east/ingesta
+      BROKER: amqp://guest:guest@rabbitmq-sa-east:5672/
+    depends_on:
+      nucleo-sa-east: {condition: service_started}
+
+  puerta-sa-east:
+    <<: *servicio
+    command: python -m puerta
+    ports: ["8081:8000"]
+    environment:
+      REGION: sa-east
+      EMISORES: *emisores
+      OTRAS_REGIONES: eu-west=http://puerta-eu-west:8000
+      URL_NUCLEO: http://nucleo-sa-east:8000
+      URL_NOTIFICADOR: http://notificador-sa-east:8000
+      URL_INGESTA: http://ingesta-sa-east:8000
+      BASE_AUDITORIA: postgresql://trotamundos:trotamundos@postgres-sa-east/auditoria
+      CLAVE_PUERTA: ${CLAVE_PUERTA_SA:-solo-desarrollo-puerta-sa-no-usar-en-produccion}
+      CLAVE_CANAL: ${CLAVE_CANAL:-solo-desarrollo-canal-entre-regiones-no-usar-en-produccion}
+      SECRETO_TICKETS: ${SECRETO_TICKETS_SA:-solo-desarrollo-tickets-sa-no-usar-en-produccion}
+    depends_on:
+      identidad-sa-east: {condition: service_started}
+      identidad-eu-west: {condition: service_started}
+      nucleo-sa-east: {condition: service_started}
+
+  # ------------------------------------------------------------------ región eu-west
+  postgres-eu-west: *postgres
+  rabbitmq-eu-west: *rabbitmq
+
+  identidad-eu-west:
+    <<: *servicio
+    command: python -m identidad
+    environment:
+      <<: *claves
+      REGION: eu-west
+      BASE_IDENTIDAD: postgresql://trotamundos:trotamundos@postgres-eu-west/identidad
+      URL_DIRECTORIO: http://entrada:8000/internal/directory
+    depends_on:
+      postgres-eu-west: {condition: service_healthy}
+
+  nucleo-eu-west:
+    <<: *servicio
+    command: python -m nucleo
+    environment:
+      <<: *claves
+      REGION: eu-west
+      NODOS: postgresql://trotamundos:trotamundos@postgres-eu-west/nodo0,postgresql://trotamundos:trotamundos@postgres-eu-west/nodo1
+      BASE_AUDITORIA: postgresql://trotamundos:trotamundos@postgres-eu-west/auditoria
+      BROKER: amqp://guest:guest@rabbitmq-eu-west:5672/
+      CLAVE_PUERTA: ${CLAVE_PUERTA_EU:-solo-desarrollo-puerta-eu-no-usar-en-produccion}
+      BUZON_SIMULADO: /datos/buzon-eu-west.jsonl
+    depends_on:
+      postgres-eu-west: {condition: service_healthy}
+      rabbitmq-eu-west: {condition: service_healthy}
+
+  notificador-eu-west:
+    <<: *servicio
+    command: python -m notificador
+    environment:
+      REGION: eu-west
+      BASE_PUSH: postgresql://trotamundos:trotamundos@postgres-eu-west/push
+      BROKER: amqp://guest:guest@rabbitmq-eu-west:5672/
+      CLAVE_PUERTA: ${CLAVE_PUERTA_EU:-solo-desarrollo-puerta-eu-no-usar-en-produccion}
+    depends_on:
+      nucleo-eu-west: {condition: service_started}
+
+  ingesta-eu-west:
+    <<: *servicio
+    command: python -m ingesta
+    environment:
+      <<: *claves
+      REGION: eu-west
+      BASE_INGESTA: postgresql://trotamundos:trotamundos@postgres-eu-west/ingesta
+      BROKER: amqp://guest:guest@rabbitmq-eu-west:5672/
+    depends_on:
+      nucleo-eu-west: {condition: service_started}
+
+  puerta-eu-west:
+    <<: *servicio
+    command: python -m puerta
+    ports: ["8082:8000"]
+    environment:
+      REGION: eu-west
+      EMISORES: *emisores
+      OTRAS_REGIONES: sa-east=http://puerta-sa-east:8000
+      URL_NUCLEO: http://nucleo-eu-west:8000
+      URL_NOTIFICADOR: http://notificador-eu-west:8000
+      URL_INGESTA: http://ingesta-eu-west:8000
+      BASE_AUDITORIA: postgresql://trotamundos:trotamundos@postgres-eu-west/auditoria
+      CLAVE_PUERTA: ${CLAVE_PUERTA_EU:-solo-desarrollo-puerta-eu-no-usar-en-produccion}
+      CLAVE_CANAL: ${CLAVE_CANAL:-solo-desarrollo-canal-entre-regiones-no-usar-en-produccion}
+      SECRETO_TICKETS: ${SECRETO_TICKETS_EU:-solo-desarrollo-tickets-eu-no-usar-en-produccion}
+    depends_on:
+      identidad-sa-east: {condition: service_started}
+      identidad-eu-west: {condition: service_started}
+      nucleo-eu-west: {condition: service_started}
+
+volumes:
+  datos:

@@ -99,7 +99,7 @@ publicando solo su catálogo; una clave sin traducir muestra el idioma base.
 | Vistas afectadas | [module-view](../02-views/module-view.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0003](0003-despliegue-por-regiones-con-region-de-origen.md), [0040](0040-modelo-de-lectura-del-panel.md), [0041](0041-cache-local-del-panel.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/nucleo/reservas/modelo.py` (datos neutros en la API); el cliente no está en el alcance |
 
 ## Estado de integración documental
 

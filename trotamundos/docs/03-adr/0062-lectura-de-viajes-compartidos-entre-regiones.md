@@ -145,7 +145,7 @@ despliegue real.
 | Vistas afectadas | [cc-view](../02-views/cc-view.md), [deployment-view](../02-views/deployment-view.md), [sequence-views](../02-views/sequence-views.md) |
 | Specs | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0003](0003-despliegue-por-regiones-con-region-de-origen.md), [0042](0042-particion-de-la-base-por-usuario.md), [0060](0060-identidad-por-region-con-tokens.md), [0061](0061-comparticion-con-cuenta-y-auditoria.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/puerta/enrutamiento.py` y `prototype/puerta/app.py` |
 
 ## Estado de integración documental
 

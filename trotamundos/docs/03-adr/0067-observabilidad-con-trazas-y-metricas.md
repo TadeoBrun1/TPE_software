@@ -114,7 +114,7 @@ solapamiento de incidentes, 503 de telemetría, reentrega del reporte y desfase 
 | Vistas afectadas | [deployment-view](../02-views/deployment-view.md), [cc-view](../02-views/cc-view.md) |
 | Specs | [ingestion-operations.md](../../specs/ingestion-operations.md), [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml), [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | ADRs relacionadas | [0024](0024-avance-y-publicacion-durable.md), [0027](0027-publicacion-del-nucleo.md), [0042](0042-particion-de-la-base-por-usuario.md), [0046](0046-notificador-de-cambios-del-panel.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/comun/observabilidad.py` |
 
 ## Estado de integración documental
 

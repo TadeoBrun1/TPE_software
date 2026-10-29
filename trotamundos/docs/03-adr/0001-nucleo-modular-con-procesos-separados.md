@@ -129,7 +129,7 @@ iteración 3, sobre el núcleo que define esta ADR.
 | Vistas afectadas | [module-view](../02-views/module-view.md), [cc-view](../02-views/cc-view.md) |
 | Specs | — |
 | ADRs relacionadas | [0002](0002-mensajeria-persistente-con-publicacion-suscripcion.md), [0003](0003-despliegue-por-regiones-con-region-de-origen.md), [0004](0004-arquitectura-de-referencia-clientes-ricos-y-puerta-de-entrada.md) |
-| Código del prototipo | `prototype/` |
+| Código del prototipo | `prototype/nucleo/`, `prototype/ingesta/` y `prototype/notificador/` (procesos separados); prueba `test_consultas_con_la_ingesta_detenida` |
 
 ## Estado de integración documental
 

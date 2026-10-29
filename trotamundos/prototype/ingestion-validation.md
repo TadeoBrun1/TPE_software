@@ -1,6 +1,7 @@
-# Validación futura del prototipo de ingesta
+# Validación del prototipo de ingesta
 
-**Estado:** plan ejecutable por escenarios, sin resultados de ejecución. El diseño del paso 7 ya fue analizado.
+**Estado:** plan por escenarios. El prototipo cubre V01 a V08 y V11 con pruebas automáticas en un proceso, y V09 y
+V16 en parte; V10, V12 a V15 y V17 siguen pendientes ([cobertura](README.md#3-qué-demuestran-las-pruebas)). El diseño del paso 7 ya fue analizado.
 [Políticas y valores](../specs/ingestion-operations.md), [autorización](../specs/ingestion-authorization.md).
 
 | ID | Preparación / acción | Resultado exigido y evidencia |
