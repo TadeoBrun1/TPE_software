@@ -85,8 +85,4 @@ Esta es una revisión analítica de riesgos, no una sesión grupal registrada ni
   fecha, escenarios revisados y acuerdos reales.
 * Confirmar alcance por fecha con lo indicado por la cátedra y seleccionar la opción avanzada de la segunda entrega.
 
-## Publicación del cierre
 
-El cierre es visible para el docente en `main` y en la Wiki de GitHub, que se actualiza copiando `wiki/Home.md` y
-`wiki/_Sidebar.md`. Antes de enviar el enlace, abrir desde la Wiki publicada la portada, las cuatro iteraciones y este
-documento, y comprobar que el menú lateral se muestra.
