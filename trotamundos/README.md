@@ -31,7 +31,7 @@ Trabajo Práctico Especial · Diseño de Sistemas de Software · UNICEN
 | 2 | Ingesta de reservas (correo + terceros) | Tomas | Diseño integrado; viabilidad de QA-1 pendiente | [iteration-2](docs/01-add/iteration-2-ingestion.md) |
 | 3 | Consulta, latencia, disponibilidad y escala | Tadeo | Diseño integrado; validación pendiente | [iteration-3](docs/01-add/iteration-3-query-scale.md) |
 | 4 | Seguridad, compartición, i18n y analítica | Ambos | Diseño integrado; validación pendiente | [iteration-4](docs/01-add/iteration-4-security-evolvability.md) |
-| 5 | 2da entrega: recomendación con human-in-the-loop (opción A) | Ambos | Diseño y prototipo en revisión (PR) | [iteration-5](docs/01-add/iteration-5-recommendation.md) |
+| 5 | 2da entrega: recomendación con human-in-the-loop (opción A) y eliminación de la cuenta | Ambos | Diseño, prototipo y auditoría independiente; en revisión ([PR #12](https://github.com/TadeoBrun1/TPE_software/pull/12)) | [iteration-5](docs/01-add/iteration-5-recommendation.md) |
 
 Los refinamientos posteriores se agregan a [iteration-plan.md](docs/01-add/iteration-plan.md).
 
@@ -69,6 +69,7 @@ son de diseño. Después del cierre se implementó el [prototipo](prototype/READ
 pruebas automáticas de comportamiento y de contratos; no hay pruebas de carga ni mediciones de los QA con
 infraestructura real. Para la segunda entrega, que exige una opción avanzada A o B, se eligió la opción A
 (sistema de recomendación, [ADR-0080](docs/03-adr/0080-eleccion-del-modulo-avanzado.md)): está diseñada en la
-[iteración 5](docs/01-add/iteration-5-recommendation.md) e implementada en el prototipo con datos sintéticos. El
+[iteración 5](docs/01-add/iteration-5-recommendation.md) (ADRs 0080 a 0085, que incluyen la eliminación de la cuenta)
+e implementada en el prototipo con datos sintéticos, que ahora cubre las iteraciones 2 a 5 con 78 pruebas. El
 alcance exigido en cada fecha debe respetar
 lo indicado por la cátedra; este estado no sustituye esa indicación.
