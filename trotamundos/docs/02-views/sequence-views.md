@@ -20,6 +20,7 @@ Un diagrama por escenario clave. Debajo de cada uno, una descripción de qué re
 | SEQ-7 | El viajero inicia sesión y abre la conexión de avisos | QA-7 | 4 | Propuesta |
 | SEQ-8 | Una cancelación genera sugerencias de alternativas | RF-09.1, QA-11, QA-12 | 5 | Propuesta; prueba en el prototipo |
 | SEQ-9 | El viajero rechaza, ajusta y acepta una sugerencia | RF-09.2, RF-09.3, QA-13 | 5 | Propuesta; prueba en el prototipo |
+| SEQ-10 | El viajero elimina su cuenta | QA-14, CON-3 | 5 | Propuesta; prueba en el prototipo |
 
 ## Refinamiento de SEQ-1 y SEQ-2
 
@@ -271,3 +272,32 @@ sequenceDiagram
 **Qué representa:** el human-in-the-loop: rechazar y ajustar cambian el orden en la misma respuesta (QA-13) y
 alimentan el entrenamiento diario; aceptar deja la alternativa como reserva propuesta sin comprar nada, y la reserva
 real la reemplaza al llegar. ADR-0083 y ADR-0084.
+
+## SEQ-10 — El viajero elimina su cuenta
+
+```mermaid
+sequenceDiagram
+    participant App as App del viajero
+    participant G as Puerta de entrada
+    participant N as Núcleo
+    participant AU as Auditoría
+    participant B as Broker
+    participant C as Identidad, ingesta, notificador, recomendación y analítica
+    App->>G: DELETE /account (token de un login de hace 5 min o menos)
+    G->>N: Principal con auth_time
+    N->>N: Transacción en la partición del usuario: borra viajes, reservas, panel, invitaciones,<br/>marcadores, vinculaciones y sus eventos en la outbox; marca de cuenta eliminada; outbox
+    N->>N: Quita los permisos del usuario sobre viajes de otros usuarios de la región
+    N->>AU: Seudonimiza al actor en los registros de la región
+    N-->>App: 204
+    App->>G: GET /panel con el token anterior (todavía vigente)
+    G->>N: Principal
+    N-->>App: 401 account_deleted
+    N-->>B: account.deleted.v1
+    B->>C: Una cola o enlace por consumidor
+    C->>C: Cada uno borra lo suyo (idempotente): cuenta y directorio, vinculaciones,<br/>dispositivos y conexión SSE, perfil y feedback, hechos del período vigente
+```
+
+**Qué representa:** el borrado inmediato en el núcleo y el aviso por evento a los demás procesos, cada uno dueño de
+sus datos. La marca de cuenta eliminada evita que un token vigente o un mensaje atrasado recreen datos del usuario.
+Los permisos y registros de auditoría en otras regiones no se tocan (consecuencia de ADR-0085).
+

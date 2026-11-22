@@ -35,6 +35,7 @@ class Identidad:
     user_id: str
     issuer: str
     email_hmac: str | None
+    auth_time: int | None = None  # momento del inicio de sesión (OIDC); DELETE /account exige uno reciente
 
 
 @dataclass
@@ -87,7 +88,8 @@ class Emisores:
             raise TokenInvalido("faltan reclamos")
         if reclamos["homeRegion"] != emisor.region:
             raise TokenInvalido("la región no corresponde al emisor")
-        return Identidad(reclamos["homeRegion"], reclamos["userId"], emisor.iss, reclamos.get("emailHmac"))
+        return Identidad(reclamos["homeRegion"], reclamos["userId"], emisor.iss, reclamos.get("emailHmac"),
+                         reclamos.get("auth_time"))
 
 
 class Tickets:

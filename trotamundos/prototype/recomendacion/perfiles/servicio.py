@@ -7,6 +7,7 @@ ni textos. Sobrevive al borrado de los viajes (ADR-0045) y se borra a pedido o c
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 
 from comun.infraestructura.db import BaseDatos, Transaccion
 from comun.infraestructura.reloj import Reloj, iso
@@ -72,6 +73,23 @@ class Perfiles:
             perfil["preferencias"] = {k: v for k, v in datos.items() if k != "enabled"}
             self.guardar(tx, perfil)
         return {"enabled": perfil["activada"], **perfil["preferencias"]}
+
+    def eliminar_cuenta(self, user_id: str) -> None:
+        """Cuenta eliminada (ADR-0085): borra todo lo del viajero, también la marca de desactivada, y sus eventos de la
+        outbox; deja la marca de cuenta eliminada. Idempotente."""
+        with self.base.transaccion() as tx:
+            for tabla in ("perfiles", "feedback", "sugerencias", "busquedas", "hechos_recibidos"):
+                tx.ejecutar(f"DELETE FROM {tabla} WHERE user_id = ?", (user_id,))
+            for fila in tx.todos("SELECT event_id, cuerpo FROM outbox"):
+                if json.loads(fila["cuerpo"]).get("userId") == user_id:
+                    tx.ejecutar("DELETE FROM outbox WHERE event_id = ?", (fila["event_id"],))
+            tx.ejecutar("INSERT INTO cuentas_eliminadas (user_id, eliminada) VALUES (?, ?) "
+                        "ON CONFLICT (user_id) DO NOTHING", (user_id, iso(self.reloj.ahora())))
+
+    def purgar_marcas(self, dias: int = 30) -> int:
+        with self.base.transaccion() as tx:
+            return tx.ejecutar("DELETE FROM cuentas_eliminadas WHERE eliminada < ?",
+                               (iso(self.reloj.ahora() - timedelta(days=dias)),))
 
     def borrar(self, user_id: str):
         """Borra perfil, preferencias, feedback, sugerencias y búsquedas del viajero en su región (QA-14)."""

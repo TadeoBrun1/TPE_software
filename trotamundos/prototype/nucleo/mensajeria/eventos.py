@@ -15,7 +15,7 @@ from comun.infraestructura import outbox
 from comun.infraestructura.db import Transaccion
 from comun.observabilidad import continuar_traza, contexto_correlacion, contexto_traza
 from contratos.esquemas import validar_evento
-from contratos.topologia import EXCHANGE_DOMINIO, RK_HECHOS, RK_PANEL, RK_VIAJE
+from contratos.topologia import EXCHANGE_DOMINIO, RK_CUENTA, RK_HECHOS, RK_PANEL, RK_VIAJE
 
 
 def _encabezados() -> dict:
@@ -63,3 +63,12 @@ def hechos_reserva(tx, region, fila: dict, tipo_cambio: str, ahora: str):
                   "arrivalCity": fila.get("lugar_llegada")}
     cuerpo.update({k: v for k, v in opcionales.items() if v})
     _guardar(tx, "booking.facts.v1", RK_HECHOS, cuerpo, ahora)
+
+
+def cuenta_eliminada(tx, region: str, user_id: str, ahora: str):
+    """`account.deleted.v1` (ADR-0085): cada proceso de la región borra los datos del usuario al recibirlo."""
+    cuerpo = {"eventId": str(uuid.uuid4()), "schemaVersion": "1", "homeRegion": region, "userId": user_id,
+              "deletedAt": ahora}
+    if contexto_correlacion.get():
+        cuerpo["correlationId"] = contexto_correlacion.get()
+    _guardar(tx, "account.deleted.v1", RK_CUENTA, cuerpo, ahora)

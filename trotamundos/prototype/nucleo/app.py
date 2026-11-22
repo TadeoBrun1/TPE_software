@@ -38,6 +38,7 @@ class Nucleo:
         self.logger = logger or Logger("nucleo", region)
         self.broker = broker
         self.clave_puerta = clave_puerta
+        self.clave_email = clave_email  # también seudonimiza al actor de una cuenta eliminada (ADR-0085)
         for nodo in nodos:
             nodo.crear_esquema(DDL_NODO)
         base_auditoria.crear_esquema(DDL_AUDITORIA)
@@ -66,7 +67,12 @@ class Nucleo:
                         (connection_id, user_id, self.region, provider_id, estado))
 
     def tarea_diaria(self) -> dict:
-        return ciclo_vida.tarea_diaria(self.ruteo, self.reloj, self.region, self.logger)
+        from nucleo.usuarios.eliminacion import purgar_marcas
+
+        resultado = ciclo_vida.tarea_diaria(self.ruteo, self.reloj, self.region, self.logger)
+        resultado["marcas_de_cuenta_purgadas"] = purgar_marcas(self.ruteo, self.reloj)  # ADR-0085
+        resultado["outbox_limpiada"] = self.publicador.limpiar_enviados()
+        return resultado
 
     def iniciar_trabajadores(self, intervalo_outbox: float = 0.2, hora_tarea_diaria: int = 4):
         """Modo servicio: publicador de outbox en un hilo, consumo del broker y tarea diaria a la hora configurada."""

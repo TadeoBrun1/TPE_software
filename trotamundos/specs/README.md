@@ -92,3 +92,5 @@ datos son suficientes. RabbitMQ y políticas definidos en ADR-0028; el prototipo
 * [Hechos de reservas](asyncapi/booking-facts.v1.yaml), 0.2.0: segundo consumidor, la recomendación (ADR-0081).
 * [Cambios confirmados](asyncapi/booking-confirmed.v1.yaml): **retirado** (sin consumidor; lo cubre `booking.facts.v1`).
 * [Búsqueda de ofertas](offer-search.md) (ADR-0082) y [reglas de la recomendación](recommendation.md) (ADR-0081, 0083).
+* [Cuenta eliminada](asyncapi/account-deleted.v1.yaml): núcleo → identidad, ingesta, notificador, recomendación y
+  analítica, con `DELETE /account` en la API (ADR-0085).

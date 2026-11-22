@@ -20,7 +20,7 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 | [2 — Ingesta](01-add/iteration-2-ingestion.md) | Diseño integrado; QA-1 a escala y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
 | [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; decisiones confirmadas por ambos | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
 | [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pasos 2–7 documentados y auditados; decisiones de ambos integrantes | Identidad por región, compartición con cuenta y auditoría, lectura entre regiones, tarjeta para redes, analítica regional seudonimizada, internacionalización en el cliente, detalles por tipo de reserva y observabilidad. |
-| [5 — Recomendación (2da entrega)](01-add/iteration-5-recommendation.md) | Pasos 2–7 documentados; decisiones de ambos integrantes; prototipo con 18 pruebas | Proceso de recomendación por región, búsqueda de alternativas con caché corta, ranking aprendido del feedback con modelo versionado y sugerencias que se aceptan como reserva propuesta. |
+| [5 — Recomendación (2da entrega)](01-add/iteration-5-recommendation.md) | Pasos 2–7 documentados; decisiones de ambos integrantes; prototipo con 23 pruebas | Proceso de recomendación por región, búsqueda de alternativas con caché corta, ranking aprendido del feedback con modelo versionado y sugerencias que se aceptan como reserva propuesta; eliminación de la cuenta en todos los procesos. |
 
 La segunda entrega exige al menos un módulo avanzado. Se eligió la opción A, sistema de recomendación con
 human-in-the-loop ([ADR-0080](03-adr/0080-eleccion-del-modulo-avanzado.md)); la opción B (asistente virtual) quedó
@@ -260,6 +260,7 @@ Ver el [índice completo de ADRs](03-adr/README.md).
 | [0082](03-adr/0082-busqueda-de-alternativas-con-cache-corta.md) | Búsqueda en las APIs de los proveedores con caché corta, búsquedas agrupadas y límite por proveedor. | accepted |
 | [0083](03-adr/0083-ranking-aprendido-del-feedback.md) | Ranking por características aprendido del feedback, con modelo regional versionado y canario. | accepted |
 | [0084](03-adr/0084-entrega-y-aceptacion-de-sugerencias.md) | API propia con aviso del notificador; aceptar deja una reserva propuesta en el núcleo. | accepted |
+| [0085](03-adr/0085-eliminacion-de-la-cuenta.md) | Eliminación de la cuenta: borrado inmediato en el núcleo y `account.deleted.v1` para el resto de los procesos. | accepted |
 
 Las decisiones de la segunda a la quinta iteración se revisan conjuntamente antes de aceptarse.
 
@@ -280,7 +281,7 @@ Las decisiones de la segunda a la quinta iteración se revisan conjuntamente ant
 | CRN-2 | 4 | 0067 | Propagación del contexto a través del broker. |
 | RF-06 | 2, implementación coordinada con 3 | 0026: asistencia saliente del núcleo | Solicitud de asistencia a la agencia preferida. |
 | RF-07 | 1 y 4 | 0001, 0064 | Consultas del equipo de datos y seudonimización. |
-| RF-09, QA-11 a QA-16 | 5 | 0080 a 0084, 0046, 0047 | Tiempos con proveedores reales, disrupción a escala completa y calidad del modelo con feedback real (el prototipo usa datos sintéticos). |
+| RF-09, QA-11 a QA-16 | 5 | 0080 a 0085, 0046, 0047 | Tiempos con proveedores reales, disrupción a escala completa y calidad del modelo con feedback real (el prototipo usa datos sintéticos). |
 
 Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 
@@ -306,7 +307,7 @@ Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 | Retención de hechos seudonimizados tras eliminar una cuenta o viaje, y cobertura de hechos tardíos sin clave. | Validar retención y riesgo de reidentificación; aplicar protocolo idempotente y período de commit (ADR-0064). | Iteración 4 (validación pendiente) |
 | CON-3 carece de un criterio concreto validado. | Precisar la política regional de datos y sus consecuencias. | Ambos integrantes |
 | Un proveedor con límite de consultas bajo demora las sugerencias en una disrupción masiva (QA-12 parcial). | Búsquedas agrupadas por clave y cubeta por proveedor; el resto recibe las sugerencias más tarde. | Iteración 5 (aceptado) |
-| El borrado de la cuenta no está diseñado y debe incluir el perfil de recomendación. | Diseñarlo para todo el sistema (ADR-0081). | Pendiente |
+| La eliminación de la cuenta no alcanza otras regiones: permisos inertes y registros de auditoría con el identificador hasta su retención. | Riesgo aceptado en ADR-0085; propagarlo por el canal entre regiones es candidato para una iteración posterior. | Iteración 5 (aceptado) |
 | El modelo aprende solo de lo que muestra (sesgo de exposición) y con poco feedback. | Exploración epsilon-greedy, corrección por posición y pesos iniciales razonables (ADR-0083). | Iteración 5 (diseñado) |
 
 ## 13. Prototipo y evidencia
@@ -421,7 +422,9 @@ se ordenan con un modelo logístico regional más un ajuste por viajero, aprendi
 modelo entran como canario y vuelven atrás solas si baja la aceptación (ADR-0083). Se muestran 3 sugerencias en una
 sección de la app y se avisa por push (que reemplaza al de la cancelación) y por SSE; aceptar deja una reserva
 propuesta en el viaje, que la reserva real reemplaza al llegar (ADR-0084). La recomendación viene activada (opt-out)
-y el perfil se puede borrar. `booking.changed.v1` se retira. Ver [iteración 5](01-add/iteration-5-recommendation.md).
+y el perfil se puede borrar. `booking.changed.v1` se retira. Además se diseñó la eliminación de la cuenta, que ADR-0081
+y ADR-0064 dejaban pendiente: el núcleo borra en el momento y avisa con `account.deleted.v1` a los demás procesos,
+que borran lo suyo (ADR-0085). Ver [iteración 5](01-add/iteration-5-recommendation.md).
 
 ## Cierre de primera entrega
 

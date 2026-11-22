@@ -62,7 +62,7 @@ generados con `/generador-qas` y auditados con `/test-qas`. Se agregaron a los d
 | Sugerencias sin cancelación (huecos en el viaje, a pedido) | Fuera del alcance: el disparador es la cancelación o disrupción |
 | Compra o emisión de reservas | Sigue fuera del sistema: aceptar deja una reserva propuesta y el enlace al proveedor |
 | Asistente virtual (opción B) | No elegido (ADR-0080); RF-06 sigue diseñado (ADR-0026) sin cambios |
-| Borrado de cuenta | No está diseñado en el sistema; cuando se diseñe debe borrar el perfil (registro de impactos) |
+| Eliminación de la cuenta | No es un requisito, pero ADR-0081 y ADR-0064 lo dejaban pendiente: se agregó al final de la iteración como [ADR-0085](../03-adr/0085-eliminacion-de-la-cuenta.md) (ver Paso 6) |
 
 ## Paso 3 — Elementos a refinar
 
@@ -133,7 +133,9 @@ regionales (ADR-0003). El módulo se suma como un proceso más de la celda, alim
 | Núcleo / `viajes` | Refinado | Las propuestas no mueven fechas ni archivado; la tarea diaria vence las propuestas | 0084 |
 | Núcleo / `mensajeria` | Refinado | Consume `suggestion.accepted.v1`; deja de declarar `booking.changed.v1`; `collapseKey` en las cancelaciones | 0081, 0084 |
 | Notificador | Refinado | Push y SSE de `suggestions.available.v1` | 0084 |
-| Puerta de entrada | Refinada | Tabla de rutas con el destino `recomendacion` y prioridad baja | 0084 |
+| Puerta de entrada | Refinada | Tabla de rutas con el destino `recomendacion` y prioridad baja; `DELETE /account` local de prioridad media; pasa `auth_time` al núcleo | 0084, 0085 |
+| Núcleo / `usuarios` | Refinado | Eliminación de la cuenta, marca de cuenta eliminada y `account.deleted.v1` | 0085 |
+| Ingesta, proveedor de identidad y directorio global | Refinados | Consumen `account.deleted.v1` y borran lo suyo | 0085 |
 
 ### Reglas de interacción
 
@@ -180,6 +182,8 @@ regionales (ADR-0003). El módulo se suma como un proceso más de la celda, alim
 | Búsqueda de ofertas | [offer-search.md](../../specs/offer-search.md) | Nuevo: consulta y oferta normalizadas, límites, caché y fallas |
 | Recomendación | [recommendation.md](../../specs/recommendation.md) | Nuevo: disparador, perfil, características, feedback, entrenamiento y versiones |
 | Topología del broker | [ingestion-operations.md](../../specs/ingestion-operations.md) | Colas y enlaces nuevos |
+| Cuenta eliminada | [asyncapi/account-deleted.v1.yaml](../../specs/asyncapi/account-deleted.v1.yaml) | Nuevo (ADR-0085): núcleo → identidad, ingesta, notificador, recomendación y analítica; `DELETE /account` en la API |
+| Registro de auditoría | [access-audit.md](../../specs/access-audit.md) | Seudonimización del actor de una cuenta eliminada; descarte por sobrecarga sin auditar |
 
 ## Paso 6 — Vistas actualizadas y ADRs creadas
 
@@ -190,6 +194,7 @@ regionales (ADR-0003). El módulo se suma como un proceso más de la celda, alim
 | [Componentes y conectores](../02-views/cc-view.md) | Proceso, colas y eventos nuevos; secuencia de cancelación a sugerencia y aceptación |
 | [Despliegue](../02-views/deployment-view.md) | Proceso y base de recomendación por región; trabajo de entrenamiento |
 | [Modelo de dominio](../02-views/domain-model.md) | Sugerencia, perfil de preferencias, feedback, versión del modelo y reserva propuesta |
+| [Secuencias](../02-views/sequence-views.md) | SEQ-8 (cancelación a sugerencias), SEQ-9 (rechazar, ajustar y aceptar) y SEQ-10 (eliminación de la cuenta) |
 
 | ADR | Título | Estado |
 |---|---|---|
@@ -198,6 +203,11 @@ regionales (ADR-0003). El módulo se suma como un proceso más de la celda, alim
 | [0082](../03-adr/0082-busqueda-de-alternativas-con-cache-corta.md) | Búsqueda de alternativas en las APIs de los proveedores, con caché corta y búsquedas agrupadas | Aceptada |
 | [0083](../03-adr/0083-ranking-aprendido-del-feedback.md) | Ranking de ofertas por características, aprendido del feedback, con un modelo regional versionado | Aceptada |
 | [0084](../03-adr/0084-entrega-y-aceptacion-de-sugerencias.md) | Sugerencias por una API propia con aviso del notificador, y aceptación como reserva propuesta | Aceptada |
+| [0085](../03-adr/0085-eliminacion-de-la-cuenta.md) | Eliminación de la cuenta: borrado inmediato en el núcleo y aviso por evento al resto de los procesos | Aceptada |
+
+ADR-0085 no sale de un driver nuevo: cierra el pendiente que dejaban ADR-0081 (el perfil se borra "cuando se elimina
+su cuenta") y ADR-0064 (retención de hechos al eliminar una cuenta). El equipo eligió el evento `account.deleted.v1`,
+el borrado inmediato y borrar todo lo que se pueda ubicar, con la auditoría seudonimizada.
 
 ## Paso 7 — Análisis
 
@@ -222,7 +232,9 @@ de ordenar, así que ninguna sugerencia mostrada viola un límite explícito.
 
 **QA-14, desactivar y borrar.** Desactivar cambia una marca en el perfil que el disparador lee en la misma
 transacción que el hecho: no se generan sugerencias nuevas. El borrado elimina perfil, preferencias, feedback y
-sugerencias del viajero en su base regional; las réplicas siguen el mismo borrado.
+sugerencias del viajero en su base regional; las réplicas siguen el mismo borrado. Si el viajero elimina la cuenta,
+la recomendación borra todo con `account.deleted.v1` por la misma cola que los hechos, y su marca de cuenta
+eliminada evita que un hecho atrasado vuelva a crear el perfil (ADR-0085).
 
 **QA-15, modelo nuevo.** La versión entrenada queda en el registro; se activa como canario para el 5 % por hash del
 `userId`. Si su tasa de aceptación cae más de un 10 % relativo, el registro vuelve a la anterior: es un cambio de
@@ -240,7 +252,7 @@ cancelación y su push ya salieron del núcleo y del notificador.
 | QA-11 | Cumplido por diseño | Depende del tiempo de respuesta de los proveedores (CON-2); medir en el prototipo con proveedores simulados |
 | QA-12 | Parcial | Si un proveedor limita por debajo de las claves de búsqueda de una disrupción, parte de los afectados recibe las sugerencias tarde |
 | QA-13 | Cumplido por diseño | La calidad del orden depende del feedback acumulado; con pocos datos manda el modelo regional |
-| QA-14 | Cumplido por diseño | Falta diseñar el borrado de cuenta del sistema; la normativa concreta (CON-3) sigue sin validar |
+| QA-14 | Cumplido por diseño | La eliminación de la cuenta (ADR-0085) no alcanza los permisos ni los registros de auditoría de otras regiones; la normativa concreta (CON-3) sigue sin validar |
 | QA-15 | Cumplido por diseño | El canario necesita una muestra mínima para decidir; en regiones chicas puede tardar |
 | QA-16 | Cumplido por diseño | Ninguno nuevo |
 
@@ -263,13 +275,13 @@ stakeholders. El límite de 30 s por consulta a un proveedor del recorrido de QA
 Registrado en el [registro de impactos](impact-log.md#iteración-5--2026-11-22): `booking.facts.v1` con dos
 consumidores y retiro de `booking.changed.v1` (ADR-0027, ADR-0064, ADR-0067), clave de colapso y push de
 sugerencias (ADR-0046), reserva propuesta y conciliación (ADR-0044, ADR-0045, ADR-0048), rutas nuevas con prioridad
-baja (ADR-0004, ADR-0047), vista compartida sin propuestas (ADR-0061), topología del broker (ADR-0028) y borrado de
-cuenta pendiente.
+baja (ADR-0004, ADR-0047), vista compartida sin propuestas (ADR-0061), topología del broker (ADR-0028) y eliminación
+de la cuenta en todos los procesos (ADR-0085: ADR-0021, ADR-0046, ADR-0060, ADR-0061, ADR-0064).
 
 ### ¿Se sigue iterando?
 
-El módulo queda diseñado y el prototipo lo implementa. Queda como candidato para una iteración posterior: el borrado
-de cuenta del sistema completo, la parte de QA-12 con proveedores de límites bajos y, si el feedback lo justifica,
+El módulo queda diseñado y el prototipo lo implementa. Queda como candidato para una iteración posterior: propagar
+la eliminación de la cuenta a otras regiones (permisos y auditoría, ADR-0085), la parte de QA-12 con proveedores de límites bajos y, si el feedback lo justifica,
 sumar una señal colaborativa al ranking (opción C de ADR-0083).
 
 ### Prototipo
@@ -281,8 +293,9 @@ sumar una señal colaborativa al ranking (opción C de ADR-0083).
 | Push y SSE de sugerencias con clave de colapso | `suggestions-available.v1.yaml`, `panel-changed.v1.yaml` 0.3.0 | 0084 |
 | Generador de datos sintéticos y evaluación del modelo | `recommendation.md` | 0083 |
 | Rutas de prioridad baja en la puerta y servicios nuevos en `docker-compose.yml` | OpenAPI 0.4.0 | 0047, 0084 |
+| Eliminación de la cuenta en el núcleo, identidad, directorio, ingesta, notificador y recomendación | `account-deleted.v1.yaml`, OpenAPI 0.4.0, `access-audit.md` | 0085 |
 
-Lo que comprueban las 18 pruebas de `tests/test_iteracion5_recomendacion.py`:
+Lo que comprueban las 18 pruebas de `tests/test_iteracion5_recomendacion.py` y las 5 de `tests/test_iteracion5_cuenta.py`:
 
 | Driver | Prueba | Resultado |
 |---|---|---|
@@ -294,6 +307,7 @@ Lo que comprueban las 18 pruebas de `tests/test_iteracion5_recomendacion.py`:
 | QA-15 | Un canario con aceptación menor en más de un 10 % se retira solo; vuelta atrás manual | Cumple |
 | QA-16 | Proveedores caídos → búsqueda pendiente que se completa al volver; resultado parcial; recomendación detenida sin afectar el panel | Cumple |
 | ADR-0083 | Con 400 cancelaciones de viajeros sintéticos, la versión nueva baja la pérdida en datos reservados, se acerca a las preferencias ocultas y supera al orden por precio | Cumple con datos sintéticos |
+| ADR-0085 | Después de `DELETE /account`, el identificador del usuario no aparece en ninguna base de la región (salvo la marca); login, directorio y permisos borrados; auditoría seudonimizada; login reciente exigido; mensajes atrasados descartados; conexión SSE cerrada | Cumple (sin analítica, fuera del prototipo) |
 
 Hallazgos del prototipo que ajustaron el diseño: `booking.facts.v1` suma `startsAt` y `endsAt` (0.2.0); borrar el
 perfil conserva la marca de desactivada; un viaje ajeno responde como uno sin sugerencias; la cubeta de fichas usa

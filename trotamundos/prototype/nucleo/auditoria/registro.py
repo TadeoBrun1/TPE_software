@@ -1,7 +1,8 @@
 """Puerto de escritura de solo agregado al registro de auditoría (ADR-0061, `specs/access-audit.md`).
 
-Ningún proceso de la aplicación modifica ni borra registros: este módulo solo expone `registrar`. Se escribe antes
-de responder; si no se puede escribir, quien llama rechaza la solicitud con `503`.
+Ningún proceso de la aplicación borra registros. Se escribe antes de responder; si no se puede escribir, quien llama
+rechaza la solicitud con `503`. La única modificación permitida es `seudonimizar_actor`, al eliminar una cuenta
+(ADR-0085): reemplaza el identificador del actor por un seudónimo estable y conserva el resto del registro.
 """
 from __future__ import annotations
 
@@ -52,6 +53,12 @@ class RegistroAuditoria:
             self.logger.alerta("auditoria_no_disponible", accion=accion, resultado=resultado, motivo=motivo,
                                tripId=trip_id, shareId=share_id, bookingId=booking_id, metodo=metodo, ruta=ruta)
             raise AuditoriaNoDisponible(str(error)) from error
+
+    def seudonimizar_actor(self, region: str, user_id: str, codigo: str) -> int:
+        """Cuenta eliminada (ADR-0085): los registros quedan como evidencia, sin el identificador del usuario."""
+        with self.base.transaccion() as tx:
+            return tx.ejecutar("UPDATE auditoria SET actor_user_id = ?, actor_issuer = NULL "
+                               "WHERE actor_region = ? AND actor_user_id = ?", (codigo, region, user_id))
 
     def consultar(self, **filtros) -> list[dict]:
         """Consulta para el equipo de seguridad y para las pruebas."""

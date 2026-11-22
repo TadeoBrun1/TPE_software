@@ -1,4 +1,7 @@
-"""Recepción de `booking.facts.v1` en la cola `recommendation.facts` (ADR-0081).
+"""Recepción de `booking.facts.v1` y `account.deleted.v1` en la cola `recommendation.facts` (ADR-0081, ADR-0085).
+
+Las dos llegan por la misma cola, en el orden en que el núcleo las publicó. Una cuenta eliminada borra todo lo del
+viajero y deja una marca que descarta los hechos atrasados de ese usuario.
 
 En una sola transacción, antes del ACK: control de entrada por `eventId` (Idempotent Receiver), actualización del
 perfil y, si el hecho es una cancelación de alojamiento o transporte informada por un proveedor o por correo de un
@@ -16,6 +19,7 @@ from comun.infraestructura.db import con_reintentos
 from comun.infraestructura.reloj import iso
 from comun.observabilidad import contexto_traza, continuar_traza, metricas
 from contratos.esquemas import ContratoInvalido, validar_evento
+from contratos.topologia import RK_CUENTA
 from recomendacion.busqueda.adaptadores import TIPOS_TRANSPORTE, Consulta
 
 TIPOS_ALOJAMIENTO = ("hotel",)
@@ -48,6 +52,9 @@ class ConsumidorHechos:
         app = self.app
         contexto_traza.set(continuar_traza(mensaje.encabezados.get("traceparent")))
         hecho = mensaje.cuerpo
+        if mensaje.routing_key == RK_CUENTA:
+            self._cuenta_eliminada(hecho)
+            return
         try:
             validar_evento("booking.facts.v1", hecho)
         except ContratoInvalido as error:
@@ -61,6 +68,8 @@ class ConsumidorHechos:
             with app.base.transaccion() as tx:
                 if tx.uno("SELECT 1 AS x FROM hechos_recibidos WHERE event_id = ?", (hecho["eventId"],)):
                     return "duplicado"
+                if tx.uno("SELECT 1 AS x FROM cuentas_eliminadas WHERE user_id = ?", (hecho["userId"],)):
+                    return "cuenta_eliminada"  # hecho atrasado de una cuenta eliminada (ADR-0085)
                 ahora = iso(app.reloj.ahora())
                 tx.ejecutar("INSERT INTO hechos_recibidos (event_id, user_id, recibido) VALUES (?, ?, ?)",
                             (hecho["eventId"], hecho["userId"], ahora))
@@ -93,3 +102,17 @@ class ConsumidorHechos:
         resultado = con_reintentos(transaccion)
         metricas.incrementar(f"recomendacion_hecho_{resultado}")
         app.logger.info("hecho_recibido", eventId=hecho["eventId"], resultado=resultado)
+
+    def _cuenta_eliminada(self, evento: dict):
+        app = self.app
+        try:
+            validar_evento("account.deleted.v1", evento)
+        except ContratoInvalido as error:
+            app.logger.alerta("baja_invalida_apartada", errores=error.errores)
+            return
+        if evento["homeRegion"] != app.region:
+            return
+        con_reintentos(lambda: app.perfiles.eliminar_cuenta(evento["userId"]))
+        metricas.incrementar("recomendacion_cuenta_eliminada")
+        app.logger.info("cuenta_eliminada_en_recomendacion")
+

@@ -23,6 +23,7 @@ a exponer AMQP en Internet. TLS y credenciales por servicio se mantienen fuera d
 | `travel.domain` | `panel.changed.v1` | Una cola por instancia del notificador (ver abajo) y la cola compartida `notifier.push` (iteración 3, ADR-0046) |
 | `travel.domain` | `suggestions.available.v1` | Las mismas colas del notificador: cada instancia (evento SSE) y `notifier.push` (iteración 5, ADR-0084) |
 | `travel.domain` | `suggestion.accepted.v1` | Cola quorum `core.suggestions` del núcleo (iteración 5, ADR-0084) |
+| `travel.domain` | `account.deleted.v1` | Colas quorum `identity.accounts` (proveedor de identidad) e `ingestion.accounts` (ingesta), y enlaces nuevos en `notifier.push`, las colas de instancia del notificador, `recommendation.facts` y `analytics.facts` (iteración 5, ADR-0085) |
 | `travel.assistance` | `assistance.requested.v1`, `assistance.result.v1` | Solicitudes para trabajador de asistencia del núcleo; resultados para seguimiento |
 | `travel.errors` | `ingestion.error.v1` | Operación/revisión con acceso restringido, referencia mínima al caso durable |
 

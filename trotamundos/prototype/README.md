@@ -3,8 +3,9 @@
 **Estado (2026-11-22):** la primera entrega se integró en `main` mediante PR #10 y #11. Cubre las iteraciones 2
 (ingesta idempotente), 3 (panel, SSE y cambios), 4 (compartición, autenticación y auditoría) y, para la segunda
 entrega, la 5 (recomendación de alternativas con human-in-the-loop, opción A). La analítica, la tarjeta para redes,
-la asistencia de agencia y el medio nuevo (ferry) quedan fuera del alcance. Las 69 pruebas automáticas pasan en un
-solo proceso, con SQLite y un broker en memoria. Los adaptadores de PostgreSQL y RabbitMQ y el `docker-compose.yml`
+la asistencia de agencia y el medio nuevo (ferry) quedan fuera del alcance. La iteración 5 suma también la
+eliminación de la cuenta (ADR-0085). Las 74 pruebas automáticas pasan en un solo proceso, con SQLite y un broker en
+memoria. Los adaptadores de PostgreSQL y RabbitMQ y el `docker-compose.yml`
 están escritos, pero no se ejecutaron en el entorno donde se armó el prototipo (no había Docker). Sí se probó a
 mano una región con cada proceso por separado, comunicados por HTTP (con SQLite y un broker en memoria por proceso).
 
@@ -19,7 +20,7 @@ Requisitos: Python 3.12 o superior (se probó con 3.13). Desde `trotamundos/prot
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q          # 69 pruebas, unos 35 segundos
+python -m pytest -q          # 74 pruebas, unos 40 segundos
 python demo.py               # recorrido por la API con dos regiones; --logs muestra los logs JSON
 python sistema.py            # entrada global en http://localhost:8080, dos regiones en un proceso
 ```
@@ -109,6 +110,7 @@ Los correos de invitación simulados quedan en `docker compose exec nucleo-sa-ea
 | `recomendacion/busqueda` | recomendación/busqueda-ofertas (puerto, adaptadores, caché, cubeta y corte por proveedor) | 0082 | [offer-search.md](../specs/offer-search.md) |
 | `recomendacion/modelo` | recomendación/modelo (características, ranking, entrenamiento y registro de versiones) | 0083 | [recommendation.md](../specs/recommendation.md) |
 | `recomendacion/sugerencias`, `api` | recomendación/sugerencias (generación, feedback y eventos) y su API | 0084 | `suggestions.available.v1`, `suggestion.accepted.v1`, [OpenAPI](../specs/openapi/itinerary-api.v1.yaml) |
+| `nucleo/usuarios/eliminacion.py`, `ingesta/cuentas/`, `identidad/` | eliminación de la cuenta: borrado en el núcleo con marca de cuenta eliminada, bajas en la ingesta, la identidad y el directorio | 0085 | `account.deleted.v1`, `DELETE /account` |
 | `simuladores/` | buzón, API de hotel y API de aerolínea sintéticas; APIs de búsqueda y viajeros sintéticos (iteración 5); endpoints de simulación | CON-1, CON-2 | — |
 | `sistema.py`, `docker-compose.yml` | ensamble local y despliegue de dos regiones | 0003 | — |
 
@@ -124,6 +126,7 @@ de auditoría de su región con su propio código, según el formato de `access-
 | `test_iteracion3_panel.py` | Panel versionado con ETag y `304`, igual al regenerado desde las tablas; Idempotency-Key; asignación por fechas; 15 viajes completos y el resto en resumen; dos cambios concurrentes del mismo usuario (versión + 2); `If-Match` 400/412; `details` validado; archivado diario, reactivación por 7 días y eliminación al año; prioridades ante sobrecarga; 429 auditado; SSE `ready` y `panel-changed` a través de la entrada global; dos instancias del notificador; ticket SSE vencido o usado como token; telemetría del panel mostrado deduplicada | QA-1, QA-2, QA-3, QA-4, QA-5, RF-04, RF-05; 0040 a 0048, 0066, 0067 |
 | `test_iteracion4_comparticion.py` | Invitar, aceptar y leer entre regiones con `no-store` y sin campos privados; invitación idempotente; rechazos auditados (`email_mismatch`, `secret_mismatch`, `no_permission`, `owner_endpoint`, `unauthenticated`, `removed`, `owner_region_unavailable`, `bad_region`, `not_found`); sin auditoría no hay acceso (503); tokens con otra audiencia, tipo, emisor, firma, algoritmo o región, vencidos o fuera del canal; sin token ni prefijo, rechazo auditado en la región más cercana; el mismo `userId` en otra región no comparte permisos; un solo salto entre puertas | QA-7; 0060, 0061, 0062, 0067 |
 | `test_iteracion5_recomendacion.py` | Cancelación del proveedor → 3 sugerencias, y una manual no; hecho reentregado sin duplicar; push de la cancelación reemplazado por el de las alternativas (misma `collapseKey`); SSE `suggestions-available`; aceptar crea la reserva propuesta (idempotente, sin mover el viaje) y la reserva real la concilia; la propuesta vence con la tarea diaria; rechazar y ajustar reordenan sin violar límites; opt-out y borrado del perfil; solo el dueño ve sus sugerencias; prioridad baja ante sobrecarga y recomendación detenida sin afectar el panel; disrupción masiva a escala 1/10 sin exceder límites de proveedores; proveedor caído (pendiente y completada) y resultado parcial; canario retirado y vuelta atrás; aprendizaje con viajeros sintéticos | QA-11 a QA-16, RF-09; 0081 a 0084 |
+| `test_iteracion5_cuenta.py` | Después de `DELETE /account`, el identificador del usuario no aparece en ninguna tabla de ninguna base de la región (salvo la marca de cuenta eliminada); login y directorio borrados; el dueño de un viaje compartido ya no ve al usuario; auditoría con el actor seudonimizado; login reciente exigido (también con token renovado); novedades y hechos atrasados descartados y evento reentregado sin fallas; la marca vence a los 30 días; la conexión SSE se cierra | QA-14, QA-7; 0085 |
 | `test_contratos.py` | Todo lo publicado cumple su AsyncAPI y lleva `traceparent`; respuestas contra la OpenAPI; regla de shards; topología (colas quorum con un consumidor activo y la cola del notificador como única excepción); esquemas de `details` registrados | 0002, 0028, 0066, 0067 |
 
 Cobertura de los escenarios de [ingestion-validation.md](ingestion-validation.md):
@@ -164,6 +167,9 @@ Cada una es una suposición del prototipo, no una decisión de la arquitectura o
   simulados. Los proveedores son sintéticos y permiten inyectar fallas.
 * La sobrecarga se fuerza en las pruebas (`ControlSobrecarga.forzada`); el reloj es inyectable para el archivado,
   los vencimientos y las esperas.
+* Eliminación de la cuenta (iteración 5): no hay analítica en el prototipo, así que el borrado de sus hechos
+  (ADR-0085) no se prueba; el registro de dispositivos de push está simulado y la revocación de autorizaciones
+  delegadas en el proveedor también.
 * Recomendación (iteración 5): las APIs de búsqueda y los viajeros son sintéticos (`simuladores/busqueda.py`,
   `simuladores/datos_sinteticos.py`). La caché, la cubeta de fichas y el corte por proveedor viven en la memoria de
   cada instancia; en la arquitectura objetivo la cubeta es compartida por región (ADR-0082). El entrenamiento usa
@@ -210,6 +216,12 @@ Hallazgos de la iteración 5:
     por minuto.
 13. **Reservas sin viaje.** Una cancelación de una reserva sin asignar no genera sugerencias: la propuesta necesita
     un viaje donde quedar.
+14. **Outbox enviada.** `ingestion-operations.md` pide vaciar el contenido de la outbox enviada a las 24 h, y el
+    prototipo no lo hacía. Ahora la tarea diaria del núcleo lo hace (`PublicadorOutbox.limpiar_enviados`); sin eso,
+    los eventos ya publicados conservaban el identificador de una cuenta eliminada.
+15. **Cuenta eliminada con token vigente.** El token de acceso dura 15 minutos y la puerta no consulta al proveedor
+    de identidad: la marca de cuenta eliminada del núcleo es la que corta el acceso en el momento, y también evita
+    que el primer pedido vuelva a crear el perfil del usuario.
 
 El hallazgo 3 necesita una decisión del equipo (el 1 se resolvió en la iteración 5); el resto está registrado en el
 [registro de impactos](../docs/01-add/impact-log.md).

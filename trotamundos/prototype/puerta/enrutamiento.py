@@ -50,6 +50,7 @@ RUTAS = [
     Ruta("PATCH", "/bookings/{bookingId}", "local", "media", True),
     Ruta("DELETE", "/bookings/{bookingId}", "local", "media", True),
     Ruta("POST", "/avisos/{providerId}", "ingesta", "alta", False),
+    Ruta("DELETE", "/account", "local", "media", False),  # iteración 5 (ADR-0085)
     # Iteración 5 (ADR-0084): sugerencias y preferencias, siempre de prioridad baja (ADR-0047).
     Ruta("GET", "/trips/{tripId}/suggestions", "recomendacion", "baja", False, "tripId"),
     Ruta("POST", "/suggestions/{suggestionId}/feedback", "recomendacion", "baja", False),

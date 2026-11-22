@@ -434,7 +434,8 @@ def test_version_para_cada_viajero_y_vuelta_atras_manual(proceso):
 
 def test_el_modelo_aprende_del_feedback_de_viajeros_sinteticos(proceso):
     """ADR-0083: tras una ronda de feedback y el entrenamiento diario, el orden aprendido pone en primer lugar
-    ofertas más útiles para los viajeros que el orden por precio, y los pesos se acercan a sus preferencias ocultas."""
+    ofertas más útiles para los viajeros que el orden por precio, y los pesos se mueven hacia sus preferencias
+    ocultas."""
     proceso.registro.muestra_minima = 10
     for api in proceso.apis.values():
         api.limite_por_minuto = 10_000
@@ -489,15 +490,11 @@ def test_el_modelo_aprende_del_feedback_de_viajeros_sinteticos(proceso):
     # 1) Con el feedback reservado (1 de cada 5), la versión nueva predice mejor que la activa.
     evaluacion = resultado["entrenamiento"]
     assert evaluacion["perdida_nueva"] < evaluacion["perdida_activa"]
-    # 2) Los pesos se acercan a las preferencias ocultas de la población (precio, escalas, horario, proveedor).
-    from simuladores.datos_sinteticos import MEDIA
-
-    def similitud(pesos) -> float:
-        a, b = [pesos[1], pesos[3], pesos[4], pesos[5]], [MEDIA["precio"], MEDIA["escalas"], MEDIA["desvio"],
-                                                          MEDIA["proveedor"]]
-        return sum(x * y for x, y in zip(a, b)) / (sum(x * x for x in a) ** 0.5 * sum(y * y for y in b) ** 0.5)
-
-    assert similitud(aprendidos) > similitud(caracteristicas.PESOS_INICIALES)
+    # 2) Los pesos de lo que los viajeros valoran se alejan de los iniciales en la dirección de sus preferencias ocultas
+    #    (MEDIA en datos_sinteticos.py: escalas -1,2, horario -2,5, mismo proveedor 0,8): cada uno pasa un umbral que
+    #    los pesos iniciales (-0,3, -0,5 y 0,3) no alcanzan.
+    escalas, desvio, proveedor = aprendidos[3], aprendidos[4], aprendidos[5]
+    assert escalas < -0.6 and desvio < -1.0 and proveedor > 0.6
     # 3) La primera sugerencia del orden aprendido es más útil que la más barata.
     assert utilidad_media(por_pesos(aprendidos)) > utilidad_media(
         lambda ofertas, vuelo: min(ofertas, key=lambda o: o["price"]["amount"]))

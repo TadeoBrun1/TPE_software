@@ -92,3 +92,5 @@ ni cumplimiento medido de los QA. Las confirmaciones de implementación y los ri
 ## Nota de la iteración 5 (2026-11-22)
 
 Colas quorum nuevas: `recommendation.facts` (enlazada a `booking.facts.v1`) y `core.suggestions` (enlazada a `suggestion.accepted.v1`). `notifier.push` y las colas por instancia del notificador suman el enlace a `suggestions.available.v1` ([`ingestion-operations.md`](../../specs/ingestion-operations.md)).
+
+Para la eliminación de la cuenta se agregan las colas quorum `identity.accounts` e `ingestion.accounts`, y enlaces de `account.deleted.v1` a `notifier.push`, a las colas por instancia del notificador, a `recommendation.facts` y a `analytics.facts` ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

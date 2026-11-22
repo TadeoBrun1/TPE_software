@@ -140,7 +140,7 @@ Leyenda: la flecha significa "puede usar".
 | núcleo/reservas | Alta, cambio y baja de reservas con campos comunes y `details` validado (ADR-0066); aplica novedades con dueño por campo y registra campos editados por el usuario (ADR-0044); marcas de borrado; reservas pendientes de resolución; reservas propuestas y su conciliación con la reserva real (ADR-0084) | `nucleo/reservas` |
 | núcleo/panel | Proyector: único escritor de `panel_por_usuario`; lo actualiza en la transacción del cambio y lo regenera desde las tablas (ADR-0040) | `nucleo/panel` |
 | núcleo/ruteo-particiones | Calcula la partición de cada usuario y conoce el nodo primario; lo usan la API, el consumidor de novedades y la tarea diaria (ADR-0042) | `nucleo/datos` |
-| núcleo/usuarios | Región de origen, idioma y país (ADR-0065), cuentas de correo vinculadas, remitentes permitidos y referencias a viajes compartidos conmigo (ADR-0062). Las credenciales viven en el proveedor de identidad, no acá (ADR-0060) | `nucleo/usuarios` |
+| núcleo/usuarios | Región de origen, idioma y país (ADR-0065), cuentas de correo vinculadas, remitentes permitidos y referencias a viajes compartidos conmigo (ADR-0062). Las credenciales viven en el proveedor de identidad, no acá (ADR-0060). Eliminación de la cuenta: borra los datos del usuario, deja la marca de cuenta eliminada y publica `account.deleted.v1` (ADR-0085) | `nucleo/usuarios` |
 | núcleo/comparticion | Invitaciones, aceptación, permisos por viaje y persona, revocación, vista compartida sin notas ni códigos, tarjeta para redes (ADR-0061, ADR-0063); acepta solo con el email invitado (`emailHmac`); intercepta todo pedido sobre un viaje ajeno | `nucleo/comparticion` |
 | núcleo/auditoria | Puerto de escritura de solo agregado al registro de auditoría; si falla, la operación se rechaza (ADR-0061) | `nucleo/auditoria` |
 | núcleo/esquemas-detalles | Carga al arrancar los esquemas de `details` registrados en la configuración (no se compilan) y valida cada bloque (ADR-0066) | `nucleo/esquemas` |
@@ -151,7 +151,7 @@ Leyenda: la flecha significa "puede usar".
 | infraestructura | Biblioteca técnica común: puertos y adaptadores de base de datos, broker, outbox, HTTP interno, reloj y límite por cliente. Sin lógica de dominio (hallazgo del prototipo) | `comun/infraestructura` |
 | núcleo/suscriptor-novedades | Recibe novedades del broker y las pasa a reservas | `nucleo/mensajeria` |
 | núcleo/suscriptor-sugerencias | Recibe `suggestion.accepted.v1` y le pide a reservas la reserva propuesta, deduplicando por sugerencia (ADR-0084) | `nucleo/mensajeria` |
-| recomendación/hechos | Consume `booking.facts.v1` con su cola, deduplica, actualiza el perfil y guarda la búsqueda pendiente si es una cancelación (ADR-0081) | `recomendacion/hechos` |
+| recomendación/hechos | Consume `booking.facts.v1` con su cola, deduplica, actualiza el perfil y guarda la búsqueda pendiente si es una cancelación (ADR-0081); por la misma cola recibe `account.deleted.v1` y borra todo lo del viajero (ADR-0085) | `recomendacion/hechos` |
 | recomendación/perfiles | Perfil resumido, preferencias explícitas, activación (opt-out) y borrado (ADR-0081) | `recomendacion/perfiles` |
 | recomendación/busqueda | Puerto de búsqueda de ofertas, adaptador por proveedor, caché de 5 minutos, búsquedas agrupadas, límite por proveedor y búsquedas pendientes (ADR-0082) | `recomendacion/busqueda` |
 | recomendación/modelo | Características, puntaje, exploración, ajuste por viajero, entrenamiento por lotes y registro de versiones con canario (ADR-0083) | `recomendacion/modelo` |
@@ -168,10 +168,11 @@ Leyenda: la flecha significa "puede usar".
 | ingesta/procesador | Selección, extracción, modelo canónico y validación | `ingesta/procesamiento` |
 | ingesta/registro-sincronizacion | Cursores, resultados, casos pendientes y outbox | `ingesta/persistencia` |
 | ingesta/publicador-novedades | Publica novedades con identidad estable y confirma envío | `ingesta/mensajeria` |
+| ingesta/bajas-cuentas | Consume `account.deleted.v1` y borra vinculaciones, cursores, trabajo y novedades del usuario (ADR-0085) | `ingesta/cuentas` |
 | entrada/resolucion-regional | Directorio mínimo que resuelve suscripción y región antes del Gateway | `entrada/enrutamiento` |
 | notificador/conexiones-sse | Mantiene las conexiones SSE de los usuarios conectados a la instancia (ADR-0046) | `notificador/sse` |
 | notificador/consumidor-avisos | Lee `panel.changed.v1` de la cola de la instancia y avisa solo a los usuarios conectados | `notificador/avisos` |
-| notificador/envio-push | Lee la cola compartida `notifier.push` y envía el push del sistema operativo | `notificador/push` |
+| notificador/envio-push | Lee la cola compartida `notifier.push` y envía el push del sistema operativo; con `account.deleted.v1` borra los dispositivos del usuario (ADR-0085) | `notificador/push` |
 | contratos | Validadores y tipos generados a partir de `specs/`; único código compartido que conoce los mensajes y la API (además de las bibliotecas técnicas) | `contratos/` |
 
 ## 4. Reglas de dependencia

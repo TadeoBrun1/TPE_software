@@ -201,3 +201,5 @@ ni cumplimiento medido de los QA. Las confirmaciones de implementación y los ri
 ## Nota de la iteración 5 (2026-11-22)
 
 `panel.changed.v1` pasa a 0.3.0 con `collapseKey` opcional. El notificador también consume `suggestions.available.v1`: push con la misma clave de colapso que la cancelación (el segundo reemplaza al primero) y evento SSE `suggestions-available` ([ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).
+
+Con `account.deleted.v1`, `notifier.push` borra los dispositivos del usuario y la instancia que tiene su conexión SSE le envía `account-deleted` y la cierra ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

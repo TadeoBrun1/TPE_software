@@ -7,7 +7,7 @@ acá se explica quién usa cada uno y para qué.
 
 | Contrato | Tipo | Archivo | Productor | Consumidores | Iteración | ADR |
 |---|---|---|---|---|---|---|
-| API de itinerarios (panel, avisos SSE con ticket, viajes archivados, gestión manual, compartición, tarjeta para redes, telemetría del cliente, sugerencias y preferencias de recomendación) | REST y SSE | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) (0.4.0) | Núcleo (SSE: notificador; ticket y reenvío: puerta de entrada; sugerencias, feedback, preferencias y perfil: recomendación) | Web, móvil, redes sociales (solo `/cards/{id}`) | 3, 4, 5 | 0040–0048, 0060–0063, 0065, 0066, 0084 |
+| API de itinerarios (panel, avisos SSE con ticket, viajes archivados, gestión manual, compartición, tarjeta para redes, telemetría del cliente, sugerencias y preferencias de recomendación, eliminación de la cuenta) | REST y SSE | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) (0.4.0) | Núcleo (SSE: notificador; ticket y reenvío: puerta de entrada; sugerencias, feedback, preferencias y perfil: recomendación) | Web, móvil, redes sociales (solo `/cards/{id}`) | 3, 4, 5 | 0040–0048, 0060–0063, 0065, 0066, 0084 |
 | Novedad de reserva detectada (propuesta) | Evento | [booking-change-detected.v1.yaml](../../specs/asyncapi/booking-change-detected.v1.yaml) (0.2.0: tipo abierto y `details`) | Ingesta | Consumidor del núcleo | 2, 4 | 0020–0024, 0066 |
 | Cambio confirmado de reserva | Evento (**retirado**) | [booking-confirmed.v1.yaml](../../specs/asyncapi/booking-confirmed.v1.yaml) | Nadie: el núcleo no lo publica desde la iteración 5 | Nunca tuvo consumidores; lo cubre `booking.facts.v1` | 2, 5 | 0027, 0081 |
 | Hechos de reservas | Evento | [booking-facts.v1.yaml](../../specs/asyncapi/booking-facts.v1.yaml) (0.2.0) | Núcleo | Analítica y recomendación de la misma región | 4, 5 | 0064, 0081 |
@@ -15,6 +15,7 @@ acá se explica quién usa cada uno y para qué.
 | Aviso de cambio del panel | Evento | [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml) (0.3.0: `correlationIds` y `collapseKey`) | Núcleo | Notificador (cola por instancia y cola de push) | 3, 4, 5 | 0046, 0067, 0084 |
 | Sugerencias disponibles | Evento | [suggestions-available.v1.yaml](../../specs/asyncapi/suggestions-available.v1.yaml) | Recomendación | Notificador (cola por instancia y cola de push) | 5 | 0084 |
 | Sugerencia aceptada | Evento | [suggestion-accepted.v1.yaml](../../specs/asyncapi/suggestion-accepted.v1.yaml) | Recomendación | Núcleo (`core.suggestions`) | 5 | 0084 |
+| Cuenta eliminada | Evento | [account-deleted.v1.yaml](../../specs/asyncapi/account-deleted.v1.yaml) | Núcleo | Identidad (`identity.accounts`), ingesta (`ingestion.accounts`), notificador, recomendación y analítica | 5 | 0085 |
 | Búsqueda de ofertas | Puerto interno y APIs estándar de proveedores | [offer-search.md](../../specs/offer-search.md) | Adaptadores de búsqueda por proveedor | Proceso de recomendación | 5 | 0082 |
 | Esquemas de detalles por tipo | JSON Schema | [specs/schemas/](../../specs/schemas/README.md) | Quien agrega el medio | Núcleo (validación), clientes (vista), adaptadores de ingesta | 4 | 0066 |
 | Registro de auditoría | Formato de registros | [access-audit.md](../../specs/access-audit.md) | Núcleo (`comparticion`) y puerta de entrada | Equipo de seguridad | 4 | 0061 |

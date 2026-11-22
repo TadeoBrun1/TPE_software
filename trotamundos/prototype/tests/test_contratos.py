@@ -10,15 +10,16 @@ import json
 import pytest
 
 from contratos.esquemas import ARCHIVOS_EVENTOS, ContratoInvalido, validar_api, validar_evento, version_contrato
-from contratos.topologia import (COLA_NUCLEO, COLA_NUCLEO_SUGERENCIAS, COLA_PUSH, COLA_RECOMENDACION,
-                                 EXCHANGE_DOMINIO, EXCHANGE_INGESTA, RK_ACEPTADA, RK_HECHOS, RK_PANEL, RK_SUGERENCIAS,
+from contratos.topologia import (COLA_IDENTIDAD_CUENTAS, COLA_INGESTA_CUENTAS, COLA_NUCLEO, COLA_NUCLEO_SUGERENCIAS,
+                                 COLA_PUSH, COLA_RECOMENDACION, EXCHANGE_DOMINIO, EXCHANGE_INGESTA, RK_ACEPTADA,
+                                 RK_CUENTA, RK_HECHOS, RK_PANEL, RK_SUGERENCIAS,
                                  SHARDS, cola_instancia_notificador, routing_key_novedad, shard_de_usuario,
                                  topologia_region)
 from nucleo.esquemas.registro import ESQUEMAS_POR_DEFECTO
 
 RK_A_EVENTO = {"panel.changed.v1": "panel.changed.v1", "trip.changed.v1": "trip.changed.v1",
                "booking.facts.v1": "booking.facts.v1", "suggestions.available.v1": "suggestions.available.v1",
-               "suggestion.accepted.v1": "suggestion.accepted.v1"}
+               "suggestion.accepted.v1": "suggestion.accepted.v1", "account.deleted.v1": "account.deleted.v1"}
 
 
 def evento_de(routing_key: str) -> str:
@@ -33,6 +34,7 @@ def test_versiones_de_los_contratos_que_implementa_el_prototipo():
     assert version_contrato("booking.facts.v1") == "0.2.0"         # startsAt/endsAt y segundo consumidor
     assert version_contrato("suggestions.available.v1") == "0.1.0"
     assert version_contrato("suggestion.accepted.v1") == "0.1.0"
+    assert version_contrato("account.deleted.v1") == "0.1.0"
     assert set(ARCHIVOS_EVENTOS) >= {"booking.change.detected.v1", "panel.changed.v1", "trip.changed.v1",
                                      "booking.facts.v1", "suggestions.available.v1", "suggestion.accepted.v1"}
     assert "booking.changed.v1" not in ARCHIVOS_EVENTOS            # retirado (ADR-0081)
@@ -91,11 +93,14 @@ def test_topologia_del_broker():
         assert cola.tipo == "quorum" and cola.argumentos["x-single-active-consumer"] is True
         assert cola.enlaces == [(EXCHANGE_INGESTA, f"booking.change.detected.v1.s{shard}")]
     assert colas[COLA_PUSH].tipo == "quorum"
-    assert set(colas[COLA_PUSH].enlaces) == {(EXCHANGE_DOMINIO, RK_PANEL), (EXCHANGE_DOMINIO, RK_SUGERENCIAS)}
-    assert colas[COLA_RECOMENDACION].enlaces == [(EXCHANGE_DOMINIO, RK_HECHOS)]           # ADR-0081
+    assert set(colas[COLA_PUSH].enlaces) == {(EXCHANGE_DOMINIO, RK_PANEL), (EXCHANGE_DOMINIO, RK_SUGERENCIAS),
+                                             (EXCHANGE_DOMINIO, RK_CUENTA)}
+    assert colas[COLA_RECOMENDACION].enlaces == [(EXCHANGE_DOMINIO, RK_HECHOS), (EXCHANGE_DOMINIO, RK_CUENTA)]
+    for cola in (COLA_INGESTA_CUENTAS, COLA_IDENTIDAD_CUENTAS):                          # ADR-0085
+        assert colas[cola].enlaces == [(EXCHANGE_DOMINIO, RK_CUENTA)]
     assert colas[COLA_NUCLEO_SUGERENCIAS].enlaces == [(EXCHANGE_DOMINIO, RK_ACEPTADA)]    # ADR-0084
     instancia = cola_instancia_notificador("abc")
-    assert (EXCHANGE_DOMINIO, RK_SUGERENCIAS) in instancia.enlaces
+    assert {(EXCHANGE_DOMINIO, RK_SUGERENCIAS), (EXCHANGE_DOMINIO, RK_CUENTA)} <= set(instancia.enlaces)
     assert instancia.tipo == "classic" and instancia.exclusiva and not instancia.durable  # única excepción
     assert all(c.tipo == "quorum" for c in topologia.colas)
 

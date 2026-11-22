@@ -22,6 +22,7 @@ from comun.infraestructura.db import SQLite
 from comun.infraestructura.http import DestinoASGI
 from comun.infraestructura.reloj import Reloj
 from comun.observabilidad import Logger
+from contratos.topologia import COLA_IDENTIDAD_CUENTAS
 from entrada.app import EntradaGlobal
 from identidad.app import ProveedorIdentidad
 from ingesta.app import Ingesta, proveedores_simulados
@@ -73,9 +74,11 @@ class Sistema:
             adaptadores, fuentes = proveedores_simulados()
             ingesta = Ingesta(nombre, SQLite(ruta("ingesta")), broker, adaptadores, reloj=self.reloj,
                               logger=logger("ingesta"))
+            ingesta.preparar_mensajeria()
             identidad = ProveedorIdentidad(nombre, SQLite(ruta("identidad")), self.claves["email"],
                                            registrar_en_directorio=self._registrar_en_directorio, reloj=self.reloj,
-                                           logger=logger("identidad"))
+                                           logger=logger("identidad"), borrar_de_directorio=self._borrar_de_directorio)
+            broker.consumir(COLA_IDENTIDAD_CUENTAS, identidad.procesar_baja)  # bajas de cuentas (ADR-0085)
             self.emisores.registrar(identidad.emisor, nombre, identidad.jwks())
             # Iteración 5: proceso de recomendación con cuatro APIs de búsqueda sintéticas (ADR-0081, ADR-0082).
             fuentes["busqueda"] = apis_busqueda_simuladas(self.reloj)
@@ -108,6 +111,9 @@ class Sistema:
 
     def _registrar_en_directorio(self, email: str, region: str):
         self.entrada.registrar_email(email, region)
+
+    def _borrar_de_directorio(self, email: str):
+        self.entrada.borrar_email(email)
 
     def procesar(self, rondas: int = 20) -> int:
         """Ejecuta trabajadores de forma sincrónica hasta que no queda nada pendiente (pruebas y demo)."""

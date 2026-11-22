@@ -92,3 +92,17 @@ class PublicadorOutbox:
     def antiguedad_pendientes(base: BaseDatos) -> int:
         with base.transaccion() as tx:
             return tx.uno("SELECT COUNT(*) AS n FROM outbox WHERE enviado IS NULL")["n"]
+
+    def limpiar_enviados(self, conservar=None) -> int:
+        """Vacía el contenido de los eventos enviados hace más de 24 h y conserva la fila mínima (eventId, destino y
+        fecha), como pide `ingestion-operations.md`. La tarea diaria de cada proceso la llama."""
+        from datetime import timedelta
+
+        limite = iso(self.reloj.ahora() - (conservar or timedelta(hours=24)))
+        total = 0
+        for base in self.bases:
+            with base.transaccion() as tx:
+                total += tx.ejecutar("UPDATE outbox SET cuerpo = '{}', encabezados = '{}' "
+                                     "WHERE enviado IS NOT NULL AND enviado < ? AND cuerpo <> '{}'", (limite,))
+        return total
+

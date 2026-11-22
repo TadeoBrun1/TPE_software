@@ -167,3 +167,5 @@ ni cumplimiento medido de los QA. Las confirmaciones de implementación y los ri
 ## Nota de la iteración 5 (2026-11-22)
 
 `booking.facts.v1` tiene un segundo consumidor, la recomendación, que usa el `userId` real porque necesita un perfil por usuario; la seudonimización es del consumidor analítico. Los campos `startsAt` y `endsAt` (0.2.0) se guardan en la analítica a nivel día. Resuelve el impacto para la segunda entrega ([ADR-0081](0081-proceso-de-recomendacion-con-perfiles-regionales.md)).
+
+Eliminación de la cuenta ([ADR-0085](0085-eliminacion-de-la-cuenta.md)): la analítica consume `account.deleted.v1` en `analytics.facts`, calcula el código del usuario con la clave del período vigente y borra esos hechos y su control de recepción. Los hechos de períodos cuya clave ya se destruyó no se pueden ubicar y quedan como están; esto resuelve la decisión de retención que esta ADR dejaba para validar, con ese límite.

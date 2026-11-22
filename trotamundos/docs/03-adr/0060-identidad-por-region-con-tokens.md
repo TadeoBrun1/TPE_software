@@ -199,3 +199,7 @@ Esta decisión forma parte del diseño integrado mediante [PR #7](https://github
 merge `00f21b9` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
 la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
 ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+
+## Nota de la iteración 5 (2026-11-22)
+
+El token de acceso suma el reclamo `auth_time` (momento del inicio de sesión; un token renovado conserva el del login original), que `DELETE /account` usa para exigir un login reciente. Con `account.deleted.v1`, el proveedor de identidad borra la cuenta, sus tokens de renovación y la entrada del directorio global; mientras tanto, la marca de cuenta eliminada del núcleo rechaza los tokens de acceso que siguen vigentes ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

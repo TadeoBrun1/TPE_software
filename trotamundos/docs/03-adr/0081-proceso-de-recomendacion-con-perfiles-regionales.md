@@ -97,8 +97,9 @@ Patrones y tácticas que aplica:
 * Bad, because `booking.facts.v1` deja de ser exclusivo de la analítica: un cambio de su lista de campos afecta a dos
   consumidores y su descripción de privacidad debe aclarar que la seudonimización es del consumidor analítico.
 * Bad, because suma un proceso y una base por región para operar.
-* Bad, because el borrado de la cuenta todavía no está diseñado en el sistema: cuando se diseñe, tiene que incluir
-  el borrado del perfil (registro de impactos).
+* Bad, because el perfil también se tiene que borrar cuando se elimina la cuenta, lo que exigía diseñar ese borrado
+  para todo el sistema; lo resuelve [ADR-0085](0085-eliminacion-de-la-cuenta.md), con `account.deleted.v1` por la
+  misma cola `recommendation.facts`.
 
 ### Confirmation
 

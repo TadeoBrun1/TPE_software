@@ -14,6 +14,7 @@ from contratos.esquemas import ContratoInvalido, validar_evento
 from contratos.topologia import COLA_NUCLEO, SHARDS
 from nucleo.panel.unidad import UnidadDeCambio
 from nucleo.reservas import novedades
+from nucleo.usuarios import eliminacion
 
 
 class ConsumidorNovedades:
@@ -40,6 +41,8 @@ class ConsumidorNovedades:
 
         def transaccion():
             with nucleo.ruteo.nodo(novedad["userId"]).transaccion() as tx:
+                if eliminacion.eliminada(tx, novedad["userId"]):
+                    return "descartada:cuenta_eliminada", None  # novedad atrasada de una cuenta eliminada (ADR-0085)
                 unidad = UnidadDeCambio(tx, nucleo.region, novedad["userId"], nucleo.reloj,
                                         correlation_ids=[novedad["correlationId"]])
                 resultado = novedades.aplicar(tx, unidad, nucleo.ruteo, nucleo.esquemas, nucleo.region, novedad)

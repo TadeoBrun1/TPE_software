@@ -15,7 +15,7 @@ avance de cada una se registra en el [registro de trabajo del equipo](../../TEAM
 | 2 | Ingesta de reservas desde correo y terceros: frescura, interoperabilidad y acceso seguro a correos | Tomas Lateana | [Iteración 2](iteration-2-ingestion.md) | 0020 a 0028 |
 | 3 | Consulta del panel, latencia, disponibilidad, escala, aplicación de novedades y ciclo de vida del viaje | Tadeo Brun | [Iteración 3](iteration-3-query-scale.md) | 0040 a 0048 |
 | 4 | Seguridad de compartición, internacionalización, analítica y evolucionabilidad | Ambos | [Iteración 4](iteration-4-security-evolvability.md) | 0060 a 0067 |
-| 5 | Segunda entrega: recomendación de alternativas con human-in-the-loop (opción A) | Ambos | [Iteración 5](iteration-5-recommendation.md) | 0080 a 0084 |
+| 5 | Segunda entrega: recomendación de alternativas con human-in-the-loop (opción A) | Ambos | [Iteración 5](iteration-5-recommendation.md) | 0080 a 0085 |
 
 Documentos que acompañan a las iteraciones:
 

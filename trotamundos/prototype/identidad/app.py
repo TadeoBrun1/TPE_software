@@ -6,6 +6,10 @@
 * Emite tokens de renovación opacos de 30 días, revocables.
 * Publica sus claves públicas en `/jwks` para que las puertas de entrada validen sin consultarlo en cada solicitud.
 
+Iteración 5 (ADR-0085): al recibir `account.deleted.v1` (cola `identity.accounts`) borra la cuenta, sus tokens de
+renovación y su entrada del directorio global. En el sistema real esto lo hace un adaptador con la API de
+administración del producto de identidad.
+
 Simplificación del prototipo: el login usa usuario y contraseña directo (sin pantallas ni redirecciones OIDC).
 """
 from __future__ import annotations
@@ -54,12 +58,13 @@ def _hash_clave(clave: str, sal: str) -> str:
 
 class ProveedorIdentidad:
     def __init__(self, region: str, base: BaseDatos, clave_email: bytes, registrar_en_directorio=None,
-                 reloj: Reloj | None = None, logger: Logger | None = None):
+                 reloj: Reloj | None = None, logger: Logger | None = None, borrar_de_directorio=None):
         self.region = region
         self.emisor = f"https://id.{region}.trotamundos.example"
         self.base = base
         self.clave_email = clave_email
         self.registrar_en_directorio = registrar_en_directorio or (lambda email, region: None)
+        self.borrar_de_directorio = borrar_de_directorio or (lambda email: None)
         self.reloj = reloj or Reloj()
         self.logger = logger or Logger("identidad", region)
         self.kid = f"{region}-1"
@@ -74,10 +79,12 @@ class ProveedorIdentidad:
         jwk.update({"kid": self.kid, "alg": "RS256", "use": "sig"})
         return {"keys": [jwk]}
 
-    def emitir_acceso(self, user_id: str, email: str, **cambios) -> str:
-        """Token de acceso. `cambios` permite a las pruebas fabricar tokens inválidos (vencidos, otra audiencia)."""
+    def emitir_acceso(self, user_id: str, email: str, auth_time: int | None = None, **cambios) -> str:
+        """Token de acceso. `auth_time` es el momento del inicio de sesión (OIDC): un token renovado conserva el del
+        login original. `cambios` permite a las pruebas fabricar tokens inválidos (vencidos, otra audiencia)."""
         ahora = self.reloj.ahora()
         reclamos = {"iss": self.emisor, "sub": user_id, "aud": AUDIENCIA, "iat": int(ahora.timestamp()),
+                    "auth_time": auth_time or int(ahora.timestamp()),
                     "nbf": int(ahora.timestamp()), "exp": int((ahora + VIDA_ACCESO).timestamp()),
                     "jti": uuid.uuid4().hex, "userId": user_id, "homeRegion": self.region,
                     "emailHmac": email_hmac(self.clave_email, email)}
@@ -127,13 +134,36 @@ class ProveedorIdentidad:
                           "WHERE r.token_hash = ?", (token_hash,))
         if fila is None or fila["revocado"] or fila["bloqueada"] or parsear(fila["vence"]) < self.reloj.ahora():
             return None
-        return {"access_token": self.emitir_acceso(fila["user_id"], fila["email"]), "token_type": "Bearer",
-                "expires_in": int(VIDA_ACCESO.total_seconds())}
+        inicio = int((parsear(fila["vence"]) - VIDA_RENOVACION).timestamp())  # el login que emitió la renovación
+        return {"access_token": self.emitir_acceso(fila["user_id"], fila["email"], auth_time=inicio),
+                "token_type": "Bearer", "expires_in": int(VIDA_ACCESO.total_seconds())}
 
     def revocar(self, token: str):
         with self.base.transaccion() as tx:
             tx.ejecutar("UPDATE renovaciones SET revocado = 1 WHERE token_hash = ?",
                         (hashlib.sha256(token.encode()).hexdigest(),))
+
+    def eliminar(self, user_id: str) -> bool:
+        """Borra la cuenta y sus tokens de renovación (ADR-0085). Idempotente; devuelve si existía."""
+        with self.base.transaccion() as tx:
+            tx.ejecutar("DELETE FROM renovaciones WHERE user_id = ?", (user_id,))
+            return tx.ejecutar("DELETE FROM cuentas WHERE user_id = ?", (user_id,)) > 0
+
+    def procesar_baja(self, mensaje):
+        """Consumidor de `account.deleted.v1` en `identity.accounts`. Si el directorio no responde, el mensaje se
+        reentrega: borrar la cuenta otra vez no es un error y la entrada del directorio se borra al reintentar."""
+        from contratos.esquemas import validar_evento
+
+        validar_evento("account.deleted.v1", mensaje.cuerpo)
+        if mensaje.cuerpo["homeRegion"] != self.region:
+            return
+        with self.base.transaccion() as tx:
+            cuenta = tx.uno("SELECT email FROM cuentas WHERE user_id = ?", (mensaje.cuerpo["userId"],))
+        if cuenta is not None:
+            # El directorio guarda solo HMAC(email) → región. Se borra antes que la cuenta: si falla, se reintenta.
+            self.borrar_de_directorio(cuenta["email"])
+        self.eliminar(mensaje.cuerpo["userId"])
+        self.logger.info("cuenta_eliminada_en_identidad", existia=cuenta is not None)
 
     def _crear_app(self) -> Starlette:
         proveedor = self
@@ -177,6 +207,22 @@ def desde_entorno() -> ProveedorIdentidad:  # pragma: no cover - docker compose
                                                  "X-Internal-Key": os.environ["CLAVE_INTERNA_DIRECTORIO"]})
         urllib.request.urlopen(pedido, timeout=5).read()
 
+    def borrar(email: str):
+        pedido = urllib.request.Request(os.environ["URL_DIRECTORIO"], method="DELETE",
+                                        data=json.dumps({"email": email}).encode(),
+                                        headers={"Content-Type": "application/json",
+                                                 "X-Internal-Key": os.environ["CLAVE_INTERNA_DIRECTORIO"]})
+        urllib.request.urlopen(pedido, timeout=5).read()
+
+    from comun.infraestructura import broker as broker_mod
+    from contratos.topologia import COLA_IDENTIDAD_CUENTAS, topologia_region
+
     region = os.environ["REGION"]
-    return ProveedorIdentidad(region, db_mod.abrir(os.environ["BASE_IDENTIDAD"], f"{region}-identidad"),
-                              os.environ["CLAVE_EMAIL_HMAC"].encode(), registrar)
+    proveedor = ProveedorIdentidad(region, db_mod.abrir(os.environ["BASE_IDENTIDAD"], f"{region}-identidad"),
+                                   os.environ["CLAVE_EMAIL_HMAC"].encode(), registrar, borrar_de_directorio=borrar)
+    if os.environ.get("BROKER"):  # bajas de cuentas (ADR-0085)
+        broker = broker_mod.abrir(os.environ["BROKER"])
+        broker.declarar(topologia_region())
+        broker.consumir(COLA_IDENTIDAD_CUENTAS, proveedor.procesar_baja)
+        broker.iniciar()
+    return proveedor

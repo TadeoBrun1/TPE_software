@@ -30,7 +30,7 @@ from nucleo.panel.unidad import UnidadDeCambio
 from nucleo.reservas import manuales
 from nucleo.reservas.manuales import ErrorDominio
 from nucleo.reservas.modelo import reserva_a_api, viaje_a_api
-from nucleo.usuarios import perfil
+from nucleo.usuarios import eliminacion, perfil
 from nucleo.viajes import ciclo_vida
 
 ENCABEZADOS_COMPARTIDOS = {"Cache-Control": "no-store"}
@@ -71,6 +71,8 @@ def endpoint(ruta: str, local: bool = True):
             try:
                 with nucleo.ruteo.nodo(principal.user_id).transaccion() as tx:
                     if principal.region == nucleo.region:
+                        if eliminacion.eliminada(tx, principal.user_id):  # token vigente de una cuenta eliminada
+                            return error(401, "account_deleted", "La cuenta fue eliminada")
                         perfil.asegurar(tx, principal.user_id, nucleo.region, iso(nucleo.reloj.ahora()))
                 return funcion(request, nucleo, principal, ruta)
             except ErrorDominio as e:
@@ -320,6 +322,22 @@ def viaje_compartido(request, nucleo, principal, ruta):
     return JSONResponse(datos, headers=ENCABEZADOS_COMPARTIDOS)
 
 
+# ------------------------------------------------------------------------------------------ cuenta
+
+REAUTENTICACION = 300  # segundos desde el inicio de sesión (suposición, ADR-0085)
+
+
+@endpoint("/account")
+def eliminar_cuenta(request, nucleo, principal, ruta):
+    """DELETE /account (ADR-0085): borrado inmediato; exige un inicio de sesión reciente."""
+    auth_time = request.headers.get("x-principal-auth-time")
+    if not auth_time or nucleo.reloj.ahora().timestamp() - int(auth_time) > REAUTENTICACION:
+        return error(401, "reauthentication_required", "Volvé a iniciar sesión para eliminar la cuenta")
+    eliminacion.eliminar_cuenta(nucleo, principal.user_id)
+    metricas.incrementar("cuentas_eliminadas")
+    return Response(status_code=204)
+
+
 # ------------------------------------------------------------------------------------------ operación
 
 async def metricas_proceso(request):
@@ -348,6 +366,7 @@ def crear_app(nucleo) -> Starlette:
         _ruta("/shared/trips/{tripId}", viaje_compartido, ["GET", "DELETE"]),
         _ruta("/bookings", crear_reserva, ["POST"]),
         _ruta("/bookings/{bookingId}", cambiar_reserva, ["PATCH", "DELETE"]),
+        _ruta("/account", eliminar_cuenta, ["DELETE"]),
         Route("/metrics", metricas_proceso, methods=["GET"]),
     ])
     app.state.nucleo = nucleo

@@ -25,6 +25,7 @@ ARCHIVOS_EVENTOS = {
     "panel.changed.v1": "panel-changed.v1.yaml",
     "suggestions.available.v1": "suggestions-available.v1.yaml",
     "suggestion.accepted.v1": "suggestion-accepted.v1.yaml",
+    "account.deleted.v1": "account-deleted.v1.yaml",
 }
 
 

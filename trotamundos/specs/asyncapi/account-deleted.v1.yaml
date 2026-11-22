@@ -1,0 +1,64 @@
+asyncapi: 2.6.0
+info:
+  title: Cuenta eliminada
+  version: 0.1.0
+  description: >
+    Contrato propuesto de la iteración 5 (ADR-0085). Lo publica el núcleo de la región de origen desde su outbox, en
+    la misma transacción que borra los datos del usuario en su partición y deja la marca de cuenta eliminada.
+    Transporte: RabbitMQ, exchange travel.domain, routing key account.deleted.v1 (ADR-0028), con una cola por
+    consumidor: identity.accounts (proveedor de identidad: credenciales, tokens de renovación y entrada del directorio
+    global), ingestion.accounts (vinculaciones, autorizaciones, cursores y trabajo pendiente), notifier.push
+    (dispositivos de push) y las colas de instancia del notificador (cierre de las conexiones SSE del usuario),
+    recommendation.facts (perfil, feedback, sugerencias y búsquedas) y analytics.facts (hechos del período cuya clave
+    sigue vigente, ADR-0064). Cada consumidor borra lo suyo con recepción idempotente: borrar lo que ya no existe no
+    es un error. El evento no lleva email, nombre ni datos del itinerario.
+defaultContentType: application/json
+channels:
+  account.deleted.v1:
+    publish:
+      operationId: publishAccountDeleted
+      message:
+        $ref: '#/components/messages/AccountDeleted'
+components:
+  messages:
+    AccountDeleted:
+      name: AccountDeleted
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+            description: Contexto de traza W3C (ADR-0067); lo propagan productores y consumidores.
+          tracestate:
+            type: string
+      payload:
+        type: object
+        additionalProperties: false
+        required:
+        - eventId
+        - schemaVersion
+        - homeRegion
+        - userId
+        - deletedAt
+        properties:
+          eventId:
+            type: string
+            minLength: 1
+          schemaVersion:
+            type: string
+            enum:
+            - '1'
+          correlationId:
+            type: string
+            minLength: 1
+            description: El de la solicitud DELETE /account (ADR-0067), para seguir el borrado en todos los procesos.
+          homeRegion:
+            type: string
+            minLength: 1
+          userId:
+            type: string
+            minLength: 1
+          deletedAt:
+            type: string
+            format: date-time
+            description: Momento en que el núcleo confirmó el borrado; desde acá corre el plazo de 24 h (QA-14).

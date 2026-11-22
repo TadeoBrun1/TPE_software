@@ -58,5 +58,5 @@ alternativas de alojamiento o transporte, el viajero las acepta, rechaza o ajust
 | Página | Qué contiene |
 |---|---|
 | [Elección del módulo (ADR-0080)](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/03-adr/0080-eleccion-del-modulo-avanzado.md) | Ventajas, desventajas y dificultad de las opciones A y B frente a lo ya diseñado |
-| [Iteración 5: recomendación](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-5-recommendation.md) | Pasos 2 a 7, drivers RF-09 y QA-11 a QA-16, ADRs 0081 a 0084 |
+| [Iteración 5: recomendación](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-5-recommendation.md) | Pasos 2 a 7, drivers RF-09 y QA-11 a QA-16, ADRs 0081 a 0085 (incluye la eliminación de la cuenta) |
 

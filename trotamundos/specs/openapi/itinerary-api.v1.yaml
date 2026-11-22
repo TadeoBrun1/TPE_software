@@ -18,7 +18,8 @@ info:
     (ADR-0062).
     0.4.0 (iteración 5, opción A): rutas de sugerencias, feedback, preferencias y perfil de recomendación, que la
     puerta de entrada enruta al proceso de recomendación de la región con prioridad baja (ADR-0081 a ADR-0084); la
-    reserva suma el estado proposed, el origen suggestion y el enlace offerUrl (reserva propuesta, ADR-0084).
+    reserva suma el estado proposed, el origen suggestion y el enlace offerUrl (reserva propuesta, ADR-0084);
+    DELETE /account elimina la cuenta (ADR-0085).
 servers:
   - url: https://{region}.api.trotamundos.example/v1
     variables:
@@ -712,6 +713,31 @@ paths:
           description: Perfil borrado (o no existía)
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+  /account:
+    delete:
+      summary: Eliminar la cuenta y todos los datos del usuario (ADR-0085)
+      description: >
+        Borrado inmediato y sin vuelta atrás. Exige un inicio de sesión reciente: el token tiene que venir de un login
+        de hace 5 minutos o menos (reclamo auth_time, suposición); si no, 401 con code reauthentication_required y la
+        app vuelve a pedir la contraseña. El núcleo borra en la misma transacción los viajes, reservas, panel,
+        invitaciones, marcadores y vinculaciones del usuario, deja una marca de cuenta eliminada y publica
+        account.deleted.v1; el resto de los procesos (identidad, ingesta, notificador, recomendación y analítica)
+        borran lo suyo al recibirlo, en 24 h o menos. Desde la respuesta, cualquier token del usuario recibe 401 con
+        code account_deleted. Prioridad media ante sobrecarga (ADR-0047).
+      operationId: deleteAccount
+      responses:
+        "204":
+          description: Cuenta eliminada en el núcleo; el resto de los procesos la borran de forma asincrónica
+        "401":
+          description: No autenticado, inicio de sesión no reciente (reauthentication_required) o cuenta ya eliminada (account_deleted)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "429":
           $ref: "#/components/responses/TooManyRequests"
         "503":

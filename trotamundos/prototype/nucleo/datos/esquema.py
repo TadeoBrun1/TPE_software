@@ -56,6 +56,11 @@ DDL_NODO = [
     """CREATE TABLE IF NOT EXISTS telemetria_panel (
         principal TEXT NOT NULL, panel_version INTEGER NOT NULL, mostrado TEXT NOT NULL, correlation_ids TEXT,
         recibido TEXT NOT NULL, PRIMARY KEY (principal, panel_version))""",
+    # Iteración 5 (ADR-0085): marca de cuenta eliminada. Solo el identificador y la fecha, 30 días (suposición): mientras
+    # tanto se rechazan los tokens que siguen vigentes y se descartan los mensajes atrasados de ese usuario.
+    """CREATE TABLE IF NOT EXISTS cuentas_eliminadas (
+        user_id TEXT PRIMARY KEY, home_region TEXT NOT NULL, eliminada TEXT NOT NULL)""",
+    "CREATE INDEX IF NOT EXISTS comparticiones_persona ON comparticiones (aceptada_region, aceptada_usuario)",
     *DDL_OUTBOX,
 ]
 

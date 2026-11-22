@@ -35,5 +35,8 @@ DDL_RECOMENDACION = [
     """CREATE TABLE IF NOT EXISTS versiones_modelo (
         version_id TEXT PRIMARY KEY, pesos TEXT NOT NULL, estado TEXT NOT NULL, ejemplos INTEGER NOT NULL,
         evaluacion TEXT NOT NULL, creada TEXT NOT NULL, cambio_estado TEXT NOT NULL)""",
+    # Cuenta eliminada (ADR-0085): solo el identificador y la fecha, 30 días (suposición), para descartar hechos
+    # atrasados de ese usuario sin volver a crear su perfil.
+    """CREATE TABLE IF NOT EXISTS cuentas_eliminadas (user_id TEXT PRIMARY KEY, eliminada TEXT NOT NULL)""",
     *DDL_OUTBOX,
 ]

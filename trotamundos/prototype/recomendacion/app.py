@@ -63,6 +63,7 @@ class Recomendacion:
 
     def entrenar(self) -> dict:
         """Trabajo diario: primero decide sobre el canario anterior y después entrena una versión nueva."""
+        self.perfiles.purgar_marcas()  # marcas de cuentas eliminadas vencidas (ADR-0085)
         canario = self.registro.evaluar_canario()
         if canario == "esperando_muestra":
             return {"canario": canario, "entrenamiento": "pospuesto"}  # a lo sumo un canario a la vez

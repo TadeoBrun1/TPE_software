@@ -80,3 +80,5 @@ ni cumplimiento medido de los QA. Las confirmaciones de implementación y los ri
 ## Nota de la iteración 5 (2026-11-22)
 
 `booking.changed.v1` se retira: nunca tuvo consumidor. `booking.facts.v1` pasa a 0.2.0 con dos consumidores y `startsAt`/`endsAt` opcionales. Las reservas propuestas no generan hechos ([ADR-0081](0081-proceso-de-recomendacion-con-perfiles-regionales.md), [ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).
+
+La outbox del núcleo publica también `account.deleted.v1` en la misma transacción que borra los datos del usuario, y en esa transacción se borran los eventos de ese usuario que estaban en la outbox ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

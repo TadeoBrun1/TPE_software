@@ -63,5 +63,6 @@ Plantilla: [adr-template.md](adr-template.md).
 | [0082](0082-busqueda-de-alternativas-con-cache-corta.md) | Búsqueda de alternativas en las APIs de los proveedores, con caché corta y búsquedas agrupadas | accepted | 5 | QA-11, QA-12, QA-16, CON-1, CON-2 |
 | [0083](0083-ranking-aprendido-del-feedback.md) | Ranking de ofertas por características, aprendido del feedback, con un modelo regional versionado | accepted | 5 | RF-09.3, QA-13, QA-15, CON-5 |
 | [0084](0084-entrega-y-aceptacion-de-sugerencias.md) | Sugerencias por una API propia con aviso del notificador, y aceptación como reserva propuesta en el núcleo | accepted | 5 | RF-09.1, RF-09.2, QA-11, QA-2, QA-7 |
+| [0085](0085-eliminacion-de-la-cuenta.md) | Eliminación de la cuenta: borrado inmediato en el núcleo y aviso por evento al resto de los procesos | accepted | 5 | QA-14, QA-7, CON-3 (pendiente de 0081 y 0064) |
 
 Mantener esta tabla actualizada al crear una ADR o cambiar su estado. La revisión cruzada y las pruebas se registran por separado.

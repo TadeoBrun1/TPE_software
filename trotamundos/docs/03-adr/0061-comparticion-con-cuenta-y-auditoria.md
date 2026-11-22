@@ -157,3 +157,5 @@ ni cumplimiento medido de los QA. Las confirmaciones de implementación y los ri
 ## Nota de la iteración 5 (2026-11-22)
 
 La vista compartida no muestra reservas propuestas ni sugerencias: son del dueño ([ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).
+
+Al eliminar una cuenta se quitan los permisos que tenía sobre viajes de otros usuarios de la región, y el registro de auditoría de la región reemplaza su identificador de actor por un seudónimo estable: es la única modificación que se permite sobre un registro ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

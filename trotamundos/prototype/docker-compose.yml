@@ -68,8 +68,10 @@ services:
       REGION: sa-east
       BASE_IDENTIDAD: postgresql://trotamundos:trotamundos@postgres-sa-east/identidad
       URL_DIRECTORIO: http://entrada:8000/internal/directory
+      BROKER: amqp://guest:guest@rabbitmq-sa-east:5672/       # bajas de cuentas (ADR-0085)
     depends_on:
       postgres-sa-east: {condition: service_healthy}
+      rabbitmq-sa-east: {condition: service_healthy}
 
   nucleo-sa-east:
     <<: *servicio
@@ -157,8 +159,10 @@ services:
       REGION: eu-west
       BASE_IDENTIDAD: postgresql://trotamundos:trotamundos@postgres-eu-west/identidad
       URL_DIRECTORIO: http://entrada:8000/internal/directory
+      BROKER: amqp://guest:guest@rabbitmq-eu-west:5672/       # bajas de cuentas (ADR-0085)
     depends_on:
       postgres-eu-west: {condition: service_healthy}
+      rabbitmq-eu-west: {condition: service_healthy}
 
   nucleo-eu-west:
     <<: *servicio

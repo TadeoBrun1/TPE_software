@@ -144,7 +144,7 @@ proceso; no miden QA ni reemplazan las validaciones con infraestructura real.
 ## Iteración 5 — 2026-11-22
 
 Segunda entrega, opción A: recomendación de alternativas con human-in-the-loop
-([iteración 5](iteration-5-recommendation.md), ADR-0080 a ADR-0084). Las decisiones las tomaron Tadeo Brun y Tomas
+([iteración 5](iteration-5-recommendation.md), ADR-0080 a ADR-0085). Las decisiones las tomaron Tadeo Brun y Tomas
 Lateana; la revisión cruzada se registra en el PR de la iteración.
 
 | Cambio o decisión | Afecta | Tratamiento | Estado |
@@ -158,7 +158,8 @@ Lateana; la revisión cruzada se registra en el PR de la iteración.
 | Proceso `recomendacion` por región, con base propia | 1 (ADR-0001, ADR-0002, ADR-0003) | No lee la base del núcleo ni la de la analítica; el núcleo no lee la suya. Vistas de módulos, C&C y despliegue actualizadas | Integrado; prototipo |
 | Trazas y métricas de la recomendación | 4 (ADR-0067) | Los eventos nuevos llevan `correlationId` y `traceparent`; métrica `qa11_cancelacion_a_sugerencia_s` | Integrado; prototipo |
 | Descarte por sobrecarga sin auditoría | 3 y 4 (ADR-0047, `access-audit.md`) | Excepción declarada: no es una decisión de acceso y auditarlo sumaría carga en el peor momento. Queda en métricas y logs | Propuesto para revisión en el PR |
-| Borrado de la cuenta | Todas | Todavía no está diseñado en el sistema; cuando se diseñe tiene que borrar el perfil de recomendación (ADR-0081) | Pendiente |
+| Eliminación de la cuenta (ADR-0085) | 1 a 4 (ADR-0021, ADR-0027, ADR-0028, ADR-0046, ADR-0060, ADR-0061, ADR-0064) | `DELETE /account` con login reciente (reclamo `auth_time`); el núcleo borra en el momento, deja una marca de cuenta eliminada por 30 días y publica `account.deleted.v1`; identidad, directorio, ingesta, notificador, recomendación y analítica borran lo suyo. La auditoría seudonimiza al actor (única modificación permitida) y la analítica borra los hechos del período vigente. Notas en las ADRs afectadas | Integrado; prototipo (sin analítica) |
+| Eliminación de la cuenta en otras regiones | 4 (ADR-0061, ADR-0062) | Los permisos del usuario sobre viajes de otras regiones quedan inertes hasta que el dueño los quite, y los registros de auditoría de esas regiones conservan el identificador hasta su retención | Pendiente: candidato para una iteración posterior |
 
 Hallazgos del prototipo de la iteración 5 (detalle en el [README del prototipo](../../prototype/README.md)):
 

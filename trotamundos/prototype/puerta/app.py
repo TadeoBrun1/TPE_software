@@ -207,6 +207,8 @@ class Puerta:
                        "traceparent": contexto_traza.get()}
         if identidad.email_hmac:
             encabezados["X-Principal-Email-Hmac"] = identidad.email_hmac
+        if identidad.auth_time:
+            encabezados["X-Principal-Auth-Time"] = str(identidad.auth_time)
         return encabezados
 
     async def _eventos(self, request: Request):

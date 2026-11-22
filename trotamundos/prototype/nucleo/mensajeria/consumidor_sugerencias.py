@@ -12,6 +12,7 @@ from contratos.esquemas import ContratoInvalido, validar_evento
 from contratos.topologia import COLA_NUCLEO_SUGERENCIAS
 from nucleo.panel.unidad import UnidadDeCambio
 from nucleo.reservas import propuestas
+from nucleo.usuarios import eliminacion
 
 
 class ConsumidorSugerencias:
@@ -37,6 +38,8 @@ class ConsumidorSugerencias:
 
         def transaccion():
             with nucleo.ruteo.nodo(evento["userId"]).transaccion() as tx:
+                if eliminacion.eliminada(tx, evento["userId"]):
+                    return "descartada:cuenta_eliminada"  # aceptación atrasada de una cuenta eliminada (ADR-0085)
                 correlacion = [evento["correlationId"]] if evento.get("correlationId") else []
                 unidad = UnidadDeCambio(tx, nucleo.region, evento["userId"], nucleo.reloj, correlation_ids=correlacion)
                 resultado = propuestas.aplicar_aceptacion(tx, unidad, nucleo.ruteo, evento)

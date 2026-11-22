@@ -14,7 +14,7 @@ from comun.infraestructura.db import BaseDatos
 from comun.infraestructura.reloj import Reloj, iso
 from comun.observabilidad import Logger, metricas
 from contratos.esquemas import validar_evento
-from contratos.topologia import RK_SUGERENCIAS
+from contratos.topologia import RK_CUENTA, RK_SUGERENCIAS
 
 VIGENCIA_REGISTRO_PUSH = timedelta(hours=24)
 
@@ -27,13 +27,25 @@ class EnvioPush:
         self.reloj = reloj
         self.logger = logger
         self.enviados: list[dict] = []
+        # Registro de dispositivos simulado: las cuentas eliminadas ya no tienen dispositivos (ADR-0085).
+        self._sin_dispositivos: set[str] = set()
         base.crear_esquema(["CREATE TABLE IF NOT EXISTS push_enviados (clave TEXT PRIMARY KEY, vence TEXT NOT NULL)"])
 
     def dispositivos(self, home_region: str, user_id: str) -> list[str]:
+        if f"{home_region}:{user_id}" in self._sin_dispositivos:
+            return []
         return [f"disp-{home_region}-{user_id}"]  # registro de dispositivos simulado
 
     def procesar(self, mensaje: Mensaje):
         aviso = mensaje.cuerpo
+        if mensaje.routing_key == RK_CUENTA:  # cuenta eliminada: se borran sus dispositivos (ADR-0085)
+            validar_evento(RK_CUENTA, aviso)
+            self._sin_dispositivos.add(f"{aviso['homeRegion']}:{aviso['userId']}")
+            with self.base.transaccion() as tx:  # registro de push enviados: la clave incluye el dispositivo
+                tx.ejecutar("DELETE FROM push_enviados WHERE clave LIKE ?",
+                            (f"%:disp-{aviso['homeRegion']}-{aviso['userId']}",))
+            metricas.incrementar("push_dispositivos_borrados")
+            return
         if mensaje.routing_key == RK_SUGERENCIAS:
             validar_evento(RK_SUGERENCIAS, aviso)
             motivo = "alternatives_available"

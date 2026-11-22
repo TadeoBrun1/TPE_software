@@ -91,3 +91,7 @@ Esta decisión forma parte del diseño integrado mediante [PR #4](https://github
 merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
 la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
 ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+
+## Nota de la iteración 5 (2026-11-22)
+
+Al eliminar la cuenta, la ingesta borra las vinculaciones del usuario y revoca las autorizaciones delegadas en el proveedor de correo o de reservas ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

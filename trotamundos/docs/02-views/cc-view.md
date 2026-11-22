@@ -83,6 +83,7 @@ flowchart LR
     B -- "suggestions.available.v1" --> NT
     G -- "REST: sugerencias, feedback, preferencias" --> R
     RE -- "lee feedback y publica versiones" --> RS2
+    B -- "account.deleted.v1 (una cola por consumidor)" --> IDP
 ```
 
 Leyenda: rectángulo = proceso; cilindro = almacenamiento; hexágono = intermediario de mensajes; flecha = conector
@@ -135,6 +136,7 @@ sola para no recargar el diagrama.
 | Intermediario (`suggestion.accepted.v1`) | Núcleo | Asíncrono, cola quorum `core.suggestions` (ADR-0084) | [suggestion-accepted.v1.yaml](../../specs/asyncapi/suggestion-accepted.v1.yaml) |
 | Intermediario (`suggestions.available.v1`) | Notificador | Asíncrono, las mismas colas que `panel.changed.v1` (ADR-0084) | [suggestions-available.v1.yaml](../../specs/asyncapi/suggestions-available.v1.yaml) |
 | Puerta de entrada | Recomendación | Síncrono, REST; prioridad baja ante sobrecarga (ADR-0047, ADR-0084) | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
+| Intermediario (`account.deleted.v1`) | Proveedor de identidad, ingesta, notificador, recomendación y analítica | Asíncrono, cola propia o enlace nuevo por consumidor (ADR-0085); en el diagrama se dibuja solo la flecha a identidad | [account-deleted.v1.yaml](../../specs/asyncapi/account-deleted.v1.yaml) |
 | Recomendación | Sistemas de terceros (búsqueda) | Síncrono, APIs estándar de búsqueda, con caché y límite por proveedor (ADR-0082) | [offer-search.md](../../specs/offer-search.md) |
 | Intermediario (eventos de dominio) | Analítica | Asíncrono, suscripción con cola propia | [booking-facts.v1.yaml](../../specs/asyncapi/booking-facts.v1.yaml), [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml) |
 | Ingesta | Proveedores de correo y terceros | Síncrono, API del proveedor (sondeo y consulta) | Externo (CON-1, CON-2) |
