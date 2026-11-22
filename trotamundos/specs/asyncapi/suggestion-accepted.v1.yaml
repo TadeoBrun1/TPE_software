@@ -1,0 +1,119 @@
+asyncapi: 2.6.0
+info:
+  title: Sugerencia aceptada
+  version: 0.1.0
+  description: >
+    Contrato propuesto de la iteración 5 (opción A, ADR-0084). Lo publica el proceso de recomendación desde su outbox,
+    en la misma transacción que guarda la aceptación. Lo consume el núcleo de la misma región con la cola quorum
+    core.suggestions: crea en el viaje una reserva con estado proposed y origen suggestion, deduplicando por
+    suggestionId (Idempotent Receiver). Si el viaje ya no existe, lo registra como descartado y confirma el mensaje.
+    Transporte: RabbitMQ, exchange travel.domain, routing key suggestion.accepted.v1 (ADR-0028). Los datos de la oferta
+    son los normalizados de specs/offer-search.md; no lleva datos del viajero más allá de sus identificadores.
+defaultContentType: application/json
+channels:
+  suggestion.accepted.v1:
+    publish:
+      operationId: publishSuggestionAccepted
+      message:
+        $ref: '#/components/messages/SuggestionAccepted'
+components:
+  messages:
+    SuggestionAccepted:
+      name: SuggestionAccepted
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+            description: Contexto de traza W3C (ADR-0067); lo propagan productores y consumidores.
+          tracestate:
+            type: string
+      payload:
+        type: object
+        additionalProperties: false
+        required:
+        - eventId
+        - schemaVersion
+        - homeRegion
+        - userId
+        - tripId
+        - suggestionId
+        - cancelledBookingId
+        - offer
+        - acceptedAt
+        properties:
+          eventId:
+            type: string
+            minLength: 1
+          schemaVersion:
+            type: string
+            enum:
+            - '1'
+          correlationId:
+            type: string
+            minLength: 1
+          homeRegion:
+            type: string
+            minLength: 1
+          userId:
+            type: string
+            minLength: 1
+          tripId:
+            type: string
+            minLength: 1
+          suggestionId:
+            type: string
+            minLength: 1
+          cancelledBookingId:
+            type: string
+            minLength: 1
+          offer:
+            type: object
+            additionalProperties: false
+            required:
+            - type
+            - provider
+            - offerUrl
+            properties:
+              type:
+                type: string
+                pattern: ^[a-z][a-z0-9_]*$
+              provider:
+                type: string
+                minLength: 1
+              startsAt:
+                type: string
+                format: date-time
+              endsAt:
+                type: string
+                format: date-time
+              timeZone:
+                type: string
+              arrivalTimeZone:
+                type: string
+              location:
+                type: string
+              arrivalLocation:
+                type: string
+              stops:
+                type: integer
+                minimum: 0
+              price:
+                type: object
+                additionalProperties: false
+                required:
+                - amount
+                - currency
+                properties:
+                  amount:
+                    type: number
+                    minimum: 0
+                  currency:
+                    type: string
+                    pattern: ^[A-Z]{3}$
+              offerUrl:
+                type: string
+                format: uri
+          acceptedAt:
+            type: string
+            format: date-time

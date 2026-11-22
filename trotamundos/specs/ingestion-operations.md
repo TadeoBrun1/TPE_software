@@ -10,7 +10,7 @@ Productores usan mensajes persistentes, publisher confirms y `mandatory=true`; u
 fallo aunque llegue confirm. No marcar outbox enviada sin confirmación y sin retorno de mensaje no enrutado.
 Consumidores usan ACK manual posterior a resultado durable. La reentrega es normal; no hay exactly-once.
 
-Cada región tiene su vhost y usuarios técnicos con permisos por exchange/cola. Ingesta publica novedades; el núcleo publica eventos confirmados y solicitudes de asistencia. El trabajador de
+Cada región tiene su vhost y usuarios técnicos con permisos por exchange/cola. Ingesta publica novedades; el núcleo publica eventos confirmados y solicitudes de asistencia; la recomendación publica sus avisos y aceptaciones (iteración 5). El trabajador de
 asistencia del núcleo publica sus resultados y tiene credenciales separadas de la atención HTTP. Consumidores reciben
 solo las colas necesarias. Broker/management no son endpoints públicos; acceso externo por Gateway no equivale
 a exponer AMQP en Internet. TLS y credenciales por servicio se mantienen fuera de código y payloads.
@@ -18,9 +18,11 @@ a exponer AMQP en Internet. TLS y credenciales por servicio se mantienen fuera d
 | Exchange durable | Routing keys | Colas / consumidor |
 |---|---|---|
 | `travel.ingestion` | `booking.change.detected.v1.s0` a `.s7` | `core.bookings.s0` a `.s7`, una por shard de usuario |
-| `travel.domain` | `booking.changed.v1`, `trip.changed.v1` | Cola independiente por consumidor autorizado. En la primera entrega solo la analítica consume `trip.changed.v1` |
-| `travel.domain` | `booking.facts.v1` | Cola quorum `analytics.facts` de la analítica de la región (iteración 4, ADR-0064); también recibe `trip.changed.v1` |
+| `travel.domain` | `trip.changed.v1` | Cola independiente por consumidor autorizado. Solo la analítica consume `trip.changed.v1`. `booking.changed.v1` se retiró en la iteración 5 (ADR-0081): nunca tuvo consumidor |
+| `travel.domain` | `booking.facts.v1` | Cola quorum `analytics.facts` de la analítica de la región (iteración 4, ADR-0064), que también recibe `trip.changed.v1`, y cola quorum `recommendation.facts` del proceso de recomendación (iteración 5, ADR-0081) |
 | `travel.domain` | `panel.changed.v1` | Una cola por instancia del notificador (ver abajo) y la cola compartida `notifier.push` (iteración 3, ADR-0046) |
+| `travel.domain` | `suggestions.available.v1` | Las mismas colas del notificador: cada instancia (evento SSE) y `notifier.push` (iteración 5, ADR-0084) |
+| `travel.domain` | `suggestion.accepted.v1` | Cola quorum `core.suggestions` del núcleo (iteración 5, ADR-0084) |
 | `travel.assistance` | `assistance.requested.v1`, `assistance.result.v1` | Solicitudes para trabajador de asistencia del núcleo; resultados para seguimiento |
 | `travel.errors` | `ingestion.error.v1` | Operación/revisión con acceso restringido, referencia mínima al caso durable |
 

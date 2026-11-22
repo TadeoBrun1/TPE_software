@@ -27,6 +27,10 @@ permite publicar al recuperar; reentregar una novedad no duplica el cambio; camb
 
 ## Transporte fijado
 
+> **Iteración 5 (ADR-0081):** `booking.changed.v1` se retiró. Nunca tuvo consumidor y su papel lo cubre
+> `booking.facts.v1`, que consumen la analítica y la recomendación de la región. Este apartado queda como registro
+> del diseño original.
+
 RabbitMQ, exchange `travel.domain`, routing key `booking.changed.v1`, cola independiente por consumidor; TLS,
 roles y confirm/mandatory/ACK según [políticas](ingestion-operations.md). Esquema mínimo en
 [booking-confirmed.v1.yaml](asyncapi/booking-confirmed.v1.yaml). La versión bookingVersion es interna del núcleo,

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: API de itinerarios de Trotamundos
-  version: 0.3.0
+  version: 0.4.0
   description: >
     Contrato propuesto de la iteración 3 (consulta y gestión de viajes), ampliado en la iteración 4 (autenticación,
     compartición, tarjeta para redes sociales, detalles por tipo de reserva y datos neutros para la
@@ -16,6 +16,9 @@ info:
     tipos como códigos, sin textos traducidos (ADR-0065). Los identificadores de viajes e invitaciones empiezan con la
     región del dueño (por ejemplo sa-east:7f3c...), para que la puerta de entrada pueda reenviar a esa región
     (ADR-0062).
+    0.4.0 (iteración 5, opción A): rutas de sugerencias, feedback, preferencias y perfil de recomendación, que la
+    puerta de entrada enruta al proceso de recomendación de la región con prioridad baja (ADR-0081 a ADR-0084); la
+    reserva suma el estado proposed, el origen suggestion y el enlace offerUrl (reserva propuesta, ADR-0084).
 servers:
   - url: https://{region}.api.trotamundos.example/v1
     variables:
@@ -575,6 +578,144 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
         "503":
           $ref: "#/components/responses/Overloaded"
+  /trips/{tripId}/suggestions:
+    get:
+      summary: Sugerencias de alternativas para un viaje (RF-09)
+      description: >
+        Lo atiende el proceso de recomendación de la región (ADR-0081, ADR-0084). Devuelve las alternativas
+        ordenadas para las reservas canceladas del viaje y el estado de la búsqueda. Solo para el dueño del viaje:
+        no se reenvía entre regiones (un viaje de otra región da 404) y, para un viaje ajeno o inexistente de la
+        región, responde con searchStatus none y la lista vacía, sin revelar si el viaje existe. Las personas con
+        quienes se compartió el viaje no ven sugerencias. Prioridad baja ante sobrecarga (ADR-0047).
+      operationId: getTripSuggestions
+      parameters:
+        - $ref: "#/components/parameters/TripId"
+      responses:
+        "200":
+          description: Sugerencias del viaje
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuggestionList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+  /suggestions/{suggestionId}/feedback:
+    post:
+      summary: Aceptar, rechazar o ajustar una sugerencia (human-in-the-loop, RF-09.2 y RF-09.3)
+      description: >
+        accept deja la alternativa como reserva propuesta en el viaje (el núcleo la crea de forma asincrónica a
+        partir de suggestion.accepted.v1) y devuelve el enlace a la oferta del proveedor. reject y adjust guardan el
+        feedback y devuelven las sugerencias del viaje reordenadas; adjust además actualiza las preferencias del
+        viajero (ADR-0083). Prioridad baja ante sobrecarga.
+      operationId: sendSuggestionFeedback
+      parameters:
+        - name: suggestionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuggestionFeedback"
+      responses:
+        "200":
+          description: Feedback guardado (reject o adjust); sugerencias del viaje reordenadas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuggestionList"
+        "202":
+          description: Sugerencia aceptada; la reserva propuesta aparece en el panel en cuanto el núcleo la aplica
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuggestionAccepted"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: La sugerencia ya fue aceptada o rechazada, o venció
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+  /recommendations/preferences:
+    get:
+      summary: Preferencias de recomendación del viajero
+      description: Incluye si la recomendación está activada (por defecto sí, RF-09.4) y los límites explícitos.
+      operationId: getRecommendationPreferences
+      responses:
+        "200":
+          description: Preferencias actuales
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationPreferences"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+    put:
+      summary: Cambiar las preferencias o desactivar la recomendación (RF-09.3, RF-09.4)
+      description: >
+        Con enabled en false no se generan sugerencias nuevas desde ese momento (QA-14). Los límites explícitos se
+        aplican antes de ordenar: ninguna sugerencia los viola (QA-13).
+      operationId: putRecommendationPreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecommendationPreferences"
+      responses:
+        "200":
+          description: Preferencias guardadas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationPreferences"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
+  /recommendations/profile:
+    delete:
+      summary: Borrar el perfil de preferencias (RF-09.4, QA-14)
+      description: >
+        Borra el perfil resumido, las preferencias, el feedback y las sugerencias del viajero en su región. No
+        desactiva la recomendación: para eso, PUT /recommendations/preferences con enabled en false. Idempotente.
+      operationId: deleteRecommendationProfile
+      responses:
+        "204":
+          description: Perfil borrado (o no existía)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Overloaded"
   /bookings:
     post:
       summary: Agregar una reserva manualmente (RF-04)
@@ -843,14 +984,19 @@ components:
           $ref: "#/components/schemas/BookingType"
         status:
           type: string
-          enum: [confirmed, modified, cancelled, pending]
+          enum: [confirmed, modified, cancelled, pending, proposed]
+          description: proposed = alternativa aceptada desde una sugerencia, todavía no reservada (ADR-0084)
         origin:
           type: string
-          enum: [email, provider, manual]
+          enum: [email, provider, manual, suggestion]
         provider:
           type: string
         providerReference:
           type: string
+        offerUrl:
+          type: string
+          format: uri
+          description: Solo en reservas propuestas. Enlace a la oferta del proveedor; Trotamundos no reserva (ADR-0084)
         startsAt:
           type: string
           format: date-time
@@ -1084,6 +1230,139 @@ components:
         days:
           type: integer
           minimum: 1
+    Suggestion:
+      type: object
+      additionalProperties: false
+      description: >
+        Alternativa a una reserva cancelada, ordenada para el viajero (ADR-0083). Datos neutros: códigos en lugar de
+        textos (ADR-0065); la app arma el texto con reasonCodes en el idioma del usuario.
+      required: [id, tripId, cancelledBookingId, rank, type, provider, price, offerUrl, status]
+      properties:
+        id:
+          type: string
+        tripId:
+          type: string
+        cancelledBookingId:
+          type: string
+        rank:
+          type: integer
+          minimum: 1
+        type:
+          $ref: "#/components/schemas/BookingType"
+        provider:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        timeZone:
+          $ref: "#/components/schemas/TimeZone"
+        arrivalTimeZone:
+          $ref: "#/components/schemas/TimeZone"
+        location:
+          type: string
+        arrivalLocation:
+          type: string
+        stops:
+          type: integer
+          minimum: 0
+        price:
+          $ref: "#/components/schemas/Money"
+        offerUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+        reasonCodes:
+          type: array
+          description: Por qué se sugiere (por ejemplo cheaper, same_provider, fewer_stops, similar_schedule)
+          items:
+            type: string
+            enum: [cheaper, same_provider, preferred_provider, fewer_stops, shorter, similar_schedule, similar_price]
+        status:
+          type: string
+          enum: [available, accepted, rejected, expired]
+    SuggestionList:
+      type: object
+      additionalProperties: false
+      required: [tripId, searchStatus, suggestions]
+      properties:
+        tripId:
+          type: string
+        searchStatus:
+          type: string
+          description: >
+            pending = la búsqueda está en curso o esperando a un proveedor (ADR-0082); partial = algún proveedor no
+            respondió; none = no hay cancelaciones con sugerencias en el viaje.
+          enum: [pending, ready, partial, none]
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Suggestion"
+    SuggestionFeedback:
+      type: object
+      additionalProperties: false
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [accept, reject, adjust]
+        reason:
+          type: string
+          description: Motivo opcional de un rechazo; se usa como señal de entrenamiento
+          enum: [too_expensive, bad_schedule, too_many_stops, unwanted_provider, other]
+        preferences:
+          $ref: "#/components/schemas/RecommendationPreferences"
+    SuggestionAccepted:
+      type: object
+      additionalProperties: false
+      required: [suggestionId, status, offerUrl]
+      properties:
+        suggestionId:
+          type: string
+        status:
+          type: string
+          enum: [accepted]
+        offerUrl:
+          type: string
+          format: uri
+    RecommendationPreferences:
+      type: object
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+          description: Activada por defecto (opt-out, RF-09.4)
+        maxPrice:
+          $ref: "#/components/schemas/Money"
+        maxStops:
+          type: integer
+          minimum: 0
+        departureWindow:
+          type: object
+          additionalProperties: false
+          description: Franja horaria local aceptable para salir o hacer el check-in
+          required: [from, to]
+          properties:
+            from:
+              type: string
+              pattern: "^[0-2][0-9]:[0-5][0-9]$"
+            to:
+              type: string
+              pattern: "^[0-2][0-9]:[0-5][0-9]$"
+        preferredProviders:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+        excludedProviders:
+          type: array
+          maxItems: 20
+          items:
+            type: string
     Error:
       type: object
       required: [code, message]
