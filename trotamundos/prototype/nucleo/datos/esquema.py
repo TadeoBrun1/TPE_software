@@ -22,7 +22,8 @@ DDL_NODO = [
         origen TEXT NOT NULL, proveedor TEXT, referencia_proveedor TEXT, connection_id TEXT, provider_id TEXT,
         external_reservation_id TEXT, source_version TEXT, inicio TEXT, fin TEXT, zona TEXT, zona_llegada TEXT,
         lugar TEXT, lugar_llegada TEXT, nombre_visible TEXT, precio_monto REAL, precio_moneda TEXT, detalles TEXT,
-        notas TEXT, campos_editados TEXT NOT NULL, version INTEGER NOT NULL, creado TEXT NOT NULL)""",
+        notas TEXT, campos_editados TEXT NOT NULL, version INTEGER NOT NULL, creado TEXT NOT NULL,
+        url_oferta TEXT, suggestion_id TEXT)""",
     "CREATE INDEX IF NOT EXISTS reservas_usuario ON reservas (user_id, trip_id)",
     "CREATE INDEX IF NOT EXISTS reservas_externas ON reservas (connection_id, provider_id, external_reservation_id)",
     """CREATE TABLE IF NOT EXISTS marcas_borrado (
@@ -39,6 +40,9 @@ DDL_NODO = [
     """CREATE TABLE IF NOT EXISTS casos_pendientes (
         caso_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, event_id TEXT NOT NULL, motivo TEXT NOT NULL,
         resumen TEXT NOT NULL, reservation_key TEXT, source_version TEXT, resuelto TEXT, creado TEXT NOT NULL)""",
+    # Iteración 5 (ADR-0084): sugerencias aceptadas ya aplicadas (control de entrada de suggestion.accepted.v1).
+    """CREATE TABLE IF NOT EXISTS sugerencias_aplicadas (
+        suggestion_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, resultado TEXT NOT NULL, procesado TEXT NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS idempotencia (
         user_id TEXT NOT NULL, clave TEXT NOT NULL, operacion TEXT NOT NULL, estado INTEGER NOT NULL,
         respuesta TEXT NOT NULL, creado TEXT NOT NULL, PRIMARY KEY (user_id, clave))""",

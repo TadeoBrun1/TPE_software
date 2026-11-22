@@ -46,7 +46,8 @@ class EntradaGlobal:
         self.app = Starlette(routes=[Route("/login/region", self.region_login, methods=["POST"]),
                                      Route("/internal/directory", self.registrar, methods=["POST"]),
                                      Route("/id/{region}/{camino:path}", self.identidad, methods=["GET", "POST"]),
-                                     Route("/{camino:path}", self.enrutar, methods=["GET", "POST", "PATCH", "DELETE"])])
+                                     Route("/{camino:path}", self.enrutar,
+                                           methods=["GET", "POST", "PUT", "PATCH", "DELETE"])])
 
     def _hmac(self, email: str) -> str:
         return hmac.new(self.clave_directorio, email.strip().lower().encode(), hashlib.sha256).hexdigest()

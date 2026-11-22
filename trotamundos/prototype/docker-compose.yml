@@ -3,8 +3,8 @@
 #   docker compose up --build        (desde trotamundos/prototype)
 #
 # Entrada global: http://localhost:8080. Puertas de entrada regionales (avisos de proveedores):
-# http://localhost:8081 (sa-east) y http://localhost:8082 (eu-west). Los endpoints de simulación del núcleo y de la
-# ingesta de sa-east quedan en 127.0.0.1:9001 y 127.0.0.1:9002 (ver README). El volumen `datos` guarda el directorio
+# http://localhost:8081 (sa-east) y http://localhost:8082 (eu-west). Los endpoints de simulación del núcleo, de la
+# ingesta y de la recomendación de sa-east quedan en 127.0.0.1:9001, 127.0.0.1:9002 y 127.0.0.1:9003 (ver README). El volumen `datos` guarda el directorio
 # global y los buzones simulados de invitaciones. Las claves son solo de desarrollo: en un
 # despliegue real salen de un gestor de secretos y no del archivo.
 
@@ -110,6 +110,20 @@ services:
     depends_on:
       nucleo-sa-east: {condition: service_started}
 
+  recomendacion-sa-east:
+    <<: *servicio
+    command: python -m recomendacion
+    ports: ["127.0.0.1:9003:8000"]
+    environment:
+      <<: *claves
+      REGION: sa-east
+      BASE_RECOMENDACION: postgresql://trotamundos:trotamundos@postgres-sa-east/recomendacion
+      BROKER: amqp://guest:guest@rabbitmq-sa-east:5672/
+      CLAVE_PUERTA: ${CLAVE_PUERTA_SA:-solo-desarrollo-puerta-sa-no-usar-en-produccion}
+    depends_on:
+      postgres-sa-east: {condition: service_healthy}
+      rabbitmq-sa-east: {condition: service_healthy}
+
   puerta-sa-east:
     <<: *servicio
     command: python -m puerta
@@ -121,6 +135,7 @@ services:
       URL_NUCLEO: http://nucleo-sa-east:8000
       URL_NOTIFICADOR: http://notificador-sa-east:8000
       URL_INGESTA: http://ingesta-sa-east:8000
+      URL_RECOMENDACION: http://recomendacion-sa-east:8000
       BASE_AUDITORIA: postgresql://trotamundos:trotamundos@postgres-sa-east/auditoria
       CLAVE_PUERTA: ${CLAVE_PUERTA_SA:-solo-desarrollo-puerta-sa-no-usar-en-produccion}
       CLAVE_CANAL: ${CLAVE_CANAL:-solo-desarrollo-canal-entre-regiones-no-usar-en-produccion}
@@ -182,6 +197,19 @@ services:
     depends_on:
       nucleo-eu-west: {condition: service_started}
 
+  recomendacion-eu-west:
+    <<: *servicio
+    command: python -m recomendacion
+    environment:
+      <<: *claves
+      REGION: eu-west
+      BASE_RECOMENDACION: postgresql://trotamundos:trotamundos@postgres-eu-west/recomendacion
+      BROKER: amqp://guest:guest@rabbitmq-eu-west:5672/
+      CLAVE_PUERTA: ${CLAVE_PUERTA_EU:-solo-desarrollo-puerta-eu-no-usar-en-produccion}
+    depends_on:
+      postgres-eu-west: {condition: service_healthy}
+      rabbitmq-eu-west: {condition: service_healthy}
+
   puerta-eu-west:
     <<: *servicio
     command: python -m puerta
@@ -193,6 +221,7 @@ services:
       URL_NUCLEO: http://nucleo-eu-west:8000
       URL_NOTIFICADOR: http://notificador-eu-west:8000
       URL_INGESTA: http://ingesta-eu-west:8000
+      URL_RECOMENDACION: http://recomendacion-eu-west:8000
       BASE_AUDITORIA: postgresql://trotamundos:trotamundos@postgres-eu-west/auditoria
       CLAVE_PUERTA: ${CLAVE_PUERTA_EU:-solo-desarrollo-puerta-eu-no-usar-en-produccion}
       CLAVE_CANAL: ${CLAVE_CANAL:-solo-desarrollo-canal-entre-regiones-no-usar-en-produccion}

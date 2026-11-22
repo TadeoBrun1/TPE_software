@@ -3,8 +3,9 @@
 Cada evento se valida contra su contrato AsyncAPI antes de guardarse: un evento que no cumple el contrato aborta
 la transacción en lugar de publicarse.
 
-`booking.changed.v1` no se escribe: según `ingestion-operations.md` no tiene consumidores en la primera entrega, y
-con `mandatory` un mensaje sin ruta es un fallo que dejaría la outbox trabada (hallazgo del prototipo, ver README).
+`booking.changed.v1` no se escribe: se retiró en la iteración 5 (ADR-0081). Nunca tuvo consumidor (con `mandatory`,
+un mensaje sin ruta dejaría la outbox trabada) y su papel lo cubre `booking.facts.v1`, que consumen la analítica y
+la recomendación.
 """
 from __future__ import annotations
 
@@ -26,11 +27,13 @@ def _guardar(tx: Transaccion, nombre: str, routing_key: str, cuerpo: dict, ahora
     outbox.agregar(tx, EXCHANGE_DOMINIO, routing_key, cuerpo, _encabezados(), ahora)
 
 
-def panel_cambiado(tx, region, user_id, version, motivo, relevancia, correlation_ids, ahora):
+def panel_cambiado(tx, region, user_id, version, motivo, relevancia, correlation_ids, ahora, clave_colapso=None):
     cuerpo = {
         "eventId": str(uuid.uuid4()), "schemaVersion": "1", "homeRegion": region, "userId": user_id,
         "panelVersion": version, "reason": motivo, "relevance": relevancia, "committedAt": ahora,
     }
+    if clave_colapso:  # 0.3.0: el push de las alternativas reemplaza al de la cancelación (ADR-0084)
+        cuerpo["collapseKey"] = clave_colapso
     if correlation_ids:
         cuerpo["correlationIds"] = list(dict.fromkeys(correlation_ids))[:50]
     _guardar(tx, "panel.changed.v1", RK_PANEL, cuerpo, ahora)
@@ -46,7 +49,7 @@ def viaje_cambiado(tx, region, user_id, trip_id, tipo, version_panel, ahora):
 
 
 def hechos_reserva(tx, region, fila: dict, tipo_cambio: str, ahora: str):
-    """`booking.facts.v1`: solo los campos permitidos para la analítica (ADR-0064)."""
+    """`booking.facts.v1`: solo los campos permitidos (ADR-0064); lo consumen la analítica y la recomendación."""
     cuerpo = {
         "eventId": str(uuid.uuid4()), "schemaVersion": "1",
         "correlationId": contexto_correlacion.get() or str(uuid.uuid4()),
@@ -55,7 +58,8 @@ def hechos_reserva(tx, region, fila: dict, tipo_cambio: str, ahora: str):
         "source": fila["origen"], "committedAt": ahora, "createdDate": fila["creado"][:10],
     }
     opcionales = {"provider": fila.get("proveedor"), "startDate": (fila.get("inicio") or "")[:10] or None,
-                  "endDate": (fila.get("fin") or "")[:10] or None, "locationCity": fila.get("lugar"),
+                  "endDate": (fila.get("fin") or "")[:10] or None, "startsAt": fila.get("inicio"),
+                  "endsAt": fila.get("fin"), "locationCity": fila.get("lugar"),
                   "arrivalCity": fila.get("lugar_llegada")}
     cuerpo.update({k: v for k, v in opcionales.items() if v})
     _guardar(tx, "booking.facts.v1", RK_HECHOS, cuerpo, ahora)

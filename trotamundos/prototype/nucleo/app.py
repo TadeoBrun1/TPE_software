@@ -25,6 +25,7 @@ from nucleo.datos.esquema import DDL_AUDITORIA, DDL_NODO
 from nucleo.datos.ruteo import RuteoParticiones
 from nucleo.esquemas.registro import ESQUEMAS_POR_DEFECTO, RegistroEsquemas
 from nucleo.mensajeria.consumidor_novedades import ConsumidorNovedades
+from nucleo.mensajeria.consumidor_sugerencias import ConsumidorSugerencias
 from nucleo.viajes import ciclo_vida
 
 
@@ -47,12 +48,14 @@ class Nucleo:
         self.comparticion = Comparticion(region, self.ruteo, self.auditoria, self.reloj, clave_email, self.correo)
         self.publicador = PublicadorOutbox(nodos, broker, self.reloj, self.logger)
         self.consumidor = ConsumidorNovedades(self)
+        self.consumidor_sugerencias = ConsumidorSugerencias(self)  # iteración 5 (ADR-0084)
         self.app = crear_app(self)
         self._activo = False
 
     def preparar_mensajeria(self):
         self.broker.declarar(topologia_region())
         self.consumidor.suscribir(self.broker)
+        self.consumidor_sugerencias.suscribir(self.broker)
 
     def registrar_vinculacion(self, connection_id: str, user_id: str, provider_id: str, estado: str = "activa"):
         """El núcleo es la autoridad de las vinculaciones (iteración 2). RF-02 no está en el alcance del prototipo,

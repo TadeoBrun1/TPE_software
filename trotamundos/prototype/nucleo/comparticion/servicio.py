@@ -175,7 +175,8 @@ class Comparticion:
                         "SELECT 1 AS x FROM comparticiones WHERE trip_id = ? AND estado = 'removed' "
                         "AND aceptada_region = ? AND aceptada_usuario = ?",
                         (trip_id, principal.region, principal.user_id)) is not None
-                    reservas = tx.todos("SELECT * FROM reservas WHERE trip_id = ? ORDER BY inicio", (trip_id,))
+                    reservas = tx.todos("SELECT * FROM reservas WHERE trip_id = ? AND estado <> 'proposed' "
+                                        "ORDER BY inicio", (trip_id,))  # las propuestas no se comparten (ADR-0084)
         if viaje is None or permiso is None:
             motivo = "not_found" if viaje is None else "removed" if quitado else "no_permission"
             self.auditoria.registrar("share.read", "denied", principal.actor, metodo, ruta, principal.entry_region,

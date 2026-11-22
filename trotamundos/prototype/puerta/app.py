@@ -46,8 +46,9 @@ class Puerta:
                  otras_regiones: dict[str, Destino], emisores: Emisores, base_auditoria: BaseDatos,
                  clave_puerta: str, clave_canal: str, secreto_tickets: str, reloj: Reloj | None = None,
                  logger: Logger | None = None, limite: LimitePorCliente | None = None,
-                 sobrecarga: ControlSobrecarga | None = None):
+                 sobrecarga: ControlSobrecarga | None = None, recomendacion: Destino | None = None):
         self.region = region
+        self.recomendacion = recomendacion  # iteración 5: proceso de recomendación de la región (ADR-0084)
         self.nucleo = nucleo
         self.notificador = notificador
         self.ingesta = ingesta
@@ -62,7 +63,7 @@ class Puerta:
         self.limite = limite or LimitePorCliente()
         self.sobrecarga = sobrecarga or ControlSobrecarga()
         self.app = Starlette(routes=[Route("/{camino:path}", self.manejar,
-                                           methods=["GET", "POST", "PATCH", "DELETE"])])
+                                           methods=["GET", "POST", "PUT", "PATCH", "DELETE"])])
 
     # ------------------------------------------------------------------------------------------ utilidades
 
@@ -132,6 +133,9 @@ class Puerta:
             ticket, vence = self.tickets.emitir(identidad, self.reloj.ahora())
             return JSONResponse({"ticket": ticket, "expiresAt": vence}, status_code=201)
 
+        if ruta.destino == "recomendacion":
+            return await self._recomendacion(request, ruta, parametros, identidad, entry_region, plantilla, cuerpo)
+
         destino = self.region
         if ruta.destino == "prefijo":
             prefijo = _REGION.match(parametros.get(ruta.parametro, ""))
@@ -166,6 +170,29 @@ class Puerta:
             except DestinoNoDisponible:
                 return _error(503, "unavailable", "Núcleo no disponible", {"Retry-After": "5"})
         return self._respuesta(respuesta.estado, respuesta.encabezados, respuesta.cuerpo, sin_cache)
+
+    async def _recomendacion(self, request: Request, ruta, parametros: dict, identidad: Identidad, entry_region: str,
+                             plantilla: str, cuerpo: bytes):
+        """Sugerencias y preferencias del propio usuario en su región (ADR-0084). Prioridad baja: con sobrecarga se
+        descartan antes que el panel; si el proceso no responde, solo esta función queda sin servicio (QA-16)."""
+        if ruta.parametro:
+            prefijo = _REGION.match(parametros.get(ruta.parametro, ""))
+            if prefijo is None or prefijo.group(1) != self.region:
+                return self._rechazo(False, "bad_region", 404, "No existe", request.method, plantilla, entry_region,
+                                     identidad, parametros)
+        if not self.sobrecarga.admitir(ruta.prioridad):
+            metricas.incrementar(f"puerta_descarte_prioridad_{ruta.prioridad}")
+            return _error(503, "overloaded", "Sobrecarga temporal", {"Retry-After": "10"})
+        if self.recomendacion is None:
+            return _error(503, "unavailable", "Recomendación no disponible", {"Retry-After": "30"})
+        encabezados = {**self._reenviados(request), **self._principal(identidad, entry_region)}
+        with self.sobrecarga:
+            try:
+                respuesta = await self.recomendacion.enviar(request.method, request.url.path, encabezados, cuerpo)
+            except DestinoNoDisponible:
+                metricas.incrementar("puerta_recomendacion_no_disponible")
+                return _error(503, "unavailable", "Recomendación no disponible", {"Retry-After": "30"})
+        return self._respuesta(respuesta.estado, respuesta.encabezados, respuesta.cuerpo, sin_cache=True)
 
     def _reenviados(self, request: Request) -> dict:
         encabezados = {k: v for k, v in request.headers.items() if k.lower() in ENCABEZADOS_REENVIADOS}
@@ -218,4 +245,6 @@ def desde_entorno() -> Puerta:  # pragma: no cover - docker compose
     return Puerta(region, http_mod.abrir(os.environ["URL_NUCLEO"]), http_mod.abrir(os.environ["URL_NOTIFICADOR"]),
                   http_mod.abrir(os.environ["URL_INGESTA"]), otras, emisores,
                   db_mod.abrir(os.environ["BASE_AUDITORIA"], f"{region}-auditoria"), os.environ["CLAVE_PUERTA"],
-                  os.environ["CLAVE_CANAL"], os.environ["SECRETO_TICKETS"])
+                  os.environ["CLAVE_CANAL"], os.environ["SECRETO_TICKETS"],
+                  recomendacion=http_mod.abrir(os.environ["URL_RECOMENDACION"]) if os.environ.get("URL_RECOMENDACION")
+                  else None)

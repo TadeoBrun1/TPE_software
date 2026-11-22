@@ -57,7 +57,7 @@ def construir(tx: Transaccion, user_id: str, version: int, reloj: Reloj) -> dict
 
 
 def actualizar(tx: Transaccion, region: str, user_id: str, motivos: list[str], correlation_ids: list[str],
-               reloj: Reloj) -> int:
+               reloj: Reloj, clave_colapso: str | None = None) -> int:
     """Escribe el panel con versión anterior + 1 y deja `panel.changed.v1` en la outbox, en la misma transacción."""
     ahora = iso(reloj.ahora())
     anterior = bloquear(tx, user_id, ahora)
@@ -67,7 +67,8 @@ def actualizar(tx: Transaccion, region: str, user_id: str, motivos: list[str], c
                 (version, json.dumps(documento), ahora, user_id))
     motivo = min(motivos, key=PRIORIDAD_MOTIVOS.index) if motivos else "booking_updated"
     relevancia = "important" if any(m in RELEVANCIA_IMPORTANTE for m in motivos) else "normal"
-    eventos.panel_cambiado(tx, region, user_id, version, motivo, relevancia, correlation_ids, ahora)
+    colapso = clave_colapso if motivo == "booking_cancelled" else None
+    eventos.panel_cambiado(tx, region, user_id, version, motivo, relevancia, correlation_ids, ahora, colapso)
     return version
 
 
