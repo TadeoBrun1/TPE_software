@@ -26,6 +26,7 @@ COLA_RECOMENDACION = "recommendation.facts"     # iteración 5 (ADR-0081)
 COLA_NUCLEO_SUGERENCIAS = "core.suggestions"    # iteración 5 (ADR-0084)
 COLA_INGESTA_CUENTAS = "ingestion.accounts"     # iteración 5 (ADR-0085)
 COLA_IDENTIDAD_CUENTAS = "identity.accounts"    # iteración 5 (ADR-0085)
+COLA_NUCLEO_CUENTAS = "core.accounts"           # iteración 5 (ADR-0085): pasos del núcleo posteriores al borrado
 COLA_PUSH = "notifier.push"
 COLA_INSTANCIA_NOTIFICADOR = "notifier.instance.{instancia}"
 
@@ -52,7 +53,7 @@ def topologia_region() -> Topologia:
     colas.append(Cola(COLA_ANALITICA, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_HECHOS),
                                                               (EXCHANGE_DOMINIO, RK_VIAJE),
                                                               (EXCHANGE_DOMINIO, RK_CUENTA)]))
-    # La recomendación recibe hechos y bajas de cuentas por la misma cola: en orden de publicación del núcleo.
+    # La recomendación recibe hechos y bajas de cuentas por la misma cola (ADR-0085).
     colas.append(Cola(COLA_RECOMENDACION, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_HECHOS),
                                                                   (EXCHANGE_DOMINIO, RK_CUENTA)]))
     colas.append(Cola(COLA_NUCLEO_SUGERENCIAS, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_ACEPTADA)]))
@@ -61,6 +62,7 @@ def topologia_region() -> Topologia:
                                                          (EXCHANGE_DOMINIO, RK_CUENTA)]))
     colas.append(Cola(COLA_INGESTA_CUENTAS, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_CUENTA)]))
     colas.append(Cola(COLA_IDENTIDAD_CUENTAS, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_CUENTA)]))
+    colas.append(Cola(COLA_NUCLEO_CUENTAS, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_CUENTA)]))
     return Topologia(exchanges=[EXCHANGE_INGESTA, EXCHANGE_DOMINIO], colas=colas)
 
 

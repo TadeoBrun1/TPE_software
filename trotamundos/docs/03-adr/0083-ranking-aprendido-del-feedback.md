@@ -52,17 +52,25 @@ Reglas:
   tres mejores, para no aprender solo de lo que ya se mostraba (exploración *epsilon-greedy*). Se registra la
   posición de cada sugerencia mostrada para corregir el sesgo de posición al entrenar.
 * **Feedback inmediato (human-in-the-loop):** aceptar o rechazar ajusta en el momento el ajuste por viajero con un
-  paso de descenso por gradiente; ajustar un parámetro cambia el filtro. En ambos casos las sugerencias pendientes
-  de ese viaje se reordenan y se devuelven en la misma respuesta (QA-13, 2 s).
+  paso de descenso por gradiente. Ajustar un parámetro cambia el filtro y, además, cada sugerencia mostrada que el
+  ajuste excluye cuenta como un **rechazo débil**: etiqueta 0 con la mitad del peso (suposición), en el paso por
+  viajero y en el entrenamiento. Así el ajuste también refina el modelo, como pide el enunciado. En todos los casos
+  las sugerencias pendientes de ese viaje se reordenan y se devuelven en la misma respuesta (QA-13, 2 s). El motivo
+  opcional de un rechazo se guarda con el feedback para analizar por qué se rechaza; el modelo todavía no lo usa.
 * **Entrenamiento por lotes, diario y por región:** un trabajo programado en la región entrena los pesos regionales
-  con el feedback de la región (aceptadas como positivas, rechazadas como negativas, ponderadas por posición). Usa
-  cómputo solo mientras corre (CON-5) y los datos no salen de la región (CON-3). El feedback de un día entra en el
-  modelo de esa noche (QA-13, 24 h).
+  con el feedback de la región (aceptadas como positivas, rechazadas como negativas y excluidas por un ajuste como
+  negativas con la mitad del peso, todas ponderadas por posición). Usa
+  cómputo solo mientras corre (CON-5) y los datos no salen de la región (CON-3). Es un único trabajo programado por
+  región, no un proceso de cada instancia. El feedback de un día entra en la versión del modelo de esa noche (QA-13,
+  24 h).
 * **Registro de versiones del modelo:** cada versión entrenada guarda sus pesos, la fecha, los datos usados y su
   evaluación con el feedback reservado para prueba. Solo se activa si no empeora la tasa de aceptación estimada de la
   versión actual. Una versión nueva arranca como *canario* para el 5 % de los viajeros, asignados por un hash estable
   del `userId`; si su tasa de aceptación cae más de un 10 % relativo con una muestra mínima, se vuelve atrás
-  automáticamente. Volver atrás es cambiar qué versión está activa: no hay que desplegar código (QA-15).
+  automáticamente. Volver atrás es cambiar qué versión está activa: no hay que desplegar código (QA-15). El canario
+  se evalúa cada 5 minutos (suposición), así que la vuelta atrás ocurre dentro de los 5 minutos de juntar la
+  muestra. Hay a lo sumo un canario: si no juntó la muestra cuando corre el entrenamiento, la versión nueva lo
+  reemplaza.
 * **Modelos regionales independientes:** cada región aprende de sus viajeros; no se combinan datos entre regiones.
 
 Patrones y tácticas que aplica:
@@ -70,12 +78,11 @@ Patrones y tácticas que aplica:
 | Patrón o táctica | Cómo se aplica | Driver |
 |---|---|---|
 | Patrón de recomendación en dos etapas (candidatos y ranking) | Filtro por límites explícitos y luego orden por puntaje | QA-13 |
-| Táctica *mantener un modelo del usuario* (usabilidad) | Ajuste por viajero y preferencias explícitas en el perfil | QA-13, RF-09.3 |
-| Táctica *apoyar la iniciativa del usuario* (usabilidad) | Ajustar parámetros cambia el filtro y reordena en el momento | QA-13 |
+| Táctica *mantener un modelo del usuario* (usabilidad) | Ajuste por viajero y preferencias explícitas en el perfil; rechazar y ajustar lo actualizan y reordenan en el momento | QA-13, RF-09.3 |
 | Exploración *epsilon-greedy* (bandit) | Una de cada diez listas incluye una oferta fuera de las mejores | RF-09.3 |
 | Táctica *diferir el enlace* (modificabilidad) | La versión activa del modelo se elige en tiempo de ejecución desde el registro | QA-15 |
-| Tácticas *escalonar los despliegues* y *volver atrás* (desplegabilidad), patrón *Canary Release* | Versión nueva para el 5 %; vuelta atrás automática si empeora | QA-15 |
-| Táctica *programar recursos* (performance) | Entrenamiento por lotes en un trabajo programado | CON-5 |
+| Tácticas *escalonar los despliegues* y *volver atrás* (desplegabilidad), patrón *Canary Release* | La versión del modelo es un artefacto que se despliega como dato, sin código: entra para el 5 % y vuelve atrás sola si empeora | QA-15 |
+| Táctica *programar recursos* (performance) | Política de planificación: el entrenamiento corre en la franja de menor carga de la región y no compite con la atención de sugerencias | CON-5 |
 
 ### Consequences
 
@@ -87,7 +94,9 @@ Patrones y tácticas que aplica:
 * Bad, because no aprovecha lo que eligen viajeros parecidos: queda como evolución (opción C) si el feedback acumulado
   lo justifica.
 * Bad, because la tasa de aceptación depende también de qué ofertas hay en cada disrupción: comparar versiones exige
-  una muestra mínima, y un canario puede tardar en decidir.
+  una muestra mínima, y un canario puede tardar en decidir. Trade-off entre QA-13 y QA-15: el feedback entra en una
+  versión del modelo en 24 h, pero llega a toda la región recién cuando un canario junta la muestra; en regiones con
+  poco tráfico eso puede tardar varios días.
 
 ### Confirmation
 

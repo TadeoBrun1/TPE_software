@@ -125,4 +125,4 @@ ni cumplimiento medido de los QA. Las confirmaciones de implementación y los ri
 
 ## Nota de la iteración 5 (2026-11-22)
 
-Los eventos de la recomendación propagan `correlationId` y `traceparent`. Métrica nueva: `qa11_cancelacion_a_sugerencia_s`, desde la búsqueda pendiente hasta las sugerencias generadas ([ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).
+Los eventos de la recomendación propagan `correlationId` y `traceparent`. Métricas nuevas de QA-11, desde la cancelación confirmada en el núcleo (`committedAt` del hecho): `qa11_cancelacion_a_sugerencias_s` (hasta las sugerencias generadas, en la recomendación) y `qa11_cancelacion_a_aviso_s` (hasta el push, en el notificador, con el `cancellationCommittedAt` de `suggestions.available.v1`) ([ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).

@@ -1,11 +1,11 @@
 """Iteración 5: recomendación de alternativas con human-in-the-loop (opción A, RF-09).
 
-ADR-0081 a ADR-0084, QA-11 a QA-16, `specs/recommendation.md` y `specs/offer-search.md`. Dos grupos de pruebas:
+ADR-0081 a ADR-0084, QA-11 a QA-17, `specs/recommendation.md` y `specs/offer-search.md`. Dos grupos de pruebas:
 
 * De punta a punta sobre el sistema de dos regiones: cancelación del proveedor → sugerencias → push y SSE →
   aceptar, rechazar o ajustar → reserva propuesta en el panel → conciliación con la reserva real.
 * Sobre un proceso de recomendación aislado, alimentado con `booking.facts.v1`: disrupción masiva con límites de
-  consulta (QA-12), proveedores caídos (QA-16), canario y vuelta atrás (QA-15) y aprendizaje con viajeros
+  consulta (QA-12), proveedores caídos (QA-17), canario y vuelta atrás (QA-15) y aprendizaje con viajeros
   sintéticos (ADR-0083).
 
 Lo que no demuestran: latencias reales, carga de 15.000 viajeros ni la calidad del modelo con datos reales.
@@ -37,10 +37,10 @@ from conftest import INICIO
 from test_iteracion2_ingesta import consultar, hotel, reservas, vincular
 
 
-def oferta_hotel(i: int, por_noche: float, check_in_hora: str = "15:00") -> dict:
+def oferta_hotel(i: int, por_noche: float, check_in_hora: str = "15:00", proveedor: str = "hotel-sol") -> dict:
     return {"hotelOfferId": f"of-{i}", "checkIn": "2026-11-10", "checkInTime": check_in_hora, "nights": 4,
             "city": "Madrid", "timeZone": "Europe/Madrid", "total": {"value": por_noche * 4, "currencyCode": "EUR"},
-            "bookingLink": f"https://hotel.example/ofertas/{i}"}
+            "bookingLink": f"https://{proveedor}.example/ofertas/{i}"}
 
 
 def fijar_ofertas(region):
@@ -48,8 +48,9 @@ def fijar_ofertas(region):
     busqueda = region.fuentes["busqueda"]
     busqueda["hotel-sol"].fijar("Madrid", "2026-11-10", 4, [oferta_hotel(1, 100), oferta_hotel(2, 160),
                                                             oferta_hotel(3, 240)])
-    busqueda["hotel-luna"].fijar("Madrid", "2026-11-10", 4, [oferta_hotel(4, 90), oferta_hotel(5, 130),
-                                                             oferta_hotel(6, 300)])
+    busqueda["hotel-luna"].fijar("Madrid", "2026-11-10", 4, [oferta_hotel(4, 90, proveedor="hotel-luna"),
+                                                             oferta_hotel(5, 130, proveedor="hotel-luna"),
+                                                             oferta_hotel(6, 300, proveedor="hotel-luna")])
 
 
 def cancelar_hotel(sistema, usuario):
@@ -117,6 +118,10 @@ def test_push_de_alternativas_reemplaza_al_de_la_cancelacion(juan, sistema):
     assert [p["reason"] for p in push] == ["booking_cancelled", "alternatives_available"]
     assert {p["collapseKey"] for p in push} == {f"booking-cancel:{cancelada['id']}"}
     assert push[1]["suggestionCount"] == 3 and push[1]["tripId"] == cancelada["tripId"]
+    # QA-11 de punta a punta: el notificador mide desde la cancelación confirmada hasta el push (reloj simulado).
+    from comun.observabilidad import metricas
+
+    assert metricas.resumen()["duraciones"]["qa11_cancelacion_a_aviso_s"]["max"] <= 120
 
 
 def test_aviso_sse_de_sugerencias(juan, sistema):
@@ -205,9 +210,13 @@ def test_limites_explicitos_y_rechazo_reordenan(juan, sistema):
     assert all(s["price"]["amount"] <= 700 for s in disponibles(sugerencias(juan, cancelada["tripId"])))
     preferencias = juan.get("/recommendations/preferences").json()
     assert preferencias["excludedProviders"] == ["hotel-luna"] and preferencias["enabled"] is True
+    # Ajustar también refina el modelo: cada sugerencia mostrada que el ajuste excluye es un rechazo débil.
     with region.recomendacion.base.transaccion() as tx:
-        feedback = tx.todos("SELECT accion, motivo FROM feedback")
-    assert feedback == [{"accion": "reject", "motivo": "too_expensive"}]  # adjust no es una etiqueta
+        feedback = tx.todos("SELECT f.accion, f.motivo, s.oferta FROM feedback f JOIN sugerencias s "
+                            "ON s.suggestion_id = f.suggestion_id ORDER BY f.creado, f.accion DESC")
+    assert feedback[0]["accion"] == "reject" and feedback[0]["motivo"] == "too_expensive"
+    excluidas = [json.loads(f["oferta"]) for f in feedback if f["accion"] == "adjust"]
+    assert excluidas and all(o["provider"] == "hotel-luna" or o["price"]["amount"] > 700 for o in excluidas)
 
 
 def test_opt_out_y_borrado_del_perfil(juan, sistema):
@@ -231,6 +240,34 @@ def test_opt_out_y_borrado_del_perfil(juan, sistema):
         assert tx.uno("SELECT COUNT(*) AS n FROM hechos_recibidos WHERE user_id = ?", (juan.user_id,))["n"] == 0
     assert fila["activada"] == 0 and json.loads(fila["metricas"])["proveedores"] == {}
     assert juan.get("/recommendations/preferences").json()["enabled"] is False
+
+
+def test_desactivada_no_perfila_ni_recrea_el_perfil(juan, sistema):
+    """ADR-0081: con la recomendación desactivada, un hecho nuevo solo se descarta; leer no crea perfiles."""
+    region = vincular(sistema, juan, "con-hotel", "hotel-sol")
+    assert juan.get("/recommendations/preferences").json() == {"enabled": True}
+    with region.recomendacion.base.transaccion() as tx:
+        assert tx.uno("SELECT COUNT(*) AS n FROM perfiles")["n"] == 0  # leer no creó el perfil
+    juan.cliente.http.put("/recommendations/preferences", json={"enabled": False}, headers=juan.h)
+    juan.delete("/recommendations/profile")
+    region.fuentes["hotel"].publicar("con-hotel", hotel(1, ref="HS-NUEVA"))
+    consultar(sistema, region, "con-hotel")
+    with region.recomendacion.base.transaccion() as tx:
+        fila = tx.uno("SELECT activada, metricas FROM perfiles WHERE user_id = ?", (juan.user_id,))
+    assert fila["activada"] == 0 and json.loads(fila["metricas"])["proveedores"] == {}
+
+
+def test_oferta_vencida_responde_409(juan, sistema, reloj):
+    region, cancelada = cancelar_hotel(sistema, juan)
+    primera = disponibles(sugerencias(juan, cancelada["tripId"]))[0]
+    with region.recomendacion.base.transaccion() as tx:
+        fila = tx.uno("SELECT oferta FROM sugerencias WHERE suggestion_id = ?", (primera["id"],))
+        oferta = {**json.loads(fila["oferta"]), "expiresAt": iso(reloj.ahora() + timedelta(minutes=10))}
+        tx.ejecutar("UPDATE sugerencias SET oferta = ? WHERE suggestion_id = ?", (json.dumps(oferta), primera["id"]))
+    reloj.adelantar(minutes=11)
+    juan.renovar()
+    respuesta = juan.post(f"/suggestions/{primera['id']}/feedback", {"action": "accept"})
+    assert respuesta.status_code == 409
 
 
 def test_borrado_del_perfil_elimina_feedback_y_sugerencias(juan, sistema):
@@ -340,7 +377,8 @@ def busquedas(proceso) -> list[dict]:
 
 def test_disrupcion_masiva_respeta_los_limites_de_los_proveedores(proceso):
     """QA-12 (a escala 1/10): 50 vuelos cancelados con 30 viajeros cada uno. Las búsquedas iguales se agrupan, la
-    cubeta por proveedor nunca excede su límite y el 95 % tiene sugerencias dentro de los 2 minutos (QA-11)."""
+    cubeta por proveedor nunca excede su límite y el 95 % tiene sugerencias generadas dentro de los 2 minutos desde la
+    cancelación (con reloj simulado: no mide tiempos reales de proveedores)."""
     azar = random.Random(11)
     vuelos = []
     while len(vuelos) < 50:
@@ -358,7 +396,10 @@ def test_disrupcion_masiva_respeta_los_limites_de_los_proveedores(proceso):
     for api in proceso.apis.values():
         assert api.cuota_excedida == 0              # 100 % de los límites respetados
         assert api.consultas == 50                  # una consulta por clave y proveedor (búsquedas agrupadas)
-    demoras = sorted((iso_a(b["terminada"]) - iso_a(b["creada"])).total_seconds() for b in busquedas(proceso))
+    # Desde la cancelación confirmada en el núcleo hasta las sugerencias generadas; el tramo outbox → notificador →
+    # push no está en este proceso aislado (se mide en la prueba de punta a punta).
+    demoras = sorted((iso_a(b["terminada"]) - iso_a(b["cancelacion_confirmada"])).total_seconds()
+                     for b in busquedas(proceso))
     assert len(demoras) == 1500 and demoras[int(len(demoras) * 0.95) - 1] <= 120
 
 
@@ -369,7 +410,7 @@ def iso_a(texto: str):
 
 
 def test_proveedores_caidos_la_busqueda_espera_y_se_completa(proceso):
-    """QA-16: sin respuesta de ningún proveedor la búsqueda queda pendiente y se completa al recuperarse."""
+    """QA-17: sin respuesta de ningún proveedor la búsqueda queda pendiente y se completa al recuperarse."""
     vuelo = vuelo_cancelado(random.Random(1))
     for api in proceso.apis.values():
         for _ in range(4):
@@ -504,3 +545,16 @@ def _consulta(vuelo: dict):
     from recomendacion.busqueda.adaptadores import Consulta
 
     return Consulta("flight", vuelo["location"], vuelo["startDate"], arrivalLocation=vuelo["arrivalLocation"])
+
+
+def test_enlace_de_oferta_no_permitido_se_descarta():
+    """B5 de la auditoría: solo https y dominios permitidos del proveedor (offer-search.md)."""
+    from recomendacion.busqueda.adaptadores import enlace_permitido
+
+    dominios = ("hotel-sol.example",)
+    assert enlace_permitido("https://hotel-sol.example/ofertas/1", dominios)
+    assert enlace_permitido("https://reservas.hotel-sol.example/x", dominios)
+    assert not enlace_permitido("http://hotel-sol.example/ofertas/1", dominios)
+    assert not enlace_permitido("https://hotel-sol.example.atacante.com/x", dominios)
+    assert not enlace_permitido("javascript:alert(1)", dominios)
+

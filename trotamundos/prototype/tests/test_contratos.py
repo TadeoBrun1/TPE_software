@@ -96,7 +96,7 @@ def test_topologia_del_broker():
     assert set(colas[COLA_PUSH].enlaces) == {(EXCHANGE_DOMINIO, RK_PANEL), (EXCHANGE_DOMINIO, RK_SUGERENCIAS),
                                              (EXCHANGE_DOMINIO, RK_CUENTA)}
     assert colas[COLA_RECOMENDACION].enlaces == [(EXCHANGE_DOMINIO, RK_HECHOS), (EXCHANGE_DOMINIO, RK_CUENTA)]
-    for cola in (COLA_INGESTA_CUENTAS, COLA_IDENTIDAD_CUENTAS):                          # ADR-0085
+    for cola in (COLA_INGESTA_CUENTAS, COLA_IDENTIDAD_CUENTAS, "core.accounts"):         # ADR-0085
         assert colas[cola].enlaces == [(EXCHANGE_DOMINIO, RK_CUENTA)]
     assert colas[COLA_NUCLEO_SUGERENCIAS].enlaces == [(EXCHANGE_DOMINIO, RK_ACEPTADA)]    # ADR-0084
     instancia = cola_instancia_notificador("abc")

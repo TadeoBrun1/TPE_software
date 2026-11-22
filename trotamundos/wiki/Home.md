@@ -40,7 +40,7 @@ responsable y sus ADRs.
 
 ### Código y seguimiento
 
-- [Contratos (specs)](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/specs): OpenAPI (API de itinerarios y sugerencias) y AsyncAPI (novedades, cambios confirmados, avisos del panel y sugerencias)
+- [Contratos (specs)](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/specs): OpenAPI (API de itinerarios y sugerencias) y AsyncAPI (novedades, hechos de reservas, avisos del panel, sugerencias y cuenta eliminada)
 - [Prototipo](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/prototype): servicios en Python de las iteraciones 2 a 5, pruebas automáticas, demo por terminal y docker compose con dos regiones
 - [Registro de trabajo del equipo](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/TEAM-LOG.md): qué hizo cada integrante y cuándo; ahí se sigue el avance del trabajo
 
@@ -58,5 +58,5 @@ alternativas de alojamiento o transporte, el viajero las acepta, rechaza o ajust
 | Página | Qué contiene |
 |---|---|
 | [Elección del módulo (ADR-0080)](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/03-adr/0080-eleccion-del-modulo-avanzado.md) | Ventajas, desventajas y dificultad de las opciones A y B frente a lo ya diseñado |
-| [Iteración 5: recomendación](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-5-recommendation.md) | Pasos 2 a 7, drivers RF-09 y QA-11 a QA-16, ADRs 0081 a 0085 (incluye la eliminación de la cuenta) |
+| [Iteración 5: recomendación](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-5-recommendation.md) | Pasos 2 a 7, drivers RF-09 y QA-11 a QA-17, ADRs 0081 a 0085 (incluye la eliminación de la cuenta) |
 

@@ -17,7 +17,7 @@ DDL_RECOMENDACION = [
         busqueda_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, home_region TEXT NOT NULL, trip_id TEXT NOT NULL,
         cancelled_booking_id TEXT NOT NULL, clave TEXT NOT NULL, consulta TEXT NOT NULL, cancelada TEXT NOT NULL,
         correlation_id TEXT, estado TEXT NOT NULL, intentos INTEGER NOT NULL DEFAULT 0, reintentar_desde TEXT,
-        parcial INTEGER NOT NULL DEFAULT 0, creada TEXT NOT NULL, terminada TEXT)""",
+        parcial INTEGER NOT NULL DEFAULT 0, creada TEXT NOT NULL, terminada TEXT, cancelacion_confirmada TEXT)""",
     "CREATE INDEX IF NOT EXISTS busquedas_estado ON busquedas (estado, reintentar_desde)",
     # Sugerencias: las 3 mostradas (available) y el resto de los candidatos ordenados (candidate, uso interno).
     """CREATE TABLE IF NOT EXISTS sugerencias (

@@ -39,6 +39,7 @@ Detalle completo en [functional-rqmts.md](functional-rqmts.md).
 | QA-13 | Usabilidad (adaptación al usuario, 2da entrega) | H | M | Sí |
 | QA-14 | Seguridad (control del perfil, 2da entrega) | H | M | Sí |
 | QA-16 | Disponibilidad (falla de la recomendación, 2da entrega) | H | M | Sí |
+| QA-17 | Disponibilidad (proveedor de búsqueda caído, 2da entrega) | M | M | No |
 | QA-15 | Modificabilidad (versiones del modelo, 2da entrega) | M | M | No |
 
 Criterio: es **driver principal** todo escenario de importancia alta (H). Los de importancia media también se
@@ -73,5 +74,5 @@ disrupciones de viaje.
 ## Decisiones pendientes que afectan los drivers
 
 - [x] Opción avanzada A (recomendación) o B (chatbot): se eligió la A (ADR-0080, 2026-11-22). Los drivers de la
-  2da entrega (RF-09, QA-11 a QA-16) se agregaron por PR de ambos, como pide la regla de drivers inmutables.
+  2da entrega (RF-09, QA-11 a QA-17) se agregaron por PR de ambos, como pide la regla de drivers inmutables.
 - [ ] Alcance exacto del prototipo (qué escenarios se implementan).

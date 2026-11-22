@@ -3,7 +3,7 @@
 **Tipo:** Comportamiento
 **Mantiene:** quien documenta cada escenario
 **Estado:** SEQ-1 y SEQ-2 en la iteración 2; SEQ-3, SEQ-4 y SEQ-6 en la iteración 3; SEQ-5 y SEQ-7 en la iteración 4;
-SEQ-8 y SEQ-9 en la iteración 5
+SEQ-8, SEQ-9 y SEQ-10 en la iteración 5
 
 Un diagrama por escenario clave. Debajo de cada uno, una descripción de qué representa y qué driver demuestra.
 
@@ -239,7 +239,7 @@ sequenceDiagram
 
 **Qué representa:** la cancelación llega al panel como siempre y, en paralelo, la recomendación busca y ordena
 alternativas sin tocar el núcleo. En una disrupción, las búsquedas con la misma clave se agrupan y se reutiliza la
-caché (QA-12); si un proveedor no responde, la búsqueda queda pendiente y la cancelación ya está avisada (QA-16).
+caché (QA-12); si un proveedor no responde, la búsqueda queda pendiente y la cancelación ya está avisada (QA-17).
 ADR-0081, ADR-0082, ADR-0083 y ADR-0084.
 
 ## SEQ-9 — El viajero rechaza, ajusta y acepta una sugerencia
@@ -255,9 +255,10 @@ sequenceDiagram
     G->>R: (prioridad baja)
     R->>R: Guarda el feedback, ajusta el modelo del viajero y reordena lo pendiente
     R-->>App: 200 con las sugerencias reordenadas
-    App->>G: PUT /recommendations/preferences {maxStops: 0}
-    G->>R: Guarda la preferencia
-    R-->>App: 200
+    App->>G: POST /suggestions/s3/feedback {adjust, preferences: {maxStops: 0}}
+    G->>R: (prioridad baja)
+    R->>R: Guarda la preferencia, cuenta como rechazos débiles las mostradas que excluye y reordena
+    R-->>App: 200 con las sugerencias reordenadas
     App->>G: POST /suggestions/s1/feedback {accept}
     G->>R: Aceptar
     R->>R: Transacción: aceptada, feedback y outbox
@@ -270,7 +271,7 @@ sequenceDiagram
 ```
 
 **Qué representa:** el human-in-the-loop: rechazar y ajustar cambian el orden en la misma respuesta (QA-13) y
-alimentan el entrenamiento diario; aceptar deja la alternativa como reserva propuesta sin comprar nada, y la reserva
+alimentan el entrenamiento diario (un ajuste, como rechazo débil de lo que excluye); aceptar deja la alternativa como reserva propuesta sin comprar nada, y la reserva
 real la reemplaza al llegar. ADR-0083 y ADR-0084.
 
 ## SEQ-10 — El viajero elimina su cuenta
@@ -285,7 +286,7 @@ sequenceDiagram
     participant C as Identidad, ingesta, notificador, recomendación y analítica
     App->>G: DELETE /account (token de un login de hace 5 min o menos)
     G->>N: Principal con auth_time
-    N->>N: Transacción en la partición del usuario: borra viajes, reservas, panel, invitaciones,<br/>marcadores, vinculaciones y sus eventos en la outbox; marca de cuenta eliminada; outbox
+    N->>N: Transacción en la partición del usuario: borra viajes, reservas, panel, invitaciones,<br/>marcadores, vinculaciones y sus eventos en la outbox, marca de cuenta eliminada y outbox
     N->>N: Quita los permisos del usuario sobre viajes de otros usuarios de la región
     N->>AU: Seudonimiza al actor en los registros de la región
     N-->>App: 204

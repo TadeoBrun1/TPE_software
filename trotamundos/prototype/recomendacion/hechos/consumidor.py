@@ -1,7 +1,8 @@
 """Recepción de `booking.facts.v1` y `account.deleted.v1` en la cola `recommendation.facts` (ADR-0081, ADR-0085).
 
-Las dos llegan por la misma cola, en el orden en que el núcleo las publicó. Una cuenta eliminada borra todo lo del
-viajero y deja una marca que descarta los hechos atrasados de ese usuario.
+Las dos llegan por la misma cola, que consumen varias instancias en paralelo: no hay orden garantizado por usuario.
+Una cuenta eliminada borra todo lo del viajero y deja una marca; cada escritura vuelve a revisar la marca y un
+barrido periódico quita lo que un hecho procesado en paralelo con la baja haya dejado (ADR-0085).
 
 En una sola transacción, antes del ACK: control de entrada por `eventId` (Idempotent Receiver), actualización del
 perfil y, si el hecho es una cancelación de alojamiento o transporte informada por un proveedor o por correo de un
@@ -74,12 +75,12 @@ class ConsumidorHechos:
                 tx.ejecutar("INSERT INTO hechos_recibidos (event_id, user_id, recibido) VALUES (?, ?, ?)",
                             (hecho["eventId"], hecho["userId"], ahora))
                 perfil = app.perfiles.obtener(tx, hecho["userId"])
+                if not perfil["activada"]:
+                    return "desactivada"  # opt-out: el hecho solo se descarta, sin perfilar ni sugerir (QA-14)
                 app.perfiles.registrar_hecho(perfil, hecho)
                 app.perfiles.guardar(tx, perfil)
                 if not dispara(hecho):
                     return "perfil"
-                if not perfil["activada"]:
-                    return "desactivada"  # opt-out: no se generan sugerencias (QA-14)
                 if hecho["tripId"] == "unassigned":
                     return "sin_viaje"  # la reserva propuesta necesita el viaje de la cancelada (ADR-0084)
                 consulta = consulta_para(hecho)
@@ -92,11 +93,11 @@ class ConsumidorHechos:
                 if not cancelada["startsAt"]:
                     cancelada["startsAt"] = f"{hecho['startDate']}T12:00:00+00:00"
                 tx.ejecutar("INSERT INTO busquedas (busqueda_id, user_id, home_region, trip_id, cancelled_booking_id, "
-                            "clave, consulta, cancelada, correlation_id, estado, creada) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', ?)",
+                            "clave, consulta, cancelada, correlation_id, estado, creada, cancelacion_confirmada) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', ?, ?)",
                             (str(uuid.uuid4()), hecho["userId"], hecho["homeRegion"], hecho["tripId"],
                              hecho["bookingId"], consulta.clave, json.dumps(consulta.__dict__), json.dumps(cancelada),
-                             hecho.get("correlationId"), ahora))
+                             hecho.get("correlationId"), ahora, hecho["committedAt"]))
                 return "busqueda_pendiente"
 
         resultado = con_reintentos(transaccion)

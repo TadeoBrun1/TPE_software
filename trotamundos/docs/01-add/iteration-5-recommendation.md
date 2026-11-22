@@ -39,7 +39,8 @@ cuesta más mantenerla (pruebas no deterministas, escala en picos, seguridad y c
 | QA-11 | El 95 % de las sugerencias disponible y avisada en 2 minutos | H, M | Disparador por evento, búsqueda y aviso |
 | QA-13 | Reordenar en 2 s respetando límites explícitos; feedback en el modelo en 24 h | H, M | Ranking aprendido, ajuste por viajero y entrenamiento diario |
 | QA-14 | 0 sugerencias tras desactivar; perfil y feedback borrados en 24 h | H, M | Almacén propio, opt-out y borrado |
-| QA-16 | Una falla de la recomendación no afecta QA-2 ni QA-4; pendientes en 10 minutos | H, M | Proceso aparte y búsquedas pendientes con reintento |
+| QA-16 | Una falla de la recomendación no afecta QA-2 ni QA-4; pendientes en 10 minutos | H, M | Proceso aparte; los hechos esperan en su cola |
+| QA-17 | Un proveedor caído no pierde búsquedas; pendientes en 10 minutos | M, M | Búsquedas pendientes con reintento, circuit breaker y resultados parciales |
 | QA-15 | Versión nueva del modelo para el 5 % y vuelta atrás en 5 minutos sin tocar otros procesos | M, M | Registro de versiones y canario |
 
 Escenarios completos en [quality-attribute-scenarios.md](../00-requirements/quality-attribute-scenarios.md),
@@ -59,7 +60,7 @@ generados con `/generador-qas` y auditados con `/test-qas`. Se agregaron a los d
 | Tema | Decisión |
 |---|---|
 | Rutas de varios tramos | Fuera del alcance acordado de RF-09: se sugieren alternativas del mismo tipo que la reserva cancelada |
-| Sugerencias sin cancelación (huecos en el viaje, a pedido) | Fuera del alcance: el disparador es la cancelación o disrupción |
+| Sugerencias sin cancelación (huecos en el viaje, a pedido) | Fuera del alcance: el disparador es la cancelación o disrupción. Las tres opciones y por qué D1 sigue siendo proactiva están en ADR-0081 |
 | Compra o emisión de reservas | Sigue fuera del sistema: aceptar deja una reserva propuesta y el enlace al proveedor |
 | Asistente virtual (opción B) | No elegido (ADR-0080); RF-06 sigue diseñado (ADR-0026) sin cambios |
 | Eliminación de la cuenta | No es un requisito, pero ADR-0081 y ADR-0064 lo dejaban pendiente: se agregó al final de la iteración como [ADR-0085](../03-adr/0085-eliminacion-de-la-cuenta.md) (ver Paso 6) |
@@ -90,7 +91,7 @@ regionales (ADR-0003). El módulo se suma como un proceso más de la celda, alim
 | *Idempotent Receiver* y *Transactional Outbox* | De integración | Hechos deduplicados; sugerencias y aceptaciones publicadas desde una outbox | QA-11, QA-6 | 0081, 0084 |
 | *Ports and Adapters* | Arquitectónico | Puerto de búsqueda de ofertas con un adaptador por proveedor | CON-1, QA-15 | 0082 |
 | *Cache-Aside* y *request collapsing* | De diseño | Una consulta por clave de búsqueda, reutilizada 5 minutos | QA-12 | 0082 |
-| *Circuit Breaker* | De diseño | Se deja de consultar un proveedor que falla seguido | QA-16 | 0082 |
+| *Circuit Breaker* | De diseño | Se deja de consultar un proveedor que falla seguido | QA-17 | 0082 |
 | Recomendación en dos etapas (candidatos y ranking) | De diseño (sistemas de recomendación) | Filtro por límites explícitos y orden por puntaje aprendido | QA-13 | 0083 |
 | Exploración *epsilon-greedy* (bandit) | De diseño (sistemas de recomendación) | Una de cada diez listas incluye una oferta fuera de las mejores | RF-09.3 | 0083 |
 | *Canary Release* | De despliegue | Versión nueva del modelo para el 5 % de los viajeros | QA-15 | 0083 |
@@ -104,16 +105,15 @@ regionales (ADR-0003). El módulo se suma como un proceso más de la celda, alim
 | Performance | Reducir la sobrecarga de cómputo | Búsquedas equivalentes agrupadas en una sola | QA-12 | 0082 |
 | Performance | Administrar las solicitudes de trabajo | Cubeta de fichas por proveedor y región | QA-12 | 0082 |
 | Performance | Priorizar eventos | Rutas de sugerencias con prioridad baja ante sobrecarga | QA-2 | 0084 |
-| Performance | Programar recursos | Entrenamiento por lotes en un trabajo programado | CON-5 | 0083 |
-| Disponibilidad | Degradación elegante | La cancelación se muestra sin sugerencias si el módulo o el proveedor fallan | QA-16 | 0081, 0082 |
-| Disponibilidad | Reintentar y manejo de excepciones | Búsquedas pendientes con espera creciente | QA-16 | 0082 |
-| Usabilidad | Mantener un modelo del usuario | Perfil con preferencias y ajuste de pesos por viajero | QA-13 | 0083 |
-| Usabilidad | Apoyar la iniciativa del usuario | Ajustar parámetros reordena en el momento | QA-13 | 0083 |
+| Performance | Programar recursos | Política de planificación: el entrenamiento corre en la franja de menor carga, sin competir con la atención de sugerencias | CON-5 | 0083 |
+| Disponibilidad | Degradación elegante | La cancelación se muestra sin sugerencias si el módulo o el proveedor fallan | QA-16, QA-17 | 0081, 0082 |
+| Disponibilidad | Reintentar y manejo de excepciones | Búsquedas pendientes con espera creciente | QA-17 | 0082 |
+| Usabilidad | Mantener un modelo del usuario | Perfil con preferencias y ajuste de pesos por viajero; rechazar y ajustar lo actualizan y reordenan en el momento | QA-13 | 0083 |
 | Seguridad | Separar entidades | Perfiles en un proceso y una base propios | QA-14 | 0081 |
 | Seguridad | Limitar la exposición | Perfil resumido; la consulta al proveedor no identifica al viajero | QA-14 | 0081, 0082 |
 | Seguridad | Autorizar actores | Sugerencias solo para el dueño del viaje | QA-7 | 0084 |
 | Modificabilidad | Diferir el enlace | La versión activa del modelo se elige en tiempo de ejecución | QA-15 | 0083 |
-| Desplegabilidad | Escalonar los despliegues y volver atrás | Canario al 5 % y vuelta atrás automática | QA-15 | 0083 |
+| Desplegabilidad | Escalonar los despliegues y volver atrás | La versión del modelo es un artefacto que se despliega como dato: canario al 5 % y vuelta atrás automática | QA-15 | 0083 |
 | Integrabilidad | Adaptar la interfaz y adherir a estándares | Oferta normalizada con ISO 4217 y zonas IANA | CON-1 | 0082 |
 
 ## Paso 5 — Instanciación
@@ -161,8 +161,13 @@ regionales (ADR-0003). El módulo se suma como un proceso más de la celda, alim
 | Valor | Origen |
 |---|---|
 | 2 minutos desde la cancelación en el panel hasta el aviso | QA-11 (suposición) |
-| Caché de búsquedas de 5 minutos | QA-12 (suposición) |
+| Caché de búsquedas de 5 minutos | ADR-0082 (suposición: vigencia habitual de una tarifa consultada en un buscador) |
 | 3 sugerencias, exploración 0,1 | ADR-0083 (suposición) |
+| Rechazo débil por ajuste con la mitad del peso | ADR-0083 (suposición) |
+| Mínimo de 30 ejemplos para entrenar; 1 de cada 5 reservado para evaluar; últimos 20 precios aceptados en el perfil | `recommendation.md` (suposición) |
+| Canario evaluado cada 5 minutos | ADR-0083 (suposición) |
+| Espera creciente entre reintentos de una búsqueda, con tope de 2 minutos | ADR-0082 (suposición) |
+| Login de hace 5 minutos o menos para eliminar la cuenta; marca de cuenta eliminada por 30 días | ADR-0085 (suposición) |
 | Circuit breaker: 3 fallas, 1 minuto | ADR-0082 (suposición) |
 | Entrenamiento diario | QA-13 (suposición) |
 | Canario 5 %, vuelta atrás si cae 10 % relativo | QA-15 (suposición) |
@@ -221,14 +226,17 @@ El riesgo está en proveedores lentos: con un límite de 30 s por consulta (supo
 minutos.
 
 **QA-12, disrupción.** 15.000 cancelaciones en 10 minutos son unas 25 por segundo, que las instancias de
-recomendación consumen en paralelo. Si los 50 vuelos cancelados comparten 20 rutas y 2 fechas, hay unas 40 claves
-de búsqueda de transporte y unas 20 de alojamiento: unas 60 consultas a los proveedores en 5 minutos en vez de
-15.000. Si un proveedor limita más que eso, las búsquedas quedan pendientes y QA-11 se incumple para esa parte, lo
+recomendación consumen en paralelo. Si los 50 vuelos cancelados comparten 20 rutas y 2 fechas (suposición), hay unas
+40 claves de búsqueda de transporte y unas 20 de alojamiento. Cada clave se consulta una vez a cada proveedor de su
+tipo: con 2 a 4 proveedores por tipo (suposición) son entre 120 y 240 consultas en 5 minutos en vez de 15.000 por
+proveedor. Si un proveedor limita más que eso, las búsquedas quedan pendientes y QA-11 se incumple para esa parte, lo
 que se registra como riesgo. El panel no comparte procesos ni base con la recomendación: QA-2 no se afecta.
 
 **QA-13, rechazo y ajuste.** El rechazo actualiza el ajuste del viajero y reordena las sugerencias pendientes del
 viaje en la misma solicitud (sin consultar proveedores): entra holgado en 2 s. El ajuste de parámetros filtra antes
-de ordenar, así que ninguna sugerencia mostrada viola un límite explícito.
+de ordenar, así que ninguna sugerencia mostrada viola un límite explícito, y las mostradas que excluye cuentan como
+rechazos débiles para el modelo. El feedback entra en una versión del modelo regional en el entrenamiento diario;
+esa versión llega a toda la región cuando el canario junta la muestra (trade-off con QA-15).
 
 **QA-14, desactivar y borrar.** Desactivar cambia una marca en el perfil que el disparador lee en la misma
 transacción que el hecho: no se generan sugerencias nuevas. El borrado elimina perfil, preferencias, feedback y
@@ -240,7 +248,7 @@ eliminada evita que un hecho atrasado vuelva a crear el perfil (ADR-0085).
 `userId`. Si su tasa de aceptación cae más de un 10 % relativo, el registro vuelve a la anterior: es un cambio de
 dato, sin desplegar código, y no toca el núcleo, la ingesta ni el notificador.
 
-**QA-16, proveedor o módulo caído.** Con el proveedor caído, la búsqueda queda pendiente y el circuit breaker evita
+**QA-16 y QA-17, módulo o proveedor caído.** Con el proveedor caído, la búsqueda queda pendiente y el circuit breaker evita
 insistir; con el proceso de recomendación caído, los hechos esperan en `recommendation.facts`. En los dos casos la
 cancelación y su push ya salieron del núcleo y del notificador.
 
@@ -249,12 +257,13 @@ cancelación y su push ya salieron del núcleo y del notificador.
 | Driver | Estado | Riesgos o pendientes |
 |---|---|---|
 | RF-09 | Cumplido por diseño | Conciliación por tipo, proveedor y fechas puede no reconocer una reserva real distinta de la oferta |
-| QA-11 | Cumplido por diseño | Depende del tiempo de respuesta de los proveedores (CON-2); medir en el prototipo con proveedores simulados |
+| QA-11 | Cumplido por diseño | Depende del tiempo de respuesta de los proveedores (CON-2); la medición de punta a punta está en el prototipo, pero sin proveedores reales |
 | QA-12 | Parcial | Si un proveedor limita por debajo de las claves de búsqueda de una disrupción, parte de los afectados recibe las sugerencias tarde |
 | QA-13 | Cumplido por diseño | La calidad del orden depende del feedback acumulado; con pocos datos manda el modelo regional |
 | QA-14 | Cumplido por diseño | La eliminación de la cuenta (ADR-0085) no alcanza los permisos ni los registros de auditoría de otras regiones; la normativa concreta (CON-3) sigue sin validar |
 | QA-15 | Cumplido por diseño | El canario necesita una muestra mínima para decidir; en regiones chicas puede tardar |
 | QA-16 | Cumplido por diseño | Ninguno nuevo |
+| QA-17 | Cumplido por diseño | Si todos los proveedores de un tipo caen, no hay sugerencias hasta que vuelva alguno |
 
 ### Riesgos
 
@@ -295,17 +304,18 @@ sumar una señal colaborativa al ranking (opción C de ADR-0083).
 | Rutas de prioridad baja en la puerta y servicios nuevos en `docker-compose.yml` | OpenAPI 0.4.0 | 0047, 0084 |
 | Eliminación de la cuenta en el núcleo, identidad, directorio, ingesta, notificador y recomendación | `account-deleted.v1.yaml`, OpenAPI 0.4.0, `access-audit.md` | 0085 |
 
-Lo que comprueban las 18 pruebas de `tests/test_iteracion5_recomendacion.py` y las 5 de `tests/test_iteracion5_cuenta.py`:
+Lo que comprueban las 21 pruebas de `tests/test_iteracion5_recomendacion.py` y las 6 de `tests/test_iteracion5_cuenta.py`:
 
 | Driver | Prueba | Resultado |
 |---|---|---|
-| RF-09, QA-11 | Cancelación del proveedor → 3 sugerencias con push y SSE; una cancelación manual no dispara nada | Cumple (reloj simulado) |
+| RF-09, QA-11 | Cancelación del proveedor → 3 sugerencias con push y SSE; una cancelación manual no dispara nada; la métrica de punta a punta (cancelación confirmada → push) se registra | Flujo y medición verificados; el tiempo con proveedores reales no se mide (reloj simulado) |
 | RF-09.2 | Aceptar crea la reserva propuesta una sola vez, no mueve el viaje, la reserva real la concilia y vence si no llega | Cumple |
-| QA-12 | 50 vuelos con 30 viajeros cada uno (escala 1/10): una consulta por clave y proveedor, 0 excesos de límite, p95 ≤ 2 min | Cumple a escala reducida |
+| QA-12 | 50 vuelos con 30 viajeros cada uno (escala 1/10): una consulta por clave y proveedor, 0 excesos de límite; p95 de cancelación a sugerencias generadas ≤ 2 min con reloj simulado | Límites: cumple a escala reducida. Tiempo: indicativo, sin el tramo hasta el push ni proveedores reales |
 | QA-13 | Rechazar y ajustar reordenan y ninguna sugerencia viola los límites explícitos | Cumple |
 | QA-14 | Desactivada no genera sugerencias ni push; borrar el perfil elimina perfil, feedback, sugerencias y búsquedas | Cumple |
-| QA-15 | Un canario con aceptación menor en más de un 10 % se retira solo; vuelta atrás manual | Cumple |
-| QA-16 | Proveedores caídos → búsqueda pendiente que se completa al volver; resultado parcial; recomendación detenida sin afectar el panel | Cumple |
+| QA-15 | Un canario con aceptación menor en más de un 10 % se retira solo (se evalúa cada 5 minutos); vuelta atrás manual | Regla verificada; los 5 minutos no se miden |
+| QA-16 | Recomendación detenida: el panel sigue, los hechos esperan y al volver se generan las sugerencias | Flujo verificado; los 10 minutos con infraestructura real no se miden |
+| QA-17 | Proveedores caídos → búsqueda pendiente que se completa dentro de los 10 minutos simulados de recuperado; resultado parcial | Cumple con reloj simulado |
 | ADR-0083 | Con 400 cancelaciones de viajeros sintéticos, la versión nueva baja la pérdida en datos reservados, se acerca a las preferencias ocultas y supera al orden por precio | Cumple con datos sintéticos |
 | ADR-0085 | Después de `DELETE /account`, el identificador del usuario no aparece en ninguna base de la región (salvo la marca); login, directorio y permisos borrados; auditoría seudonimizada; login reciente exigido; mensajes atrasados descartados; conexión SSE cerrada | Cumple (sin analítica, fuera del prototipo) |
 
@@ -313,3 +323,38 @@ Hallazgos del prototipo que ajustaron el diseño: `booking.facts.v1` suma `start
 perfil conserva la marca de desactivada; un viaje ajeno responde como uno sin sugerencias; la cubeta de fichas usa
 la mitad del límite como capacidad para no superarlo en ninguna ventana de un minuto. Estado y detalle en
 [prototype/README.md](../../prototype/README.md).
+
+### Revisión de la iteración
+
+La iteración se revisó con una auditoría independiente (un revisor sin el contexto de las decisiones), que encontró
+3 hallazgos graves, 9 medios y varios menores. Antes de corregir, el equipo decidió tres puntos:
+
+* ajustar parámetros también entrena el modelo, como rechazo débil de lo que excluye (ADR-0083);
+* contra la falta de orden por usuario en la cola de la recomendación, se revisa la marca de cuenta eliminada en cada
+  escritura y se agrega un barrido periódico, sin partir la cola en shards (ADR-0085);
+* la caché, las búsquedas en curso y las cubetas de fichas viven en una caché compartida por región (ADR-0082).
+
+Las correcciones aplicadas fueron:
+
+* **Privacidad en el prototipo:** la API de recomendación rechaza los tokens vigentes de una cuenta eliminada y las
+  lecturas no crean perfiles; con la recomendación desactivada, los hechos ya no perfilan al viajero.
+* **Eliminación de la cuenta (ADR-0085):**
+  * los pasos del núcleo fuera de la partición del usuario se hacen al consumir su propio evento (`core.accounts`),
+    así se reintentan si algo falla;
+  * el seudónimo de la auditoría usa una clave propia y se declara como dato seudonimizado;
+  * el inventario suma logs, backups y errores apartados con sus plazos;
+  * la analítica conserva su control de recepción y deja una marca (`analytics-processing.md`).
+* **QA-11:** una sola definición, desde la cancelación confirmada hasta el push, medida por el notificador con
+  `cancellationCommittedAt`. Los resultados del prototipo dicen qué se verificó y qué no se mide.
+* **QA-15:** el canario se evalúa cada 5 minutos; la medida se cuenta desde que junta la muestra; el trade-off con
+  QA-13 queda registrado (ADR-0083).
+* **QA-16 y QA-17:** QA-16 tenía dos fuentes de estímulo; se dividió en falla del proceso (QA-16) y proveedor caído
+  (QA-17).
+* **Opciones de disparador** (cancelación, viaje con huecos, a pedido) agregadas a ADR-0081.
+* **Suposiciones:** origen de los 5 minutos de caché, rutas y fechas del recorrido de QA-12, cálculo de consultas por
+  proveedor y constantes del código, ahora en la tabla de tiempos y valores y en `recommendation.md`.
+* **Menores:** tácticas de usabilidad según Bass (se quitó "apoyar la iniciativa del usuario"), justificación de
+  "programar recursos" y "escalonar los despliegues", drivers alineados entre ADRs e índice, documentos
+  desactualizados, `409` para ofertas vencidas, `offerUrl` solo https y dominios del proveedor, resultados parciales
+  fuera de la caché, retención de sugerencias vencidas, entrenamiento como trabajo único por región.
+

@@ -1,7 +1,8 @@
 """Entrenamiento del modelo (ADR-0083): regresión logística con numpy, por región y por lotes.
 
-* `entrenar`: pesos regionales a partir de los ejemplos del feedback (aceptada = 1, rechazada = 0), ponderados por
-  posición para corregir el sesgo de lo que se mostraba arriba, con regularización L2 hacia los pesos de partida.
+* `entrenar`: pesos regionales a partir de los ejemplos del feedback (aceptada = 1, rechazada = 0, excluida por un
+  ajuste = 0 con la mitad del peso), ponderados por posición para corregir el sesgo de lo que se mostraba arriba,
+  con regularización L2 hacia los pesos de partida.
 * `paso_viajero`: ajuste inmediato por viajero con un paso de descenso por gradiente (human-in-the-loop, QA-13).
 * `perdida`: pérdida logarítmica, para comparar versiones con el feedback reservado para prueba.
 """
@@ -11,6 +12,7 @@ import numpy as np
 
 TASA_VIAJERO = 0.5   # suposición
 L2_VIAJERO = 0.02    # suposición
+PESO_AJUSTE = 0.5    # suposición: una sugerencia que el viajero excluye al ajustar es un rechazo débil
 
 
 def peso_por_posicion(posicion: int) -> float:
@@ -41,9 +43,10 @@ def perdida(ejemplos: list[tuple[list[float], int, float]], pesos: list[float]) 
     return float(-np.mean(y * np.log(prob) + (1 - y) * np.log(1 - prob)))
 
 
-def paso_viajero(ajuste: list[float], x: list[float], etiqueta: int, pesos: list[float]) -> list[float]:
+def paso_viajero(ajuste: list[float], x: list[float], etiqueta: int, pesos: list[float],
+                 factor: float = 1.0) -> list[float]:
     u = np.array(ajuste or [0.0] * len(x), dtype=float)
     xv, w = np.array(x, dtype=float), np.array(pesos, dtype=float)
     prob = 1 / (1 + np.exp(-np.clip(xv @ (w + u), -30, 30)))
-    u = u + TASA_VIAJERO * ((etiqueta - prob) * xv - L2_VIAJERO * u)
+    u = u + factor * TASA_VIAJERO * ((etiqueta - prob) * xv - L2_VIAJERO * u)
     return [round(float(v), 6) for v in u]

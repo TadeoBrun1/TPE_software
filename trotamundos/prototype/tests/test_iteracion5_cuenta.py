@@ -75,6 +75,9 @@ def test_eliminar_la_cuenta_borra_al_usuario_de_toda_la_region(juan, cliente, si
     assert juan.get("/panel").json()["code"] == "account_deleted"   # token todavía vigente: 401
     sistema.procesar()
 
+    # El token sigue vigente también para la recomendación: no vuelve a crear el perfil.
+    preferencias = juan.get("/recommendations/preferences")
+    assert preferencias.status_code == 401 and preferencias.json()["code"] == "account_deleted"
     assert restos(region, juan.user_id) == []
     evento = next(m for m in region.broker.publicados if m.routing_key == RK_CUENTA)
     validar_evento("account.deleted.v1", evento.cuerpo)
@@ -114,7 +117,10 @@ def test_mensajes_atrasados_y_reentregas(juan, sistema):
     region.recomendacion.hechos.procesar(Mensaje(EXCHANGE_DOMINIO, RK_HECHOS,
                                                  {**hecho.cuerpo, "eventId": "atrasado-1"}, {}))
     evento = next(m for m in region.broker.publicados if m.routing_key == RK_CUENTA)
-    for consumidor in (region.identidad.procesar_baja, region.ingesta.bajas.procesar,
+    from nucleo.usuarios import eliminacion
+
+    for consumidor in (lambda m: eliminacion.completar(region.nucleo, m), region.identidad.procesar_baja,
+                       region.ingesta.bajas.procesar,
                        region.recomendacion.hechos.procesar, region.notificador.push.procesar):
         consumidor(Mensaje(EXCHANGE_DOMINIO, RK_CUENTA, evento.cuerpo, {}, True))
     assert restos(region, juan.user_id) == []
@@ -151,3 +157,20 @@ def test_la_conexion_sse_se_cierra(juan, sistema):
 
     recibidos = asyncio.run(asyncio.wait_for(escenario(), timeout=5))
     assert recibidos[-1].startswith(b"event: account-deleted")
+
+
+def test_el_barrido_quita_lo_que_un_hecho_en_paralelo_dejo(juan, sistema):
+    """Varias instancias consumen la cola sin orden por usuario: si un hecho se procesó en paralelo con la baja y dejó
+    filas, el barrido periódico de la recomendación las quita (ADR-0085)."""
+    region = sistema.regiones["sa-east"]
+    juan.ingresar()
+    juan.delete("/account")
+    sistema.procesar()
+    with region.recomendacion.base.transaccion() as tx:  # lo que habría dejado el hecho procesado en paralelo
+        tx.ejecutar("INSERT INTO perfiles (user_id, home_region, activada, preferencias, metricas, ajuste, "
+                    "actualizado) "
+                    "VALUES (?, 'sa-east', 1, '{}', '{}', '[]', '2026-11-01')", (juan.user_id,))
+    region.recomendacion.ciclo()
+    with region.recomendacion.base.transaccion() as tx:
+        assert tx.uno("SELECT COUNT(*) AS n FROM perfiles WHERE user_id = ?", (juan.user_id,))["n"] == 0
+

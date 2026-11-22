@@ -24,12 +24,14 @@ en la [OpenAPI](openapi/itinerary-api.v1.yaml) (0.4.0) y los mensajes en
 | Activación (`enabled`, por defecto `true`) | Opt-out (RF-09.4, QA-14) | Preferencias del viajero |
 | Preferencias explícitas (precio máximo, escalas, franja horaria, proveedores preferidos y excluidos) | Filtro antes de ordenar (QA-13) | Preferencias y ajustes del feedback |
 | Afinidad por proveedor y por tipo | Característica del ranking | Contadores de `booking.facts.v1` y aceptaciones |
-| Banda de precios | Precio relativo | Precios de las ofertas aceptadas |
+| Banda de precios | Precio relativo | Precios de las últimas 20 ofertas aceptadas (suposición) |
 | Duración típica de estadías y anticipación típica | Características | Fechas de `booking.facts.v1` |
 | Ajuste de pesos por viajero | Personalización (ADR-0083) | Feedback |
 
 No guarda códigos de reserva, nombres, notas ni textos. Sobrevive al borrado de viajes; se borra a pedido
-(`DELETE /recommendations/profile`) o con la cuenta, junto con el feedback y las sugerencias.
+(`DELETE /recommendations/profile`) o con la cuenta, junto con el feedback y las sugerencias. Con la recomendación
+desactivada, los hechos nuevos solo se descartan: no actualizan el perfil. Leer las preferencias o las sugerencias
+no crea un perfil.
 
 ## 3. Ranking
 
@@ -48,25 +50,37 @@ No guarda códigos de reserva, nombres, notas ni textos. Sobrevive al borrado de
 |---|---|---|
 | `accept` | Sugerencia aceptada; `suggestion.accepted.v1`; el resto del grupo queda descartado | Positiva |
 | `reject` (con motivo opcional) | Se ajusta `u_viajero` con un paso de gradiente y se reordena lo pendiente | Negativa |
-| `adjust` (preferencias) | Cambia el filtro y se reordena lo pendiente | Ninguna: se guarda como preferencia, no como etiqueta |
+| `adjust` (preferencias) | Cambia el filtro; cada sugerencia mostrada que el ajuste excluye mueve `u_viajero` con medio paso; se reordena lo pendiente | Rechazo débil: negativa con la mitad del peso (suposición) por cada sugerencia mostrada excluida |
 
 La respuesta de `reject` y `adjust` trae las sugerencias reordenadas (QA-13, 2 s).
 
 ## 5. Entrenamiento y versiones
 
 * Trabajo diario por región con el feedback de la región; los datos no salen de la región (CON-3).
-* Ejemplos: características de cada sugerencia mostrada; etiqueta 1 si se aceptó, 0 si se rechazó; peso por posición
-  para corregir el sesgo de lo que se mostraba arriba.
+* Ejemplos: características de cada sugerencia mostrada; etiqueta 1 si se aceptó, 0 si se rechazó o si un ajuste la
+  excluyó (este último con la mitad del peso); peso por posición para corregir el sesgo de lo que se mostraba arriba.
+  Con menos de 30 ejemplos (suposición) no se entrena. Uno de cada cinco ejemplos, elegido por hash de su
+  identificador (suposición), queda reservado para evaluar.
 * Cada versión guarda pesos, fecha, cantidad de ejemplos y su evaluación con el feedback reservado para prueba.
 * Activación: una versión que no empeora la evaluación pasa a **canario** para el 5 % de los viajeros (hash estable
   del `userId`). Con una muestra mínima de 200 sugerencias mostradas (suposición), si su tasa de aceptación es más de
   un 10 % relativo menor que la de la activa, se retira; si no, pasa a activa. Volver atrás es cambiar la versión
   activa en el registro (QA-15).
+* El canario se evalúa cada 5 minutos (suposición), no solo en el trabajo diario: la medida de QA-15 (vuelta atrás en
+  5 minutos) se cuenta desde que junta la muestra mínima.
+* A lo sumo un canario a la vez. Si el canario no juntó la muestra cuando corre el entrenamiento, la versión nueva
+  lo reemplaza: el feedback del día entra en una versión del modelo en 24 h, y llega a toda la región cuando un
+  canario junta la muestra (trade-off entre QA-13 y QA-15, más lento en regiones con poco tráfico).
+* Sugerencias vencidas o nunca mostradas se borran a los 30 días (suposición, ADR-0081); el feedback conserva su copia
+  de las características.
 
 ## 6. Observabilidad (ADR-0067)
 
-Métricas por región: tiempo desde `committedAt` del hecho hasta `suggestions.available.v1` (QA-11), aciertos de la
-caché y consultas por proveedor (QA-12), búsquedas pendientes y su antigüedad (QA-16), tasa de aceptación por
+Métricas por región. **QA-11** se mide de punta a punta, desde `committedAt` del hecho de la cancelación (cuando
+quedó aplicada en el panel) hasta que el notificador envía el push: `suggestions.available.v1` lleva
+`cancellationCommittedAt` y el notificador registra `qa11_cancelacion_a_aviso_s`; la recomendación registra además el
+tramo hasta las sugerencias generadas (`qa11_cancelacion_a_sugerencias_s`). Además: aciertos de la
+caché y consultas por proveedor (QA-12), búsquedas pendientes y su antigüedad (QA-17), tasa de aceptación por
 versión del modelo (QA-15), tiempo de respuesta del feedback (QA-13). Los logs no llevan datos personales; el
 `correlationId` del hecho viaja en `suggestions.available.v1`.
 

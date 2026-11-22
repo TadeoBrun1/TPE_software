@@ -41,13 +41,21 @@ Qué pasa con el perfil cuando se eliminan los viajes (ADR-0045):
 * C1. El perfil resumido sobrevive y es borrable
 * C2. El perfil se recalcula solo con los viajes vigentes
 
+Qué dispara una sugerencia (el enunciado pide sugerir "proactivamente", sin decir cuándo):
+
+* D1. Una cancelación o disrupción de una reserva de alojamiento o transporte
+* D2. Un viaje próximo con huecos (noches sin alojamiento, tramos sin transporte)
+* D3. Un pedido del viajero
+
 ## Decision Outcome
 
-Chosen options: "A1. Un proceso nuevo por región", "B1. Consumir `booking.facts.v1`" y "C1. El perfil sobrevive y es
-borrable", because el proceso aparte no compite con la atención del panel (QA-2, QA-4) y puede fallar sin afectarlo
-(QA-16); `booking.facts.v1` ya trae exactamente los campos que hacen falta (usuario, viaje, tipo, estado, origen,
-proveedor, ciudades y fechas) y evita un segundo evento casi igual; y un perfil resumido conserva lo aprendido sin
-guardar viajes ni reservas.
+Chosen options: "A1. Un proceso nuevo por región", "B1. Consumir `booking.facts.v1`", "C1. El perfil sobrevive y es
+borrable" y "D1. Cancelación o disrupción", because el proceso aparte no compite con la atención del panel (QA-2,
+QA-4) y puede fallar sin afectarlo (QA-16); `booking.facts.v1` ya trae exactamente los campos que hacen falta (usuario, viaje, tipo, estado, origen,
+proveedor, ciudades y fechas) y evita un segundo evento casi igual; un perfil resumido conserva lo aprendido sin
+guardar viajes ni reservas; y la cancelación es el momento en que el viajero más necesita una alternativa. Con D1 la
+sugerencia sigue siendo proactiva: el sistema la inicia sin que el viajero la pida, apenas se entera de la
+disrupción. D2 y D3 quedan como extensiones que usan el mismo proceso, búsqueda y ranking.
 
 Reglas:
 
@@ -82,7 +90,7 @@ Patrones y tácticas que aplica:
 
 | Patrón o táctica | Cómo se aplica | Driver |
 |---|---|---|
-| Patrón *Publish-Subscribe* (ADR-0002) | Cola propia enlazada a `booking.facts.v1`, sin tocar el núcleo | QA-15, QA-16 |
+| Patrón *Publish-Subscribe* (ADR-0002) | Cola propia enlazada a `booking.facts.v1`, sin tocar el núcleo | QA-12, QA-16 |
 | Patrón *Competing Consumers* | Instancias que comparten `recommendation.facts` | QA-12 |
 | Patrón *Idempotent Receiver* | Deduplicación por `eventId` con hecho, perfil y búsqueda en una transacción | QA-11 |
 | Táctica *separar entidades* (seguridad) | Perfiles en un proceso y una base propios, fuera del núcleo y de la analítica | QA-14 |
@@ -143,6 +151,23 @@ con el proceso de recomendación detenido, el panel sigue respondiendo.
 
 * Good, because nada dura más que los viajes.
 * Bad, because cada año se pierde el aprendizaje y el feedback deja de influir.
+
+### D1. Cancelación o disrupción
+
+* Good, because llega cuando la alternativa más sirve y el disparador ya existe (`booking.facts.v1` con `cancelled`).
+* Good, because acota la carga: solo se busca ante cancelaciones, no por cada viaje.
+* Bad, because no sugiere nada en viajes sin problemas; el modelo aprende solo de esas situaciones.
+
+### D2. Viaje próximo con huecos
+
+* Good, because sugiere también sin disrupciones.
+* Bad, because exige decidir qué es un hueco (un viaje puede no necesitar alojamiento) y busca para muchos viajes que
+  quizá no lo necesitan, con más consultas a los proveedores.
+
+### D3. A pedido del viajero
+
+* Good, because no molesta: el viajero decide cuándo.
+* Bad, because no es proactivo, que es lo que pide el enunciado.
 
 ## More Information
 

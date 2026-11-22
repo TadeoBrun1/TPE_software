@@ -170,7 +170,7 @@ medida de QA-14 mezclaba la residencia de datos y QA-15 tenía valores vagos).
 | Estímulo | Rechaza una sugerencia o ajusta un parámetro (precio máximo, máximo de escalas, franja horaria) |
 | Artefacto | Módulo de recomendación |
 | Ambiente | Operación normal |
-| Respuesta | El sistema reordena las sugerencias de ese viaje según el ajuste, guarda el feedback y lo incorpora al modelo |
+| Respuesta | El sistema reordena las sugerencias de ese viaje según el ajuste, guarda el feedback (un ajuste cuenta como rechazo débil de las sugerencias que excluye) y lo incorpora al modelo |
 | Medida de respuesta | Las sugerencias reordenadas se muestran en 2 s o menos, el 100 % respeta los límites explícitos del usuario y el feedback entra en el modelo regional dentro de las 24 h |
 
 ### QA-14 Seguridad y privacidad: control del perfil
@@ -181,7 +181,7 @@ medida de QA-14 mezclaba la residencia de datos y QA-15 tenía valores vagos).
 | Estímulo | Desactiva la recomendación y pide borrar su perfil |
 | Artefacto | Almacén de perfiles y feedback del módulo de recomendación |
 | Ambiente | Operación normal |
-| Respuesta | El sistema deja de generar sugerencias para ese viajero, borra su perfil y su feedback identificable y le confirma el borrado |
+| Respuesta | El sistema deja de generar sugerencias para ese viajero, borra su perfil y su feedback y le confirma el borrado |
 | Medida de respuesta | 0 sugerencias nuevas desde la desactivación y el 100 % del perfil y del feedback borrado en 24 h o menos |
 
 ### QA-15 Modificabilidad del modelo
@@ -193,18 +193,29 @@ medida de QA-14 mezclaba la residencia de datos y QA-15 tenía valores vagos).
 | Artefacto | Módulo de recomendación |
 | Ambiente | Sistema en producción |
 | Respuesta | El sistema despliega la versión nueva para el 5 % de los usuarios, compara su tasa de aceptación con la de la versión actual y vuelve atrás si cae más de un 10 % relativo |
-| Medida de respuesta | El cambio no modifica código del núcleo, la ingesta ni el notificador, y la vuelta atrás a la versión anterior tarda 5 minutos o menos |
+| Medida de respuesta | El cambio no modifica código del núcleo, la ingesta ni el notificador, y la vuelta atrás a la versión anterior tarda 5 minutos o menos desde que la versión nueva junta la muestra mínima para compararla |
 
 ### QA-16 Disponibilidad: falla de la recomendación
 
 | Parte | Contenido |
 |---|---|
-| Fuente del estímulo | API de búsqueda de un proveedor, o el propio módulo de recomendación |
-| Estímulo | Deja de responder durante una cancelación |
-| Artefacto | Módulo de recomendación |
+| Fuente del estímulo | Proceso de recomendación de la región |
+| Estímulo | Deja de funcionar (todas sus instancias) mientras llegan cancelaciones |
+| Artefacto | Proceso de recomendación |
 | Ambiente | Operación normal |
-| Respuesta | El sistema muestra la cancelación y su aviso sin sugerencias, guarda la búsqueda pendiente y la reintenta al volver el servicio |
-| Medida de respuesta | El panel sigue cumpliendo QA-2 y QA-4, y las sugerencias pendientes se generan dentro de los 10 minutos de recuperado el servicio |
+| Respuesta | El sistema muestra la cancelación y su aviso sin sugerencias; los hechos esperan en la cola del proceso y, cuando vuelve, los procesa y genera las sugerencias |
+| Medida de respuesta | El panel sigue cumpliendo QA-2 y QA-4, y las sugerencias pendientes se generan dentro de los 10 minutos de recuperado el proceso |
+
+### QA-17 Disponibilidad: proveedor de búsqueda caído
+
+| Parte | Contenido |
+|---|---|
+| Fuente del estímulo | API de búsqueda de un proveedor |
+| Estímulo | Deja de responder durante una cancelación |
+| Artefacto | Búsqueda de alternativas del proceso de recomendación |
+| Ambiente | Operación normal, con otros proveedores del mismo tipo disponibles o no |
+| Respuesta | El sistema guarda la búsqueda pendiente, deja de consultar al proveedor tras fallas seguidas, sugiere con los otros proveedores (marcando la búsqueda como parcial) si responden, y reintenta con espera creciente |
+| Medida de respuesta | Ninguna búsqueda se pierde, y las sugerencias pendientes se generan dentro de los 10 minutos de recuperado el proveedor |
 
 ### Suposiciones de la 2da entrega
 
@@ -216,4 +227,4 @@ medida de QA-14 mezclaba la residencia de datos y QA-15 tenía valores vagos).
 | 24 h para incorporar el feedback | QA-13 | Reentrenamiento diario por lotes (CON-5) |
 | 24 h para borrar el perfil | QA-14 | Plazo operativo; la normativa concreta no está validada (CON-3) |
 | 5 % de usuarios, 10 % relativo, 5 minutos | QA-15 | Práctica habitual de despliegue canario con vuelta atrás automatizada |
-| 10 minutos tras la recuperación | QA-16 | Reintento con espera creciente, como la ingesta |
+| 10 minutos tras la recuperación | QA-16, QA-17 | Reintento con espera creciente, como la ingesta |

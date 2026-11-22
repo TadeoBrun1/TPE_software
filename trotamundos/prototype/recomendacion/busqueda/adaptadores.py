@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
+from comun.observabilidad import metricas
 from simuladores.proveedores import ErrorAutorizacion, ErrorCuota, ErrorTemporal  # noqa: F401 - clasificación
 
 TIPOS_TRANSPORTE = ("flight", "train", "bus", "car")
@@ -44,9 +46,18 @@ def _con_zona(local: str, zona: str) -> str:
     return datetime.fromisoformat(local).replace(tzinfo=ZoneInfo(zona)).isoformat()
 
 
-def _valida(oferta: dict) -> bool:
-    """Una oferta sin precio, sin enlace o sin inicio se descarta (error de datos)."""
-    return bool(oferta.get("price") and oferta.get("offerUrl") and oferta.get("startsAt"))
+def enlace_permitido(url: str | None, dominios: tuple[str, ...]) -> bool:
+    """`offerUrl` viene de un tercero y la app lo abre: solo https y un dominio permitido para ese proveedor."""
+    if not url:
+        return False
+    partes = urlsplit(url)
+    host = (partes.hostname or "").lower()
+    return partes.scheme == "https" and any(host == d or host.endswith("." + d) for d in dominios)
+
+
+def _valida(oferta: dict, dominios: tuple[str, ...]) -> bool:
+    """Una oferta sin precio, sin inicio o con un enlace no permitido se descarta (error de datos)."""
+    return bool(oferta.get("price") and oferta.get("startsAt") and enlace_permitido(oferta.get("offerUrl"), dominios))
 
 
 class AdaptadorBusquedaHotel(PuertoBusqueda):
@@ -56,6 +67,7 @@ class AdaptadorBusquedaHotel(PuertoBusqueda):
         self.api = api
         self.proveedor = api.proveedor
         self.limite_por_minuto = limite_por_minuto or api.limite_por_minuto
+        self.dominios = tuple(getattr(api, "dominios", ()))  # configuración del adaptador
 
     def buscar(self, consulta: Consulta) -> list[dict]:
         crudas = self.api.buscar(consulta.location, consulta.date, consulta.nights or 1, consulta.currency)
@@ -71,8 +83,10 @@ class AdaptadorBusquedaHotel(PuertoBusqueda):
                       "price": {"amount": c["total"]["value"], "currency": c["total"]["currencyCode"]},
                       "offerUrl": c.get("bookingLink"), "expiresAt": c.get("validUntil")}
             oferta = {k: v for k, v in oferta.items() if v is not None}
-            if _valida(oferta):
+            if _valida(oferta, self.dominios):
                 ofertas.append(oferta)
+            else:
+                metricas.incrementar("oferta_descartada_datos")
         return ofertas
 
 
@@ -83,6 +97,7 @@ class AdaptadorBusquedaAerolinea(PuertoBusqueda):
         self.api = api
         self.proveedor = api.proveedor
         self.limite_por_minuto = limite_por_minuto or api.limite_por_minuto
+        self.dominios = tuple(getattr(api, "dominios", ()))  # configuración del adaptador
 
     def buscar(self, consulta: Consulta) -> list[dict]:
         crudas = self.api.buscar(consulta.location, consulta.arrivalLocation, consulta.date, consulta.currency)
@@ -98,6 +113,6 @@ class AdaptadorBusquedaAerolinea(PuertoBusqueda):
                       "timeZone": primero["depTz"], "arrivalTimeZone": ultimo["arrTz"],
                       "location": primero["from"], "arrivalLocation": ultimo["to"], "stops": len(tramos) - 1,
                       "price": c.get("price"), "offerUrl": c.get("deepLink")}
-            if _valida(oferta):
+            if _valida(oferta, self.dominios):
                 ofertas.append(oferta)
         return ofertas

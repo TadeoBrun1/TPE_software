@@ -37,6 +37,9 @@ def endpoint(funcion):
         region, user_id = request.headers.get("x-principal-region"), request.headers.get("x-principal-user")
         if not user_id or region != app.region:
             return _error(401, "unauthorized", "El token no corresponde a esta región")
+        with app.base.transaccion() as tx:
+            if app.perfiles.eliminada(tx, user_id):  # token vigente de una cuenta eliminada (ADR-0085)
+                return _error(401, "account_deleted", "La cuenta fue eliminada")
         try:
             return funcion(request, app, user_id)
         except ContratoInvalido as e:

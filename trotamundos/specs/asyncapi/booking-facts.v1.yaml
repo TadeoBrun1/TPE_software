@@ -1,6 +1,6 @@
 asyncapi: 2.6.0
 info:
-  title: Hechos de reservas para la analítica
+  title: Hechos de reservas para la analítica y la recomendación
   version: 0.2.0
   description: >
     Contrato propuesto de la iteración 4 (ADR-0064). Lo publica el núcleo desde su outbox, en la misma transacción

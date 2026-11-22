@@ -134,7 +134,7 @@ proceso; no miden QA ni reemplazan las validaciones con infraestructura real.
 |---|---|---|---|
 | `booking.changed.v1` no tiene consumidor y, con `mandatory`, dejaría la outbox del núcleo trabada | 2 y 4 | El prototipo no lo publica; los cambios confirmados (también los manuales) salen en `booking.facts.v1` | Resuelto en la iteración 5: el contrato se retira (ADR-0081) |
 | Puertos de base, broker, outbox y HTTP repetidos en los tres procesos | 1 a 4 | Biblioteca técnica `comun/infraestructura`, sin dominio; [vista de módulos](../02-views/module-view.md) actualizada | Integrado |
-| Descarte por sobrecarga (ADR-0047) sobre una ruta de recurso sin motivo en `access-audit.md` | 3 y 4 | El prototipo no lo audita; queda en métricas | Resuelto en la iteración 5: excepción declarada en `access-audit.md` |
+| Descarte por sobrecarga (ADR-0047) sobre una ruta de recurso sin motivo en `access-audit.md` | 3 y 4 | El prototipo no lo audita; queda en métricas | Resuelto en la iteración 5 (excepción declarada en `access-audit.md`), propuesto para revisión en el PR #12 |
 | Cancelación anterior al alta | 2 y 3 | Al llegar el alta se asocia la cancelación pendiente: con versiones ordenadas gana la mayor; sin orden, la confirmación también queda para conciliar | Interpretación de `ingestion-contract.md` implementada |
 | Invitación cuando falla la auditoría | 4 | La invitación se audita dentro de su transacción: si falla, no se crea ni se envía el correo | Implementado, coherente con ADR-0061 |
 | Aviso de proveedor con la ingesta caída | 2 | La puerta responde `503` con `Retry-After`; la reconciliación cubre lo que el proveedor no reintente | Implementado |

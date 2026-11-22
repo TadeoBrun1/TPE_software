@@ -7,7 +7,11 @@
   recarga de la otra mitad por minuto, así ninguna ventana de un minuto supera el límite (capacidad + recarga de un
   minuto = límite). Sin fichas no se consulta.
 * Circuit breaker: tras 3 fallas temporales seguidas, el proveedor no se consulta durante 1 minuto.
-* Si un proveedor falla y otro responde, el resultado es parcial; si ninguno responde, la búsqueda queda pendiente.
+* Si un proveedor falla (o no tiene fichas) y otro responde, el resultado es parcial y no se guarda en la caché; si
+  ninguno responde, la búsqueda queda pendiente.
+
+Simplificación del prototipo: la caché, las cubetas y los cortes viven en la memoria de la instancia. En la
+arquitectura (ADR-0082) son una caché compartida por región, para que n instancias respeten un solo límite.
 """
 from __future__ import annotations
 
@@ -108,9 +112,10 @@ class Buscador:
         if respondieron == 0 and fallas_reintentables:
             return Resultado([], pendiente=True, reintentar_en=espera)
         parcial = fallas_reintentables > 0
-        vence = ahora + VIGENCIA_CACHE
-        vencimientos = [parsear(o["expiresAt"]) for o in ofertas if o.get("expiresAt")]
-        if vencimientos:
-            vence = min(vence, min(vencimientos))
-        self._cache[consulta.clave] = (vence, [dict(o) for o in ofertas], parcial)
+        if not parcial:  # un resultado parcial no se guarda: la próxima búsqueda vuelve a consultar al que faltó
+            vence = ahora + VIGENCIA_CACHE
+            vencimientos = [parsear(o["expiresAt"]) for o in ofertas if o.get("expiresAt")]
+            if vencimientos:
+                vence = min(vence, min(vencimientos))
+            self._cache[consulta.clave] = (vence, [dict(o) for o in ofertas], parcial)
         return Resultado(ofertas, parcial=parcial)

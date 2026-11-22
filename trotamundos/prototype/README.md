@@ -4,7 +4,7 @@
 (ingesta idempotente), 3 (panel, SSE y cambios), 4 (compartición, autenticación y auditoría) y, para la segunda
 entrega, la 5 (recomendación de alternativas con human-in-the-loop, opción A). La analítica, la tarjeta para redes,
 la asistencia de agencia y el medio nuevo (ferry) quedan fuera del alcance. La iteración 5 suma también la
-eliminación de la cuenta (ADR-0085). Las 74 pruebas automáticas pasan en un solo proceso, con SQLite y un broker en
+eliminación de la cuenta (ADR-0085). Las 78 pruebas automáticas pasan en un solo proceso, con SQLite y un broker en
 memoria. Los adaptadores de PostgreSQL y RabbitMQ y el `docker-compose.yml`
 están escritos, pero no se ejecutaron en el entorno donde se armó el prototipo (no había Docker). Sí se probó a
 mano una región con cada proceso por separado, comunicados por HTTP (con SQLite y un broker en memoria por proceso).
@@ -20,7 +20,7 @@ Requisitos: Python 3.12 o superior (se probó con 3.13). Desde `trotamundos/prot
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q          # 74 pruebas, unos 40 segundos
+python -m pytest -q          # 78 pruebas, unos 40 segundos
 python demo.py               # recorrido por la API con dos regiones; --logs muestra los logs JSON
 python sistema.py            # entrada global en http://localhost:8080, dos regiones en un proceso
 ```
@@ -125,8 +125,8 @@ de auditoría de su región con su propio código, según el formato de `access-
 | `test_iteracion2_ingesta.py` | Escenarios de [ingestion-validation.md](ingestion-validation.md) (tabla siguiente), avisos firmados por la puerta, reserva sin fechas que queda sin asignar, dueño por campo con aviso importante y push sin repetir, marca de borrado, consultas con la ingesta detenida y novedades que esperan con el núcleo detenido | QA-1, QA-4, QA-6, QA-8; 0001, 0002, 0020 a 0028, 0044 |
 | `test_iteracion3_panel.py` | Panel versionado con ETag y `304`, igual al regenerado desde las tablas; Idempotency-Key; asignación por fechas; 15 viajes completos y el resto en resumen; dos cambios concurrentes del mismo usuario (versión + 2); `If-Match` 400/412; `details` validado; archivado diario, reactivación por 7 días y eliminación al año; prioridades ante sobrecarga; 429 auditado; SSE `ready` y `panel-changed` a través de la entrada global; dos instancias del notificador; ticket SSE vencido o usado como token; telemetría del panel mostrado deduplicada | QA-1, QA-2, QA-3, QA-4, QA-5, RF-04, RF-05; 0040 a 0048, 0066, 0067 |
 | `test_iteracion4_comparticion.py` | Invitar, aceptar y leer entre regiones con `no-store` y sin campos privados; invitación idempotente; rechazos auditados (`email_mismatch`, `secret_mismatch`, `no_permission`, `owner_endpoint`, `unauthenticated`, `removed`, `owner_region_unavailable`, `bad_region`, `not_found`); sin auditoría no hay acceso (503); tokens con otra audiencia, tipo, emisor, firma, algoritmo o región, vencidos o fuera del canal; sin token ni prefijo, rechazo auditado en la región más cercana; el mismo `userId` en otra región no comparte permisos; un solo salto entre puertas | QA-7; 0060, 0061, 0062, 0067 |
-| `test_iteracion5_recomendacion.py` | Cancelación del proveedor → 3 sugerencias, y una manual no; hecho reentregado sin duplicar; push de la cancelación reemplazado por el de las alternativas (misma `collapseKey`); SSE `suggestions-available`; aceptar crea la reserva propuesta (idempotente, sin mover el viaje) y la reserva real la concilia; la propuesta vence con la tarea diaria; rechazar y ajustar reordenan sin violar límites; opt-out y borrado del perfil; solo el dueño ve sus sugerencias; prioridad baja ante sobrecarga y recomendación detenida sin afectar el panel; disrupción masiva a escala 1/10 sin exceder límites de proveedores; proveedor caído (pendiente y completada) y resultado parcial; canario retirado y vuelta atrás; aprendizaje con viajeros sintéticos | QA-11 a QA-16, RF-09; 0081 a 0084 |
-| `test_iteracion5_cuenta.py` | Después de `DELETE /account`, el identificador del usuario no aparece en ninguna tabla de ninguna base de la región (salvo la marca de cuenta eliminada); login y directorio borrados; el dueño de un viaje compartido ya no ve al usuario; auditoría con el actor seudonimizado; login reciente exigido (también con token renovado); novedades y hechos atrasados descartados y evento reentregado sin fallas; la marca vence a los 30 días; la conexión SSE se cierra | QA-14, QA-7; 0085 |
+| `test_iteracion5_recomendacion.py` | Cancelación del proveedor → 3 sugerencias, y una manual no; hecho reentregado sin duplicar; push de la cancelación reemplazado por el de las alternativas (misma `collapseKey`); SSE `suggestions-available`; aceptar crea la reserva propuesta (idempotente, sin mover el viaje) y la reserva real la concilia; la propuesta vence con la tarea diaria; rechazar y ajustar reordenan sin violar límites; opt-out y borrado del perfil; con la recomendación desactivada no se perfila y leer no crea el perfil; oferta vencida `409`; enlaces de ofertas validados; solo el dueño ve sus sugerencias; prioridad baja ante sobrecarga y recomendación detenida sin afectar el panel; disrupción masiva a escala 1/10 sin exceder límites de proveedores; proveedor caído (pendiente y completada) y resultado parcial; canario retirado y vuelta atrás; aprendizaje con viajeros sintéticos | QA-11 a QA-17, RF-09; 0081 a 0084 |
+| `test_iteracion5_cuenta.py` | Después de `DELETE /account`, el identificador del usuario no aparece en ninguna tabla de ninguna base de la región (salvo la marca de cuenta eliminada); login y directorio borrados; el dueño de un viaje compartido ya no ve al usuario; auditoría con el actor seudonimizado; login reciente exigido (también con token renovado); novedades y hechos atrasados descartados y evento reentregado sin fallas; la marca vence a los 30 días; un token vigente no recrea el perfil de recomendación; el barrido quita lo que un hecho en paralelo dejó; la conexión SSE se cierra | QA-14, QA-7; 0085 |
 | `test_contratos.py` | Todo lo publicado cumple su AsyncAPI y lleva `traceparent`; respuestas contra la OpenAPI; regla de shards; topología (colas quorum con un consumidor activo y la cola del notificador como única excepción); esquemas de `details` registrados | 0002, 0028, 0066, 0067 |
 
 Cobertura de los escenarios de [ingestion-validation.md](ingestion-validation.md):
@@ -170,6 +170,11 @@ Cada una es una suposición del prototipo, no una decisión de la arquitectura o
 * Eliminación de la cuenta (iteración 5): no hay analítica en el prototipo, así que el borrado de sus hechos
   (ADR-0085) no se prueba; el registro de dispositivos de push está simulado y la revocación de autorizaciones
   delegadas en el proveedor también.
+* Estado compartido de la búsqueda: la caché, las búsquedas en curso y las cubetas de fichas viven en la memoria de
+  cada instancia; en la arquitectura son una caché compartida por región (ADR-0082). Con una instancia por región,
+  como en el prototipo, el comportamiento es el mismo.
+* Entrenamiento: corre como hilo de la instancia de recomendación que tiene `ENTRENAR=1`; en la arquitectura es un
+  único trabajo programado por región (ADR-0083). Con varias instancias, solo una debe tenerlo.
 * Recomendación (iteración 5): las APIs de búsqueda y los viajeros son sintéticos (`simuladores/busqueda.py`,
   `simuladores/datos_sinteticos.py`). La caché, la cubeta de fichas y el corte por proveedor viven en la memoria de
   cada instancia; en la arquitectura objetivo la cubeta es compartida por región (ADR-0082). El entrenamiento usa
@@ -222,6 +227,24 @@ Hallazgos de la iteración 5:
 15. **Cuenta eliminada con token vigente.** El token de acceso dura 15 minutos y la puerta no consulta al proveedor
     de identidad: la marca de cuenta eliminada del núcleo es la que corta el acceso en el momento, y también evita
     que el primer pedido vuelva a crear el perfil del usuario.
+
+Correcciones de la auditoría independiente de la iteración 5 (detalle en el documento de la iteración):
+
+16. **Cuenta eliminada y recomendación.** La API de recomendación también rechaza los tokens vigentes de una cuenta
+    eliminada, y leer preferencias o sugerencias ya no crea un perfil.
+17. **Recomendación desactivada.** Un hecho nuevo solo se descarta: ya no actualiza las métricas del perfil.
+18. **Ajustar también entrena.** Cada sugerencia mostrada que un ajuste excluye es un rechazo débil (la mitad del
+    peso), en el modelo del viajero y en el entrenamiento.
+19. **Pasos del núcleo después del borrado.** Quitar permisos y seudonimizar la auditoría se hacen al consumir el
+    propio `account.deleted.v1` (cola `core.accounts`): si algo falla, se reentrega. El seudónimo usa una clave
+    propia, no la del HMAC del email.
+20. **Sin orden por usuario en `recommendation.facts`.** Cada escritura revisa la marca de cuenta eliminada y un
+    barrido periódico quita lo que un hecho procesado en paralelo haya dejado.
+21. **QA-11 de punta a punta.** `suggestions.available.v1` lleva `cancellationCommittedAt` y el notificador mide
+    hasta el push (`qa11_cancelacion_a_aviso_s`).
+22. **Canario y caché.** El canario se evalúa cada 5 minutos en el ciclo; un resultado parcial ya no se guarda en la
+    caché; una oferta vencida responde `409`; los enlaces de las ofertas se validan (https y dominio del
+    proveedor); las sugerencias vencidas se borran a los 30 días.
 
 El hallazgo 3 necesita una decisión del equipo (el 1 se resolvió en la iteración 5); el resto está registrado en el
 [registro de impactos](../docs/01-add/impact-log.md).

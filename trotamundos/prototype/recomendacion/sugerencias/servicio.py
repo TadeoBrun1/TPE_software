@@ -4,8 +4,10 @@
   de cada búsqueda: filtro por límites explícitos, orden con la versión del modelo del viajero, 3 mostradas y el
   resto como candidatas; `suggestions.available.v1` en la outbox.
 * `feedback`: aceptar publica `suggestion.accepted.v1`; rechazar ajusta el modelo del viajero y reordena; ajustar
-  cambia las preferencias y reordena. Rechazar y ajustar responden con las sugerencias reordenadas (QA-13).
+  cambia las preferencias, cuenta como rechazo débil cada sugerencia mostrada que el ajuste excluye y reordena.
+  Rechazar y ajustar responden con las sugerencias reordenadas (QA-13). Una oferta vencida responde 409.
 * `entrenar`: trabajo diario por región; si la versión nueva no empeora con el feedback reservado, queda canario.
+  También borra las sugerencias vencidas o no mostradas de más de 30 días (ADR-0081).
 """
 from __future__ import annotations
 
@@ -22,9 +24,10 @@ from recomendacion.busqueda.adaptadores import Consulta
 from recomendacion.modelo import caracteristicas, entrenamiento, ranking
 from recomendacion.sugerencias import eventos
 
-MAX_CANDIDATAS = 10              # se guardan las 10 mejores (3 mostradas y 7 candidatas)
-ESPERA_MAXIMA = timedelta(minutes=2)
-MIN_EJEMPLOS_ENTRENAMIENTO = 30  # suposición
+MAX_CANDIDATAS = 10              # suposición: se guardan las 10 mejores (3 mostradas y 7 candidatas)
+ESPERA_MAXIMA = timedelta(minutes=2)  # suposición: tope de la espera creciente entre reintentos (QA-17)
+MIN_EJEMPLOS_ENTRENAMIENTO = 30  # suposición: con menos feedback no se entrena una versión nueva
+RETENCION_SUGERENCIAS = timedelta(days=30)  # suposición (ADR-0081)
 
 
 class NoEncontrada(Exception):
@@ -89,7 +92,9 @@ class Sugerencias:
         with app.base.transaccion() as tx:
             actual = tx.uno("SELECT estado FROM busquedas WHERE busqueda_id = ?", (busqueda["busqueda_id"],))
             if actual is None or actual["estado"] != "pendiente":
-                return  # borrada (perfil borrado) o ya generada
+                return  # borrada (perfil o cuenta borrados) o ya generada
+            if app.perfiles.eliminada(tx, busqueda["user_id"]):
+                return  # la cuenta se eliminó mientras se buscaba (ADR-0085); el barrido borra la búsqueda
             perfil = app.perfiles.obtener(tx, busqueda["user_id"])
             if not perfil["activada"]:
                 tx.ejecutar("UPDATE busquedas SET estado = 'descartada', terminada = ? WHERE busqueda_id = ?",
@@ -117,8 +122,10 @@ class Sugerencias:
                         (estado, 1 if parcial else 0, ahora, busqueda["busqueda_id"]))
             if elegidos:
                 eventos.sugerencias_disponibles(tx, busqueda, len(elegidos), parcial, ahora)
-        demora = (app.reloj.ahora() - parsear(busqueda["creada"])).total_seconds()
-        metricas.observar("qa11_cancelacion_a_sugerencia_s", max(demora, 0.0))
+        # QA-11 se mide desde la cancelación confirmada en el núcleo; el tramo hasta el push lo mide el notificador.
+        desde = busqueda.get("cancelacion_confirmada") or busqueda["creada"]
+        demora = (app.reloj.ahora() - parsear(desde)).total_seconds()
+        metricas.observar("qa11_cancelacion_a_sugerencias_s", max(demora, 0.0))
         app.logger.info("sugerencias_generadas", busqueda=busqueda["busqueda_id"], mostradas=len(elegidos),
                         version=version["version_id"], parcial=parcial)
 
@@ -128,7 +135,7 @@ class Sugerencias:
         """SuggestionList del viaje: las sugerencias mostradas que siguen cumpliendo los límites del viajero."""
         app = self.app
         with app.base.transaccion() as tx:
-            perfil = app.perfiles.obtener(tx, user_id)
+            perfil = app.perfiles.obtener(tx, user_id, crear=False)  # leer no crea perfiles
             busquedas = tx.todos("SELECT estado, parcial FROM busquedas WHERE user_id = ? AND trip_id = ?",
                                  (user_id, trip_id))
             filas = tx.todos("SELECT * FROM sugerencias WHERE user_id = ? AND trip_id = ? AND estado <> 'candidate' "
@@ -173,8 +180,16 @@ class Sugerencias:
             if fila is None or fila["estado"] == "candidate":
                 raise NoEncontrada(suggestion_id)
             fila = _fila_sugerencia(fila)
-            if fila["estado"] != "available":
-                raise EstadoInvalido(fila["estado"])
+            vence = fila["oferta"].get("expiresAt")
+            if fila["estado"] == "available" and vence and parsear(vence) <= app.reloj.ahora():
+                tx.ejecutar("UPDATE sugerencias SET estado = 'expired' WHERE suggestion_id = ?", (suggestion_id,))
+                fila["estado"] = "expired"
+        if fila["estado"] != "available":
+            raise EstadoInvalido(fila["estado"])  # 409: ya respondida o la oferta venció
+        with app.base.transaccion() as tx:
+            actual = tx.uno("SELECT estado FROM sugerencias WHERE suggestion_id = ?", (suggestion_id,))
+            if actual is None or actual["estado"] != "available":  # otra solicitud la respondió en el medio
+                raise EstadoInvalido(actual["estado"] if actual else "deleted")
             perfil = app.perfiles.obtener(tx, user_id)
             pesos = app.registro.pesos_de(fila["version_modelo"], tx)
             if accion in ("accept", "reject"):
@@ -202,12 +217,29 @@ class Sugerencias:
             if accion == "reject":
                 tx.ejecutar("UPDATE sugerencias SET estado = 'rejected' WHERE suggestion_id = ?", (suggestion_id,))
                 metricas.incrementar("sugerencia_rechazada")
-            else:  # adjust: las preferencias nuevas cambian el filtro
+            else:  # adjust: las preferencias nuevas cambian el filtro y lo que excluyen es un rechazo débil
                 cambios = {k: v for k, v in (preferencias or {}).items() if k != "enabled"}
                 perfil["preferencias"] = {**perfil["preferencias"], **cambios}
+                self._rechazos_debiles(tx, perfil, fila["busqueda_id"], pesos, ahora)
             app.perfiles.guardar(tx, perfil)
             self._reordenar(tx, perfil, fila["busqueda_id"])
         return 200, self.listar(user_id, fila["trip_id"])
+
+    def _rechazos_debiles(self, tx, perfil: dict, busqueda_id: str, pesos: list[float], ahora: str):
+        """Ajustar también refina el modelo (enunciado, RF-09.3): cada sugerencia mostrada que las preferencias nuevas
+        excluyen se guarda como feedback `adjust` (etiqueta 0, la mitad del peso) y mueve el modelo del viajero."""
+        mostradas = [_fila_sugerencia(f) for f in tx.todos(
+            "SELECT * FROM sugerencias WHERE busqueda_id = ? AND estado = 'available'", (busqueda_id,))]
+        for fila in mostradas:
+            if caracteristicas.cumple_limites(fila["oferta"], perfil["preferencias"]):
+                continue
+            tx.ejecutar("INSERT INTO feedback (feedback_id, user_id, suggestion_id, accion, motivo, caracteristicas, "
+                        "version_modelo, posicion, creado) VALUES (?, ?, ?, 'adjust', NULL, ?, ?, ?, ?)",
+                        (str(uuid.uuid4()), perfil["user_id"], fila["suggestion_id"],
+                         json.dumps(fila["caracteristicas"]), fila["version_modelo"], fila["posicion"], ahora))
+            perfil["ajuste"] = entrenamiento.paso_viajero(perfil["ajuste"], fila["caracteristicas"], 0, pesos,
+                                                          entrenamiento.PESO_AJUSTE)
+            metricas.incrementar("sugerencia_excluida_por_ajuste")
 
     def _reordenar(self, tx, perfil: dict, busqueda_id: str):
         """Vuelve a ordenar lo pendiente del grupo con el ajuste y los límites actuales; las 3 mejores se muestran."""
@@ -236,10 +268,14 @@ class Sugerencias:
         """Trabajo diario por región (ADR-0083): entrena con el feedback de la región y publica un canario."""
         app = self.app
         with app.base.transaccion() as tx:
+            tx.ejecutar("DELETE FROM sugerencias WHERE estado IN ('expired', 'candidate') AND creada < ?",
+                        (iso(app.reloj.ahora() - RETENCION_SUGERENCIAS),))
             filas = tx.todos("SELECT feedback_id, accion, caracteristicas, posicion FROM feedback "
-                             "WHERE accion IN ('accept', 'reject')")
+                             "WHERE accion IN ('accept', 'reject', 'adjust')")
         ejemplos = [(json.loads(f["caracteristicas"]), 1 if f["accion"] == "accept" else 0,
-                     entrenamiento.peso_por_posicion(f["posicion"] - 1), f["feedback_id"]) for f in filas]
+                     entrenamiento.peso_por_posicion(f["posicion"] - 1)
+                     * (entrenamiento.PESO_AJUSTE if f["accion"] == "adjust" else 1.0), f["feedback_id"])
+                    for f in filas]
         if len(ejemplos) < MIN_EJEMPLOS_ENTRENAMIENTO:
             return {"resultado": "sin_datos_suficientes", "ejemplos": len(ejemplos)}
         prueba = [e[:3] for e in ejemplos if int(hashlib.sha256(e[3].encode()).hexdigest()[:4], 16) % 5 == 0]

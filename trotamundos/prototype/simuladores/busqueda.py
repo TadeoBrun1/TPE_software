@@ -29,6 +29,7 @@ class _BusquedaSimulada(_Fuente):
         super().__init__()
         self.proveedor = proveedor
         self.limite_por_minuto = limite_por_minuto
+        self.dominios = (f"{proveedor}.example",)  # dominios permitidos para sus enlaces (offer-search.md)
         self.reloj = reloj
         self.cuota_excedida = 0
         self.fijas: dict[tuple, list[dict]] = {}

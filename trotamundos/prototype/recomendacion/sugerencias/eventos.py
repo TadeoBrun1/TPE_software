@@ -27,6 +27,8 @@ def sugerencias_disponibles(tx, busqueda: dict, cantidad: int, parcial: bool, ah
               "committedAt": ahora}
     if busqueda.get("correlation_id"):
         cuerpo["correlationId"] = busqueda["correlation_id"]
+    if busqueda.get("cancelacion_confirmada"):
+        cuerpo["cancellationCommittedAt"] = busqueda["cancelacion_confirmada"]  # para medir QA-11 en el notificador
     tipo = (busqueda.get("cancelada") or {}).get("type")
     if tipo:
         cuerpo["bookingType"] = tipo

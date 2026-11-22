@@ -20,7 +20,7 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 | [2 — Ingesta](01-add/iteration-2-ingestion.md) | Diseño integrado; QA-1 a escala y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
 | [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; decisiones confirmadas por ambos | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
 | [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pasos 2–7 documentados y auditados; decisiones de ambos integrantes | Identidad por región, compartición con cuenta y auditoría, lectura entre regiones, tarjeta para redes, analítica regional seudonimizada, internacionalización en el cliente, detalles por tipo de reserva y observabilidad. |
-| [5 — Recomendación (2da entrega)](01-add/iteration-5-recommendation.md) | Pasos 2–7 documentados; decisiones de ambos integrantes; prototipo con 23 pruebas | Proceso de recomendación por región, búsqueda de alternativas con caché corta, ranking aprendido del feedback con modelo versionado y sugerencias que se aceptan como reserva propuesta; eliminación de la cuenta en todos los procesos. |
+| [5 — Recomendación (2da entrega)](01-add/iteration-5-recommendation.md) | Pasos 2–7 documentados; decisiones de ambos integrantes; prototipo con 27 pruebas; auditoría independiente corregida | Proceso de recomendación por región, búsqueda de alternativas con caché corta, ranking aprendido del feedback con modelo versionado y sugerencias que se aceptan como reserva propuesta; eliminación de la cuenta en todos los procesos. |
 
 La segunda entrega exige al menos un módulo avanzado. Se eligió la opción A, sistema de recomendación con
 human-in-the-loop ([ADR-0080](03-adr/0080-eleccion-del-modulo-avanzado.md)); la opción B (asistente virtual) quedó
@@ -106,7 +106,7 @@ Ver la [vista de componentes y conectores](02-views/cc-view.md).
 | Analítica | Consumir cambios confirmados para preparar análisis. |
 | Recomendación | Consumir cambios confirmados, buscar alternativas en los proveedores, ordenarlas para cada viajero y publicar sugerencias y aceptaciones (ADR-0081 a ADR-0084). |
 
-### Dos flujos de mensajes
+### Flujos de mensajes
 
 | Flujo | Productor | Consumidor | Significado |
 |---|---|---|---|
@@ -281,7 +281,7 @@ Las decisiones de la segunda a la quinta iteración se revisan conjuntamente ant
 | CRN-2 | 4 | 0067 | Propagación del contexto a través del broker. |
 | RF-06 | 2, implementación coordinada con 3 | 0026: asistencia saliente del núcleo | Solicitud de asistencia a la agencia preferida. |
 | RF-07 | 1 y 4 | 0001, 0064 | Consultas del equipo de datos y seudonimización. |
-| RF-09, QA-11 a QA-16 | 5 | 0080 a 0085, 0046, 0047 | Tiempos con proveedores reales, disrupción a escala completa y calidad del modelo con feedback real (el prototipo usa datos sintéticos). |
+| RF-09, QA-11 a QA-17 | 5 | 0080 a 0085, 0046, 0047 | Tiempos con proveedores reales, disrupción a escala completa y calidad del modelo con feedback real (el prototipo usa datos sintéticos). |
 
 Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 
@@ -304,7 +304,7 @@ Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 | Un token de acceso robado sirve hasta 15 minutos. | Vida corta y revocación del token de renovación (ADR-0060). | Iteración 4 (aceptado) |
 | Una primera solicitud desde muy lejos de la región de origen puede superar los 800 ms de QA-2. | Se cumple con la conexión abierta; mitigación candidata: TLS en la entrada global cerca del usuario. | Iteración 4 (aceptado), candidata para la 5 |
 | Si falla la auditoría, se rechazan las lecturas de viajes compartidos. | QA-7 exige el 100 %; auditoría replicada en dos zonas (ADR-0061). | Iteración 4 (aceptado) |
-| Retención de hechos seudonimizados tras eliminar una cuenta o viaje, y cobertura de hechos tardíos sin clave. | Validar retención y riesgo de reidentificación; aplicar protocolo idempotente y período de commit (ADR-0064). | Iteración 4 (validación pendiente) |
+| Retención de hechos seudonimizados tras eliminar un viaje, y cobertura de hechos tardíos sin clave. Al eliminar una cuenta, los hechos del período vigente se borran y los de períodos anteriores quedan sin poder asociarse (ADR-0085). | Validar retención y riesgo de reidentificación; aplicar protocolo idempotente y período de commit (ADR-0064). | Iteración 4 (validación pendiente; la parte de cuentas, resuelta en la 5) |
 | CON-3 carece de un criterio concreto validado. | Precisar la política regional de datos y sus consecuencias. | Ambos integrantes |
 | Un proveedor con límite de consultas bajo demora las sugerencias en una disrupción masiva (QA-12 parcial). | Búsquedas agrupadas por clave y cubeta por proveedor; el resto recibe las sugerencias más tarde. | Iteración 5 (aceptado) |
 | La eliminación de la cuenta no alcanza otras regiones: permisos inertes y registros de auditoría con el identificador hasta su retención. | Riesgo aceptado en ADR-0085; propagarlo por el canal entre regiones es candidato para una iteración posterior. | Iteración 5 (aceptado) |

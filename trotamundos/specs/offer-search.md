@@ -35,14 +35,22 @@ no lleva datos del viajero: el proveedor no sabe para quién es (táctica *limit
 
 Un adaptador no inventa datos que el proveedor no da (igual que ADR-0023): un campo ausente queda ausente.
 
+`offerUrl` viene de un tercero y la app lo abre: el adaptador solo acepta `https` y un dominio de la lista permitida
+de ese proveedor (configuración del adaptador). Una oferta con otro enlace se descarta como error de datos.
+
 ## Caché, agrupación y límites
 
+* La caché, las búsquedas en curso y las cubetas de fichas están en una caché compartida en memoria por región
+  (ADR-0082), no en cada instancia del proceso de recomendación. Si no responde, no se consulta: las búsquedas
+  quedan pendientes.
 * Una búsqueda en curso con la misma clave se comparte: las demás esperan su resultado (*request collapsing*).
 * El resultado se reutiliza 5 minutos (suposición) o hasta el `expiresAt` más cercano, lo que pase primero.
 * Cada adaptador tiene una cubeta de fichas por región dimensionada con el límite publicado por el proveedor:
   capacidad de la mitad del límite por minuto y recarga de la otra mitad por minuto, para que ninguna ventana de un
-  minuto lo supere (una cubeta llena del tamaño del límite más su recarga permitiría casi el doble). Sin fichas, la
-  búsqueda queda pendiente y se reintenta; nunca se excede el límite (QA-12).
+  minuto lo supere (una cubeta llena del tamaño del límite más su recarga permitiría casi el doble). Un proveedor sin
+  fichas no se consulta: si otro proveedor del tipo respondió, el resultado es parcial; si ninguno, la búsqueda queda
+  pendiente y se reintenta. Nunca se excede el límite (QA-12).
+* Un resultado parcial no se guarda en la caché, para que la próxima búsqueda de esa clave consulte al que faltó.
 * Tiempo máximo de una consulta: 30 s (suposición).
 
 ## Fallas

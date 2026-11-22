@@ -11,7 +11,7 @@ from datetime import timedelta
 
 from comun.infraestructura.broker import Mensaje
 from comun.infraestructura.db import BaseDatos
-from comun.infraestructura.reloj import Reloj, iso
+from comun.infraestructura.reloj import Reloj, iso, parsear
 from comun.observabilidad import Logger, metricas
 from contratos.esquemas import validar_evento
 from contratos.topologia import RK_CUENTA, RK_SUGERENCIAS
@@ -72,4 +72,7 @@ class EnvioPush:
                 enviado.update(tripId=aviso["tripId"], suggestionCount=aviso["suggestionCount"])
             self.enviados.append(enviado)
             metricas.incrementar("push_enviado")
+            if aviso.get("cancellationCommittedAt"):  # QA-11 de punta a punta: cancelación confirmada → push
+                metricas.observar("qa11_cancelacion_a_aviso_s",
+                                  max((ahora - parsear(aviso["cancellationCommittedAt"])).total_seconds(), 0.0))
             self.logger.info("push_enviado", reason=motivo)

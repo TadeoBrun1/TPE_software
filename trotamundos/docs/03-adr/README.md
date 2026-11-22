@@ -60,9 +60,12 @@ Plantilla: [adr-template.md](adr-template.md).
 | [0067](0067-observabilidad-con-trazas-y-metricas.md) | Observabilidad con trazas, métricas por etapa y logs estructurados | accepted | 4 | CRN-2, QA-1, QA-4, CON-3 |
 | [0080](0080-eleccion-del-modulo-avanzado.md) | Módulo avanzado de la segunda entrega: sistema de recomendación (opción A) | accepted | 5 | Enunciado (2da entrega), RF-09 |
 | [0081](0081-proceso-de-recomendacion-con-perfiles-regionales.md) | Proceso de recomendación por región, alimentado por eventos y con su propio almacén de perfiles | accepted | 5 | RF-09, QA-11, QA-14, QA-16, CON-3, CON-5 |
-| [0082](0082-busqueda-de-alternativas-con-cache-corta.md) | Búsqueda de alternativas en las APIs de los proveedores, con caché corta y búsquedas agrupadas | accepted | 5 | QA-11, QA-12, QA-16, CON-1, CON-2 |
-| [0083](0083-ranking-aprendido-del-feedback.md) | Ranking de ofertas por características, aprendido del feedback, con un modelo regional versionado | accepted | 5 | RF-09.3, QA-13, QA-15, CON-5 |
-| [0084](0084-entrega-y-aceptacion-de-sugerencias.md) | Sugerencias por una API propia con aviso del notificador, y aceptación como reserva propuesta en el núcleo | accepted | 5 | RF-09.1, RF-09.2, QA-11, QA-2, QA-7 |
+| [0082](0082-busqueda-de-alternativas-con-cache-corta.md) | Búsqueda de alternativas en las APIs de los proveedores, con caché corta y búsquedas agrupadas | accepted | 5 | QA-11, QA-12, QA-17, CON-1, CON-2 |
+| [0083](0083-ranking-aprendido-del-feedback.md) | Ranking de ofertas por características, aprendido del feedback, con un modelo regional versionado | accepted | 5 | RF-09.3, QA-11, QA-13, QA-15, CON-3, CON-5 |
+| [0084](0084-entrega-y-aceptacion-de-sugerencias.md) | Sugerencias por una API propia con aviso del notificador, y aceptación como reserva propuesta en el núcleo | accepted | 5 | RF-09.1, RF-09.2, QA-2, QA-7, QA-11, QA-13 |
 | [0085](0085-eliminacion-de-la-cuenta.md) | Eliminación de la cuenta: borrado inmediato en el núcleo y aviso por evento al resto de los procesos | accepted | 5 | QA-14, QA-7, CON-3 (pendiente de 0081 y 0064) |
+
+Las ADRs 0080 a 0085 están `accepted` por decisión de los dos integrantes; su integración en `main` depende de la
+revisión del PR #12.
 
 Mantener esta tabla actualizada al crear una ADR o cambiar su estado. La revisión cruzada y las pruebas se registran por separado.

@@ -37,11 +37,12 @@ elección y la comparación; las decisiones de diseño del módulo están en ADR
 Chosen option: "A. Sistema de recomendación", because se suma a la arquitectura como un consumidor nuevo de eventos
 sin tocar el núcleo (ADR-0002), no compromete la latencia del panel (QA-2) y, una vez incorporado, escala y opera
 con costo bajo: las sugerencias se calculan ante eventos y el modelo se entrena por lotes. El equipo la consideró
-además la opción más útil para el viajero. Los costos que trae (un almacén de perfiles, una fuente externa de ofertas
+además la opción más útil para el viajero; ese juicio de valor es una suposición del equipo que ningún stakeholder
+validó, y no se usa como criterio de arquitectura. Los costos que trae (un almacén de perfiles, una fuente externa de ofertas
 y reglas nuevas) se resuelven con decisiones propias en esta misma iteración.
 
 Alcance acordado por el equipo (RF-09): sugiere **alojamiento y transporte** (las rutas de varios tramos quedan
-fuera), se dispara **ante una cancelación o disrupción**, y aceptar una sugerencia la deja como **reserva propuesta**
+fuera), se dispara **ante una cancelación o disrupción** (las opciones de disparador están en ADR-0081), y aceptar una sugerencia la deja como **reserva propuesta**
 con el enlace a la oferta del proveedor, sin comprar ni emitir reservas (fuera del alcance del sistema).
 
 Se registra también un factor de alcance que no se usa para justificar decisiones de diseño: el equipo tiene más
@@ -62,7 +63,7 @@ en el prototipo.
 ### Confirmation
 
 La [iteración 5](../01-add/iteration-5-recommendation.md) diseña el módulo con ADR-0081 a ADR-0084 y el prototipo lo
-implementa con pruebas de RF-09 y de los escenarios QA-11 a QA-16.
+implementa con pruebas de RF-09 y de los escenarios QA-11 a QA-17.
 
 ## Pros and Cons of the Options
 
@@ -76,7 +77,7 @@ Niveles estimados por el equipo (**suposición**): 🟢 bajo, 🟡 medio, 🔴 a
 | Aspecto | A. Recomendación | B. Asistente virtual |
 |---|---|---|
 | Incorporarlo al diseño | 🔴 Alto: almacén nuevo, catálogo externo, ciclo de entrenamiento y reglas nuevas | 🟡 Medio: reusa ADR-0026; suma excepciones y seguridad |
-| Implementarlo en el prototipo | 🔴 Alto: datos sintéticos, modelo, catálogo simulado y ciclo de feedback | 🟡 Medio: módulo de asistencia (ya diseñado) y un bot con modelo local |
+| Implementarlo en el prototipo (factor de alcance, no criterio de arquitectura) | 🔴 Alto: datos sintéticos, modelo, catálogo simulado y ciclo de feedback | 🟡 Medio: módulo de asistencia (ya diseñado) y un bot con modelo local |
 | Impacto en lo ya hecho | 🟢 Bajo: proceso aparte y endpoints nuevos | 🟡 Medio: excepciones a ADR-0004 y ADR-0065, herramientas sobre la API del núcleo |
 | Cambiar el modelo en el futuro | 🟡 Medio: hay que reentrenar y puede cambiar el formato del perfil | 🟢 Bajo: el modelo se reemplaza detrás de un puerto |
 | Agregar capacidades nuevas | 🟡 Medio: un tipo de sugerencia nuevo suele pedir otra fuente de datos | 🟢 Bajo: se agrega una herramienta al bot |

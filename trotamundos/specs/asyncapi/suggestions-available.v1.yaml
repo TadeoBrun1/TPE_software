@@ -83,3 +83,9 @@ components:
           committedAt:
             type: string
             format: date-time
+          cancellationCommittedAt:
+            type: string
+            format: date-time
+            description: >
+              committedAt del hecho de la cancelación en el núcleo. El notificador mide QA-11 desde acá hasta que
+              envía el push (qa11_cancelacion_a_aviso_s).

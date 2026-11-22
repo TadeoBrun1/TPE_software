@@ -14,7 +14,7 @@ sistema, y las siguientes atacan los drivers de mayor prioridad, empezando por l
 | 2 | Ingesta de reservas desde correo y terceros: frescura, interoperabilidad y acceso seguro a correos | RF-01, RF-02, RF-03, RF-06, QA-1, QA-6, QA-8, CRN-3, CRN-4 | Tomas Lateana |
 | 3 | Consulta de itinerarios: latencia, disponibilidad y escala ante picos; aplicación de novedades en el núcleo | RF-04, RF-05, QA-2, QA-3, QA-4, QA-5; etapas de núcleo y cliente de QA-1; QA-6 del lado consumidor | Tadeo Brun |
 | 4 | Seguridad de compartición, internacionalización, analítica sin afectar a los usuarios y evolucionabilidad | RF-07, RF-08, QA-7, QA-9, QA-10, CRN-2, interoperabilidad con redes sociales | Ambos |
-| 5 | Segunda entrega: módulo avanzado, opción A (recomendación de alternativas con human-in-the-loop) | RF-09, QA-11, QA-12, QA-13, QA-14, QA-15, QA-16; aplican CON-1, CON-2, CON-3, CON-5 | Ambos |
+| 5 | Segunda entrega: módulo avanzado, opción A (recomendación de alternativas con human-in-the-loop) | RF-09, QA-11, QA-12, QA-13, QA-14, QA-15, QA-16, QA-17; aplican CON-1, CON-2, CON-3, CON-5 | Ambos |
 
 Cada fila enlaza a su documento:
 [1](iteration-1-structure.md) ·

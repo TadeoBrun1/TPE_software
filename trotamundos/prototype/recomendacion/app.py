@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 import threading
 import time
+from datetime import timedelta
 
 from comun.infraestructura import broker as broker_mod
 from comun.infraestructura import db as db_mod
@@ -31,6 +32,8 @@ from recomendacion.modelo.registro import MUESTRA_MINIMA, RegistroModelos
 from recomendacion.perfiles.servicio import Perfiles
 from recomendacion.sugerencias.servicio import Sugerencias
 from simuladores.busqueda import BusquedaAerolineaSimulada, BusquedaHotelSimulada
+
+EVALUACION_CANARIO = timedelta(minutes=5)  # suposición: cada cuánto se evalúa el canario (QA-15)
 
 
 class Recomendacion:
@@ -52,24 +55,35 @@ class Recomendacion:
         self.publicador = PublicadorOutbox([base], broker, self.reloj, self.logger)
         self.app = crear_app(self)
         self._activo = False
+        self._ultima_evaluacion = None
 
     def preparar_mensajeria(self):
         self.broker.declarar(topologia_region())  # idempotente: no depende de que el núcleo arranque antes
         self.broker.consumir(COLA_RECOMENDACION, self.hechos.procesar, prefetch=20)
 
     def ciclo(self) -> int:
-        """Un ciclo de trabajo: búsquedas pendientes y publicación de la outbox (pruebas, demo y modo servicio)."""
+        """Un ciclo de trabajo (pruebas, demo y modo servicio): búsquedas pendientes, outbox, barrido de cuentas
+        eliminadas y, cada 5 minutos, la evaluación del canario (QA-15: se decide apenas junta la muestra)."""
+        self.perfiles.barrer_eliminadas()
+        ahora = self.reloj.ahora()
+        if self._ultima_evaluacion is None or ahora - self._ultima_evaluacion >= EVALUACION_CANARIO:
+            self._ultima_evaluacion = ahora
+            self.registro.evaluar_canario()
         return self.sugerencias.procesar_pendientes() + self.publicador.publicar_pendientes()
 
     def entrenar(self) -> dict:
-        """Trabajo diario: primero decide sobre el canario anterior y después entrena una versión nueva."""
+        """Trabajo diario: decide sobre el canario y entrena una versión nueva. Si el canario todavía no juntó la
+        muestra, la versión nueva lo reemplaza (incluye el mismo feedback y el del último día): el feedback entra en
+        una versión del modelo en 24 h, y a toda la región cuando un canario junta la muestra (trade-off QA-13/QA-15).
+        """
         self.perfiles.purgar_marcas()  # marcas de cuentas eliminadas vencidas (ADR-0085)
         canario = self.registro.evaluar_canario()
-        if canario == "esperando_muestra":
-            return {"canario": canario, "entrenamiento": "pospuesto"}  # a lo sumo un canario a la vez
         return {"canario": canario, "entrenamiento": self.sugerencias.entrenar()}
 
-    def iniciar_trabajadores(self, intervalo: float = 0.5, hora_entrenamiento: int = 3):
+    def iniciar_trabajadores(self, intervalo: float = 0.5, hora_entrenamiento: int = 3, entrenar: bool = True):
+        """En la arquitectura el entrenamiento es un único trabajo programado por región (ADR-0083). En el prototipo
+        corre como hilo de la instancia que tiene `entrenar=True` (variable ENTRENAR); con varias instancias, solo una
+        debe tenerlo."""
         self._activo = True
         self.broker.iniciar()
 
@@ -92,7 +106,8 @@ class Recomendacion:
                 time.sleep(60)
 
         threading.Thread(target=trabajar, daemon=True, name="recomendacion").start()
-        threading.Thread(target=diaria, daemon=True, name="entrenamiento").start()
+        if entrenar:
+            threading.Thread(target=diaria, daemon=True, name="entrenamiento").start()
 
     def detener(self):
         self._activo = False
@@ -125,5 +140,5 @@ def desde_entorno() -> Recomendacion:  # pragma: no cover - docker compose
         from simuladores.admin import rutas_recomendacion
 
         recomendacion.app.router.routes.extend(rutas_recomendacion(recomendacion, os.environ["CLAVE_ADMIN"]))
-    recomendacion.iniciar_trabajadores()
+    recomendacion.iniciar_trabajadores(entrenar=os.environ.get("ENTRENAR", "1") == "1")
     return recomendacion

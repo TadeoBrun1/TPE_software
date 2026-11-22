@@ -854,6 +854,8 @@ components:
         permitidos por emisor, exp y nbf cuando exista. sub se vincula de forma estable a userId y homeRegion debe
         corresponder a ese emisor. El principal es (homeRegion, userId). Se rechazan ID tokens, tokens de renovación
         y tickets SSE. Las claves se seleccionan de la configuración confiable del emisor, nunca de URLs del token.
+        Desde la 0.4.0 lleva también auth_time (momento del inicio de sesión; un token renovado conserva el del login
+        original), que DELETE /account usa para exigir un login reciente (ADR-0085).
   parameters:
     TripId:
       name: tripId
@@ -1299,6 +1301,7 @@ components:
         offerUrl:
           type: string
           format: uri
+          description: Enlace a la oferta del proveedor; solo https y dominios permitidos para ese proveedor (offer-search.md)
         expiresAt:
           type: string
           format: date-time
@@ -1338,7 +1341,9 @@ components:
           enum: [accept, reject, adjust]
         reason:
           type: string
-          description: Motivo opcional de un rechazo; se usa como señal de entrenamiento
+          description: >
+            Motivo opcional de un rechazo; se guarda con el feedback para analizar por qué se rechaza (el modelo
+            todavía no lo usa)
           enum: [too_expensive, bad_schedule, too_many_stops, unwanted_provider, other]
         preferences:
           $ref: "#/components/schemas/RecommendationPreferences"

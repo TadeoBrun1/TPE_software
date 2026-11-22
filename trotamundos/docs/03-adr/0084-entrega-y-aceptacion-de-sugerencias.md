@@ -149,7 +149,7 @@ recomendación detenida, el panel sigue respondiendo (`test_iteracion5_recomenda
 | Elemento | Enlace |
 |---|---|
 | Iteración ADD | 5, [iteration-5-recommendation](../01-add/iteration-5-recommendation.md) |
-| Drivers | RF-09.1, RF-09.2, QA-7, QA-11, QA-13 |
+| Drivers | RF-09.1, RF-09.2, QA-2, QA-7, QA-11, QA-13 |
 | Contratos | [OpenAPI](../../specs/openapi/itinerary-api.v1.yaml), [suggestions-available.v1.yaml](../../specs/asyncapi/suggestions-available.v1.yaml), [suggestion-accepted.v1.yaml](../../specs/asyncapi/suggestion-accepted.v1.yaml), [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml) |
 | Vistas afectadas | [C&C](../02-views/cc-view.md), [secuencias](../02-views/sequence-views.md) |
 | Código del prototipo | `prototype/recomendacion/`, `prototype/nucleo/reservas/propuestas.py`, `prototype/notificador/` |

@@ -36,6 +36,7 @@ flowchart LR
         OT["Colector de observabilidad<br/>(trazas, métricas, logs)"]
         R["Recomendación<br/>(perfiles, búsqueda, ranking)"]
         RS2[("Base de recomendación<br/>(perfiles, feedback,<br/>sugerencias, versiones)")]
+        RC[("Caché compartida<br/>(búsquedas, en curso,<br/>fichas por proveedor)")]
         RE["Entrenamiento diario<br/>(trabajo programado)"]
     end
 
@@ -77,6 +78,7 @@ flowchart LR
     MB -- "ping/echo y promoción de réplicas" --> DB
     B -- "booking.facts.v1 (recommendation.facts)" --> R
     R -- "perfiles, sugerencias y feedback" --> RS2
+    R -- "caché, búsquedas en curso y fichas (atómico)" --> RC
     R -- "búsqueda de ofertas (API estándar, caché 5 min)" --> ET
     R -- "suggestions.available.v1 y suggestion.accepted.v1" --> B
     B -- "suggestion.accepted.v1 (core.suggestions)" --> N
@@ -111,6 +113,7 @@ sola para no recargar el diagrama.
 | Monitor de base | Tres instancias (zonas A, B y C); detecta primarias caídas en 30 s y promueve la réplica con acuerdo de dos de tres (ADR-0042) | 3 |
 | Recomendación | Consume `booking.facts.v1`, mantiene perfiles, busca alternativas en los proveedores con caché y límites, las ordena con el modelo de la región, sirve la API de sugerencias y publica sus avisos y aceptaciones (ADR-0081 a ADR-0084) | 5 |
 | Base de recomendación | Perfiles resumidos, preferencias, feedback, sugerencias, búsquedas pendientes, versiones del modelo y outbox; en la región de origen (ADR-0081) | 5 |
+| Caché compartida de la recomendación | Caché de búsquedas de 5 minutos, búsquedas en curso por clave y cubetas de fichas por proveedor, compartidas por todas las instancias de la región (ADR-0082) | 5 |
 | Entrenamiento diario | Trabajo programado por región que entrena una versión nueva con el feedback y la deja como canario (ADR-0083) | 5 |
 
 ## 4. Conectores
@@ -137,6 +140,7 @@ sola para no recargar el diagrama.
 | Intermediario (`suggestions.available.v1`) | Notificador | Asíncrono, las mismas colas que `panel.changed.v1` (ADR-0084) | [suggestions-available.v1.yaml](../../specs/asyncapi/suggestions-available.v1.yaml) |
 | Puerta de entrada | Recomendación | Síncrono, REST; prioridad baja ante sobrecarga (ADR-0047, ADR-0084) | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
 | Intermediario (`account.deleted.v1`) | Proveedor de identidad, ingesta, notificador, recomendación y analítica | Asíncrono, cola propia o enlace nuevo por consumidor (ADR-0085); en el diagrama se dibuja solo la flecha a identidad | [account-deleted.v1.yaml](../../specs/asyncapi/account-deleted.v1.yaml) |
+| Recomendación | Caché compartida de la recomendación | Síncrono, en memoria por red, operaciones atómicas para las fichas (ADR-0082) | — |
 | Recomendación | Sistemas de terceros (búsqueda) | Síncrono, APIs estándar de búsqueda, con caché y límite por proveedor (ADR-0082) | [offer-search.md](../../specs/offer-search.md) |
 | Intermediario (eventos de dominio) | Analítica | Asíncrono, suscripción con cola propia | [booking-facts.v1.yaml](../../specs/asyncapi/booking-facts.v1.yaml), [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml) |
 | Ingesta | Proveedores de correo y terceros | Síncrono, API del proveedor (sondeo y consulta) | Externo (CON-1, CON-2) |

@@ -12,6 +12,7 @@ x-claves: &claves
   CLAVE_EMAIL_HMAC: ${CLAVE_EMAIL_HMAC:-solo-desarrollo-email-hmac-no-usar-en-produccion}
   CLAVE_INTERNA_DIRECTORIO: ${CLAVE_INTERNA_DIRECTORIO:-solo-desarrollo-directorio-interno-no-usar-en-produccion}
   CLAVE_ADMIN: ${CLAVE_ADMIN:-solo-desarrollo-admin-no-usar-en-produccion}
+  CLAVE_SEUDONIMOS_AUDITORIA: ${CLAVE_SEUDONIMOS_AUDITORIA:-solo-desarrollo-seudonimos-no-usar-en-produccion}
 
 x-servicio: &servicio
   build:

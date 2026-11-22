@@ -20,7 +20,7 @@ saturar a los proveedores ni atrasar las sugerencias?
 
 * QA-11: sugerencias avisadas en 2 minutos.
 * QA-12: 15.000 afectados en 10 minutos respetando el 100 % de los límites de consulta de cada proveedor.
-* QA-16: si un proveedor no responde, la búsqueda queda pendiente y se reintenta.
+* QA-17: si un proveedor no responde, la búsqueda queda pendiente y se reintenta.
 * CON-1 (APIs estándar) y CON-2 (sistemas externos que no podemos modificar).
 * ADR-0023: puertos comunes y adaptadores por proveedor.
 
@@ -48,29 +48,37 @@ Reglas:
   viajero: la consulta al proveedor no dice para quién es (táctica *limitar la exposición*).
 * **Búsquedas agrupadas:** si una búsqueda con la misma clave está en curso, las demás esperan su resultado en vez
   de consultar otra vez (*request collapsing*).
-* **Caché corta:** el resultado de una clave se reutiliza durante 5 minutos (suposición, el mismo valor que la
-  medida de QA-12), o menos si la oferta trae un vencimiento menor. Se descarta antes si el proveedor responde que
+* **Caché corta:** el resultado de una clave se reutiliza durante 5 minutos (suposición, por analogía con la
+  vigencia habitual de una tarifa consultada en un buscador de viajes), o menos si la oferta trae un vencimiento
+  menor. Se descarta antes si el proveedor responde que
   una oferta ya no está disponible.
 * **Límite por proveedor:** cada adaptador respeta el límite de consultas publicado por el proveedor con una cubeta
   de fichas por región, con capacidad de la mitad del límite por minuto y recarga de la otra mitad por minuto, así
   ninguna ventana de un minuto lo supera. Si no quedan fichas, la búsqueda queda pendiente y se reintenta, en vez de
   exceder el límite.
+* **Estado compartido de la región:** la caché, las búsquedas en curso (para agruparlas) y las cubetas de fichas
+  viven en una **caché compartida en memoria por región** (tipo Redis, con réplica en otra zona; suposición), no en
+  cada instancia. Así hay una sola caché, una sola consulta por clave y un solo límite por proveedor aunque haya *n*
+  instancias. La búsqueda en curso es una entrada con vencimiento por clave; las fichas se descuentan con una
+  operación atómica. Si la caché compartida no responde, no se consulta a ningún proveedor: las búsquedas quedan
+  pendientes y se reintentan (preferimos atrasar sugerencias antes que exceder un límite).
 * **Fallas:** se clasifican como en ADR-0023 (temporal, cuota, autorización, datos). Una falla temporal o de cuota
   deja la búsqueda pendiente con reintento y espera creciente; tras 3 fallas seguidas de un proveedor, se deja de
   consultarlo durante 1 minuto (*Circuit Breaker*; valores supuestos). La cancelación ya está en el panel: solo se
-  atrasan las sugerencias (QA-16).
-* **Varios proveedores:** se consulta a todos los adaptadores del tipo de reserva; si uno falla y otro responde, se
-  sugieren las ofertas disponibles y se anota que la búsqueda fue parcial.
+  atrasan las sugerencias (QA-17).
+* **Varios proveedores:** se consulta a todos los adaptadores del tipo de reserva; si uno falla (o no tiene fichas) y
+  otro responde, se sugieren las ofertas disponibles y se anota que la búsqueda fue parcial. Un resultado parcial
+  no se guarda en la caché, para que la próxima búsqueda de esa clave vuelva a consultar al que faltó.
 
 Patrones y tácticas que aplica:
 
 | Patrón o táctica | Cómo se aplica | Driver |
 |---|---|---|
-| Patrón *Ports and Adapters* | Un puerto de búsqueda y un adaptador por proveedor | CON-1, QA-15 |
-| Táctica *mantener varias copias de los datos* (performance) | Caché de 5 minutos por clave de búsqueda | QA-11, QA-12 |
+| Patrón *Ports and Adapters* | Un puerto de búsqueda y un adaptador por proveedor | CON-1, CON-2 |
+| Táctica *mantener varias copias de los datos* (performance) | Caché de 5 minutos por clave de búsqueda, compartida por las instancias de la región | QA-11, QA-12 |
 | Táctica *reducir la sobrecarga de cómputo* (performance), patrón *request collapsing* | Una consulta al proveedor por clave aunque haya miles de afectados | QA-12 |
 | Táctica *administrar las solicitudes de trabajo* (performance) | Cubeta de fichas por proveedor y región | QA-12, CON-2 |
-| Tácticas *reintentar* y *manejo de excepciones* (disponibilidad), patrón *Circuit Breaker* | Búsquedas pendientes con reintento; se deja de consultar a un proveedor que falla | QA-16 |
+| Tácticas *reintentar* y *manejo de excepciones* (disponibilidad), patrón *Circuit Breaker* | Búsquedas pendientes con reintento; se deja de consultar a un proveedor que falla | QA-17 |
 | Tácticas *adaptar la interfaz* y *adherir a estándares* (integrabilidad) | Contrato de oferta normalizado con ISO 4217 y zonas IANA | CON-1, QA-10 |
 
 ### Consequences
@@ -113,7 +121,7 @@ caído deja la búsqueda pendiente y al volver se completan las sugerencias; el 
 | Elemento | Enlace |
 |---|---|
 | Iteración ADD | 5, [iteration-5-recommendation](../01-add/iteration-5-recommendation.md) |
-| Drivers | QA-11, QA-12, QA-16, CON-1, CON-2 |
+| Drivers | QA-11, QA-12, QA-17, CON-1, CON-2 |
 | Contratos | [offer-search.md](../../specs/offer-search.md) |
 | Vistas afectadas | [C&C](../02-views/cc-view.md), [contexto](../00-requirements/context-diagram.md) |
 | Código del prototipo | `prototype/recomendacion/busqueda/` |

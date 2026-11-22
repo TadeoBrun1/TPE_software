@@ -5,9 +5,9 @@ que hizo, marcadores de viajes compartidos con él, vinculaciones, claves de ide
 deja la marca de cuenta eliminada y se escribe `account.deleted.v1` en la outbox. Los demás procesos de la región
 borran lo suyo al recibir el evento.
 
-Después del commit, fuera de esa transacción (otras particiones), se quitan los permisos que el usuario tenía sobre
-viajes de otros usuarios de la región y se seudonimiza al actor en los registros de auditoría de la región. Las dos
-operaciones son idempotentes y se pueden repetir.
+Lo que está fuera de esa partición (los permisos del usuario sobre viajes de otros usuarios de la región y el actor en
+los registros de auditoría) lo hace `completar`, que el núcleo ejecuta al consumir su propio `account.deleted.v1` en
+la cola `core.accounts`: si el proceso cae o la auditoría falla, el mensaje se reentrega y se repite (idempotente).
 
 La marca de cuenta eliminada dura 30 días (suposición): mientras tanto, un token de acceso que siga vigente recibe
 401 y se descartan las novedades o sugerencias atrasadas de ese usuario.
@@ -61,12 +61,23 @@ def eliminar_cuenta(nucleo, user_id: str) -> dict:
         return {"resultado": "eliminada", "borrados": borrados}
 
     resultado = con_reintentos(transaccion)
-    if resultado["resultado"] == "eliminada":
-        resultado["permisos_quitados"] = quitar_permisos(nucleo, user_id)
-        resultado["auditoria_seudonimizada"] = nucleo.auditoria.seudonimizar_actor(
-            region, user_id, codigo_actor(nucleo.clave_email, region, user_id))
-    nucleo.logger.info("cuenta_eliminada", **{k: v for k, v in resultado.items() if k != "borrados"})
+    nucleo.logger.info("cuenta_eliminada", resultado=resultado["resultado"])
     return resultado
+
+
+def completar(nucleo, mensaje) -> None:
+    """Consumidor de `account.deleted.v1` en `core.accounts`: quita permisos y seudonimiza la auditoría. Si algo
+    falla, la excepción hace que el mensaje se reentregue."""
+    from contratos.esquemas import validar_evento
+
+    validar_evento("account.deleted.v1", mensaje.cuerpo)
+    if mensaje.cuerpo["homeRegion"] != nucleo.region:
+        return
+    user_id = mensaje.cuerpo["userId"]
+    permisos = quitar_permisos(nucleo, user_id)
+    registros = nucleo.auditoria.seudonimizar_actor(nucleo.region, user_id,
+                                                    codigo_actor(nucleo.clave_seudonimos, nucleo.region, user_id))
+    nucleo.logger.info("cuenta_eliminada_completada", permisos=permisos, registros_auditoria=registros)
 
 
 def borrar_de_outbox(tx: Transaccion, user_id: str) -> int:

@@ -54,7 +54,9 @@ flowchart TB
         RC1["Recomendación × n<br/>(zonas A y B)"]
         RD1[("Base de recomendación<br/>(primaria A, réplica B)")]
         RT1["Entrenamiento diario<br/>(trabajo programado)"]
+        RK1[("Caché compartida<br/>(primaria A, réplica B)")]
         RC1 --- RD1
+        RC1 --- RK1
         RT1 --- RD1
         D1 -. "replicación sincrónica por nodo" .- D2
         AU1 -. "replicación sincrónica" .- AU2
@@ -86,7 +88,7 @@ flowchart TB
 | Notificador | Conexiones SSE y envío de push (ADR-0046) | Varias instancias en A y B; escala por conexiones abiertas | Cada instancia tiene su cola de avisos; si cae, la app sigue con su caché |
 | Monitor de base | *Ping/echo* a las primarias cada 5 s; promoción de réplicas | 3 instancias, una por zona | Una promoción requiere acuerdo de dos de tres, para evitar promociones dobles |
 | Analítica y almacén analítico | Consumo de `booking.facts.v1` y `trip.changed.v1`, seudonimización y consultas pesadas (ADR-0064) | Por región; no hay almacén global | No está en el camino de los viajeros: su caída solo atrasa los datos analíticos, que esperan en su cola |
-| Recomendación y su base (iteración 5) | Consumo de `booking.facts.v1`, búsqueda de alternativas, ranking, API de sugerencias (ADR-0081 a ADR-0084) | Instancias en A y B que compiten por su cola; base con primaria en A y réplica sincrónica en B | No está en el camino del panel: si cae, los hechos esperan en su cola y la cancelación se muestra sin sugerencias (QA-16). Escala de forma reactiva (ADR-0043) |
+| Recomendación y su base (iteración 5) | Consumo de `booking.facts.v1`, búsqueda de alternativas, ranking, API de sugerencias (ADR-0081 a ADR-0084) | Instancias en A y B que compiten por su cola; base con primaria en A y réplica sincrónica en B; caché compartida en memoria con primaria en A y réplica en B (ADR-0082). El entrenamiento diario es un único trabajo programado por región, no un hilo de cada instancia | No está en el camino del panel: si cae, los hechos esperan en su cola y la cancelación se muestra sin sugerencias (QA-16). Escala de forma reactiva (ADR-0043) |
 | Entrenamiento del modelo (iteración 5) | Trabajo diario por región que entrena una versión nueva con el feedback (ADR-0083) | Una ejecución por día y región, sin capacidad reservada (CON-5) | Los datos no salen de la región (CON-3); si falla, sigue activa la versión anterior |
 | Directorio global de regiones | `HMAC(email)` → región para el login, calculado por la entrada global con una clave propia (ADR-0060) | Replicado en varias regiones, como la entrada global | Guarda un seudónimo por usuario (aceptado por proporcionalidad frente a CON-3); si cae, no se puede iniciar sesión desde un dispositivo nuevo |
 | Proveedor de identidad | Login, tokens y revocación de los usuarios de la región (ADR-0060) | Instancias en A y B | Guarda credenciales y emails solo de su región (CON-3) |

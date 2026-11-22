@@ -24,6 +24,7 @@ Las prioridades de esta tabla son **propuestas a validar** (ningún stakeholder 
 | QA-13 | Usabilidad | Adaptación al usuario (2da entrega) | Reordenar en 2 s respetando límites; feedback en el modelo en 24 h | (H, M) |
 | QA-14 | Seguridad | Control del perfil (2da entrega) | 0 sugerencias tras desactivar; perfil borrado en 24 h | (H, M) |
 | QA-16 | Disponibilidad | Falla de la recomendación (2da entrega) | Panel sin impacto; pendientes en 10 min tras recuperar | (H, M) |
+| QA-17 | Disponibilidad | Proveedor de búsqueda caído (2da entrega) | Ninguna búsqueda perdida; pendientes en 10 min tras recuperar | (M, M) |
 | QA-15 | Modificabilidad | Versiones del modelo (2da entrega) | Canario al 5 %, vuelta atrás en 5 min sin tocar otros procesos | (M, M) |
 
 ## Árbol
@@ -68,6 +69,8 @@ flowchart TD
     G3 --> QA14["QA-14 Borrado en 24 h (H, M)"]
     D --> D2["Falla de la recomendación (2da entrega)"]
     D2 --> QA16["QA-16 Panel sin impacto (H, M)"]
+    D --> D3["Proveedor de búsqueda caído (2da entrega)"]
+    D3 --> QA17["QA-17 Pendientes en 10 min (M, M)"]
     E --> E2["Versiones del modelo (2da entrega)"]
     E2 --> QA15["QA-15 Vuelta atrás en 5 min (M, M)"]
 ```
@@ -87,6 +90,7 @@ los (H, M); ver [architectural-drivers.md](architectural-drivers.md).
   porque condiciona la estructura de despliegue; la parte de idiomas y formatos queda para la iteración 4.
 - QA-3 (M, M) se atiende en la iteración 3 junto con QA-2.
 - Las prioridades son una propuesta del equipo: ningún stakeholder las confirmó.
-- Los escenarios QA-11 a QA-16 son de la 2da entrega (opción A, RF-09) y se atienden en la
+- Los escenarios QA-11 a QA-17 son de la 2da entrega (opción A, RF-09) y se atienden en la
   [iteración 5](../01-add/iteration-5-recommendation.md). QA-12 es (H, H) porque las cancelaciones masivas
-  coinciden con los picos de QA-5 y dependen de proveedores externos con límites de consulta.
+  coinciden con los picos de QA-5 y dependen de proveedores externos con límites de consulta. QA-17 salió de dividir
+  QA-16 (antes tenía dos fuentes de estímulo, auditoría de la iteración 5); es (M, M) porque solo atrasa sugerencias.
