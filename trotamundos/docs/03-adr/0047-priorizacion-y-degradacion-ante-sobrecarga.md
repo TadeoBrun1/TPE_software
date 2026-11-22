@@ -106,3 +106,7 @@ Esta decisión forma parte del diseño integrado mediante [PR #6](https://github
 merge `54122ee` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
 la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
 ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+
+## Nota de la iteración 5 (2026-11-22)
+
+Las rutas de sugerencias y preferencias son de prioridad baja. Un descarte por sobrecarga no se audita, aun sobre una ruta de recurso: excepción declarada en [`access-audit.md`](../../specs/access-audit.md) ([registro de impactos](../01-add/impact-log.md#iteración-5--2026-11-22)).

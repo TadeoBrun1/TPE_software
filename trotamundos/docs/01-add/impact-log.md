@@ -89,7 +89,7 @@ Los impactos de origen conservan su fecha y contexto. La siguiente tabla expresa
 | 2026-10-28 | 4, ADR-0063 | El núcleo sirve una única página HTML (tarjeta para redes) con texto en el idioma del dueño | 1 | Excepción acotada a ADR-0004 (el núcleo no genera pantallas) y a ADR-0065 | Integrado documentalmente; validación pendiente |
 | 2026-10-28 | 4, ADR-0060 a 0064 | Notas agregadas en ADR-0001, ADR-0003 y ADR-0004 que remiten a las ADRs de la iteración 4 que resolvieron sus pendientes | 1 | Solo referencias | Compatible |
 | 2026-10-28 | 4, ADR-0045 | ADR-0045 remitía a la iteración 4 la anonimización de los eventos de viajes eliminados | 3 | Nota agregada en ADR-0045 que remite a ADR-0064 | Compatible |
-| 2026-10-28 | 4, ADR-0064 | **Segunda entrega (opción A, recomendación):** el almacén analítico no tiene datos por usuario | 2da entrega | Un sistema de recomendación tendrá que guardar su propio perfil resumido por usuario (métricas comprimidas), calculado desde los datos operativos, en la región del usuario y eliminado junto con su cuenta | Para la segunda entrega |
+| 2026-10-28 | 4, ADR-0064 | **Segunda entrega (opción A, recomendación):** el almacén analítico no tiene datos por usuario | 2da entrega | Un sistema de recomendación tendrá que guardar su propio perfil resumido por usuario (métricas comprimidas), calculado desde los datos operativos, en la región del usuario y eliminado junto con su cuenta | Resuelto en la iteración 5: ADR-0081 |
 
 ## Criterio para resolver un impacto
 
@@ -132,11 +132,41 @@ proceso; no miden QA ni reemplazan las validaciones con infraestructura real.
 
 | Hallazgo | Afecta | Tratamiento | Estado |
 |---|---|---|---|
-| `booking.changed.v1` no tiene consumidor y, con `mandatory`, dejaría la outbox del núcleo trabada | 2 y 4 | El prototipo no lo publica; los cambios confirmados (también los manuales) salen en `booking.facts.v1` | Decisión pendiente: retirar el contrato o publicarlo cuando exista un consumidor |
+| `booking.changed.v1` no tiene consumidor y, con `mandatory`, dejaría la outbox del núcleo trabada | 2 y 4 | El prototipo no lo publica; los cambios confirmados (también los manuales) salen en `booking.facts.v1` | Resuelto en la iteración 5: el contrato se retira (ADR-0081) |
 | Puertos de base, broker, outbox y HTTP repetidos en los tres procesos | 1 a 4 | Biblioteca técnica `comun/infraestructura`, sin dominio; [vista de módulos](../02-views/module-view.md) actualizada | Integrado |
-| Descarte por sobrecarga (ADR-0047) sobre una ruta de recurso sin motivo en `access-audit.md` | 3 y 4 | El prototipo no lo audita; queda en métricas | Decisión pendiente: agregar un motivo o declararlo excepción |
+| Descarte por sobrecarga (ADR-0047) sobre una ruta de recurso sin motivo en `access-audit.md` | 3 y 4 | El prototipo no lo audita; queda en métricas | Resuelto en la iteración 5: excepción declarada en `access-audit.md` |
 | Cancelación anterior al alta | 2 y 3 | Al llegar el alta se asocia la cancelación pendiente: con versiones ordenadas gana la mayor; sin orden, la confirmación también queda para conciliar | Interpretación de `ingestion-contract.md` implementada |
 | Invitación cuando falla la auditoría | 4 | La invitación se audita dentro de su transacción: si falla, no se crea ni se envía el correo | Implementado, coherente con ADR-0061 |
 | Aviso de proveedor con la ingesta caída | 2 | La puerta responde `503` con `Retry-After`; la reconciliación cubre lo que el proveedor no reintente | Implementado |
 | SSE a través de la entrada global | 3 | La entrada global reenvía el flujo a medida que llega, no la respuesta completa | Implementado |
 | Solicitud sin token ni prefijo de región (por ejemplo, `DELETE /bookings/{id}` sin token) | 3 y 4 | ADR-0060 no dice adónde va; la entrada global la manda a la región más cercana, cuya puerta rechaza con `401` y la audita | Suposición del prototipo |
+
+## Iteración 5 — 2026-11-22
+
+Segunda entrega, opción A: recomendación de alternativas con human-in-the-loop
+([iteración 5](iteration-5-recommendation.md), ADR-0080 a ADR-0084). Las decisiones las tomaron Tadeo Brun y Tomas
+Lateana; la revisión cruzada se registra en el PR de la iteración.
+
+| Cambio o decisión | Afecta | Tratamiento | Estado |
+|---|---|---|---|
+| `booking.facts.v1` pasa a 0.2.0: dos consumidores (analítica y recomendación) y `startsAt`/`endsAt` opcionales | 2, 3 y 4 (ADR-0027, ADR-0064) | La recomendación usa el `userId` real porque necesita un perfil por usuario; la seudonimización queda como regla del consumidor analítico, que sigue guardando las fechas a nivel día. Nota en ADR-0027 y ADR-0064 | Integrado; prototipo |
+| `booking.changed.v1` se retira | 2 y 3 (ADR-0027, `core-publication.md`) | Cierra la decisión pendiente del prototipo: nunca tuvo consumidor y su papel lo cubre `booking.facts.v1`. El archivo del contrato se conserva marcado como retirado | Integrado; prototipo |
+| `panel.changed.v1` pasa a 0.3.0 con `collapseKey` opcional; el notificador consume `suggestions.available.v1` (push y SSE `suggestions-available`) | 3 (ADR-0046) | Cambio compatible. La cancelación y sus alternativas comparten la clave `booking-cancel:<bookingId>`: el segundo push reemplaza al primero | Integrado; prototipo |
+| Reserva propuesta: estado `proposed`, origen `suggestion` y `offerUrl` | 3 y 4 (ADR-0044, ADR-0045, ADR-0048, ADR-0061) | La crea el núcleo al consumir `suggestion.accepted.v1`; no genera `booking.facts.v1`, no mueve las fechas del viaje, no aparece en la vista compartida, la reemplaza la reserva real (mismo tipo, proveedor y fechas con un día de tolerancia) y vence en la tarea diaria | Integrado; prototipo |
+| Cinco rutas nuevas atendidas por el proceso de recomendación, con prioridad baja | 1, 3 y 4 (ADR-0004, ADR-0047, ADR-0062) | No están en la tabla del canal entre regiones; un viaje de otra región da `404` en la puerta. La puerta y la entrada global aceptan `PUT` | Integrado; prototipo |
+| Topología: colas quorum `recommendation.facts` (`booking.facts.v1`) y `core.suggestions` (`suggestion.accepted.v1`); `notifier.push` y las colas por instancia suman `suggestions.available.v1` | 2 y 3 (ADR-0028) | Filas nuevas en `ingestion-operations.md`; nota en ADR-0028 | Integrado; prototipo |
+| Proceso `recomendacion` por región, con base propia | 1 (ADR-0001, ADR-0002, ADR-0003) | No lee la base del núcleo ni la de la analítica; el núcleo no lee la suya. Vistas de módulos, C&C y despliegue actualizadas | Integrado; prototipo |
+| Trazas y métricas de la recomendación | 4 (ADR-0067) | Los eventos nuevos llevan `correlationId` y `traceparent`; métrica `qa11_cancelacion_a_sugerencia_s` | Integrado; prototipo |
+| Descarte por sobrecarga sin auditoría | 3 y 4 (ADR-0047, `access-audit.md`) | Excepción declarada: no es una decisión de acceso y auditarlo sumaría carga en el peor momento. Queda en métricas y logs | Propuesto para revisión en el PR |
+| Borrado de la cuenta | Todas | Todavía no está diseñado en el sistema; cuando se diseñe tiene que borrar el perfil de recomendación (ADR-0081) | Pendiente |
+
+Hallazgos del prototipo de la iteración 5 (detalle en el [README del prototipo](../../prototype/README.md)):
+
+| Hallazgo | Tratamiento | Estado |
+|---|---|---|
+| `booking.facts.v1` no traía horas y la recomendación compara horarios | `startsAt` y `endsAt` opcionales (0.2.0) | Integrado en el contrato y en ADR-0081 |
+| Borrar el perfil volvía a activar la recomendación (opt-out) | Se conserva solo la marca de desactivada | Integrado en el prototipo |
+| La recomendación no sabe de quién es un viaje | Un viaje ajeno responde como uno sin sugerencias, sin revelar si existe | Integrado en ADR-0084 y en la OpenAPI |
+| Una cubeta de fichas llena del tamaño del límite permite casi el doble en un minuto | Capacidad de la mitad del límite y recarga de la otra mitad por minuto | Integrado en ADR-0082 y `offer-search.md` |
+| Reserva cancelada sin viaje asignado | No genera sugerencias: la propuesta necesita un viaje | Suposición del prototipo |
+

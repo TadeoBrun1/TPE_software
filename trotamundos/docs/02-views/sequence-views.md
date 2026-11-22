@@ -2,7 +2,8 @@
 
 **Tipo:** Comportamiento
 **Mantiene:** quien documenta cada escenario
-**Estado:** SEQ-1 y SEQ-2 en la iteración 2; SEQ-3, SEQ-4 y SEQ-6 en la iteración 3; SEQ-5 y SEQ-7 en la iteración 4
+**Estado:** SEQ-1 y SEQ-2 en la iteración 2; SEQ-3, SEQ-4 y SEQ-6 en la iteración 3; SEQ-5 y SEQ-7 en la iteración 4;
+SEQ-8 y SEQ-9 en la iteración 5
 
 Un diagrama por escenario clave. Debajo de cada uno, una descripción de qué representa y qué driver demuestra.
 
@@ -17,6 +18,8 @@ Un diagrama por escenario clave. Debajo de cada uno, una descripción de qué re
 | SEQ-5 | Se comparte un itinerario con una persona de otra región | QA-7, RF-08 | 4 | Propuesta |
 | SEQ-6 | Una novedad pisa un campo editado por el usuario | RF-04, QA-6 | 3 | Propuesta |
 | SEQ-7 | El viajero inicia sesión y abre la conexión de avisos | QA-7 | 4 | Propuesta |
+| SEQ-8 | Una cancelación genera sugerencias de alternativas | RF-09.1, QA-11, QA-12 | 5 | Propuesta; prueba en el prototipo |
+| SEQ-9 | El viajero rechaza, ajusta y acepta una sugerencia | RF-09.2, RF-09.3, QA-13 | 5 | Propuesta; prueba en el prototipo |
 
 ## Refinamiento de SEQ-1 y SEQ-2
 
@@ -201,3 +204,70 @@ sequenceDiagram
 sesiones (QA-5), y el navegador abre la conexión SSE con un ticket firmado porque no puede enviar el encabezado
 `Authorization` (QA-7). El directorio global solo guarda el HMAC del email, calculado por la entrada global con una
 clave propia, y la región (CON-3). ADR-0060.
+
+## SEQ-8 — Una cancelación genera sugerencias de alternativas
+
+```mermaid
+sequenceDiagram
+    participant B as Broker
+    participant N as Núcleo
+    participant NT as Notificador
+    participant R as Recomendación
+    participant P as Proveedores (API de búsqueda)
+    participant App as App del viajero
+    B->>N: booking.change.detected.v1 (la aerolínea cancela)
+    N->>N: Transacción: reserva cancelada, panel y outbox
+    N-->>B: panel.changed.v1 (booking_cancelled, collapseKey) y booking.facts.v1 (cancelled)
+    B->>NT: panel.changed.v1
+    NT-->>App: Push "tu vuelo fue cancelado" (clave booking-cancel:b1)
+    B->>R: booking.facts.v1 (recommendation.facts)
+    R->>R: ¿Ya recibido? ¿Recomendación activada? Transacción: perfil y búsqueda pendiente
+    R-->>B: ACK
+    R->>R: ¿Hay resultado en caché o una búsqueda igual en curso?
+    alt Sin caché
+        R->>P: Búsqueda por ruta y fecha (dentro del límite del proveedor)
+        P-->>R: Ofertas
+    end
+    R->>R: Filtra por límites explícitos, ordena con el modelo y guarda 3 sugerencias
+    R-->>B: suggestions.available.v1 (outbox, misma collapseKey)
+    B->>NT: suggestions.available.v1
+    NT-->>App: Push "encontramos 3 alternativas" (reemplaza al anterior) y SSE suggestions-available
+    App->>R: GET /trips/{tripId}/suggestions (vía puerta de entrada)
+    R-->>App: Sugerencias ordenadas con reasonCodes
+```
+
+**Qué representa:** la cancelación llega al panel como siempre y, en paralelo, la recomendación busca y ordena
+alternativas sin tocar el núcleo. En una disrupción, las búsquedas con la misma clave se agrupan y se reutiliza la
+caché (QA-12); si un proveedor no responde, la búsqueda queda pendiente y la cancelación ya está avisada (QA-16).
+ADR-0081, ADR-0082, ADR-0083 y ADR-0084.
+
+## SEQ-9 — El viajero rechaza, ajusta y acepta una sugerencia
+
+```mermaid
+sequenceDiagram
+    participant App as App del viajero
+    participant G as Puerta de entrada
+    participant R as Recomendación
+    participant B as Broker
+    participant N as Núcleo
+    App->>G: POST /suggestions/s2/feedback {reject, too_expensive}
+    G->>R: (prioridad baja)
+    R->>R: Guarda el feedback, ajusta el modelo del viajero y reordena lo pendiente
+    R-->>App: 200 con las sugerencias reordenadas
+    App->>G: PUT /recommendations/preferences {maxStops: 0}
+    G->>R: Guarda la preferencia
+    R-->>App: 200
+    App->>G: POST /suggestions/s1/feedback {accept}
+    G->>R: Aceptar
+    R->>R: Transacción: aceptada, feedback y outbox
+    R-->>App: 202 con offerUrl (la app abre la oferta del proveedor)
+    R-->>B: suggestion.accepted.v1
+    B->>N: suggestion.accepted.v1 (core.suggestions)
+    N->>N: ¿Ya aplicada esta sugerencia? Transacción: reserva propuesta en el viaje, panel y outbox
+    N-->>B: panel.changed.v1 (booking_added)
+    Note over N: Si después llega la reserva real por la ingesta (mismo tipo, proveedor y fechas),<br/>reemplaza a la propuesta en la misma transacción
+```
+
+**Qué representa:** el human-in-the-loop: rechazar y ajustar cambian el orden en la misma respuesta (QA-13) y
+alimentan el entrenamiento diario; aceptar deja la alternativa como reserva propuesta sin comprar nada, y la reserva
+real la reemplaza al llegar. ADR-0083 y ADR-0084.

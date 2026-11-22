@@ -85,5 +85,7 @@ Esta es una revisión analítica de riesgos, no una sesión grupal registrada ni
 * No se registra una sesión de Risk Storming del equipo si no ocurrió. Si la realizan, agregar participantes,
   fecha, escenarios revisados y acuerdos reales.
 * Confirmar alcance por fecha con lo indicado por la cátedra y seleccionar la opción avanzada de la segunda entrega.
+  Seleccionada después del cierre: opción A, sistema de recomendación ([ADR-0080](../03-adr/0080-eleccion-del-modulo-avanzado.md),
+  [iteración 5](../01-add/iteration-5-recommendation.md)).
 
 

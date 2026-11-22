@@ -125,3 +125,7 @@ Esta decisión forma parte del diseño integrado mediante [PR #3](https://github
 merge `05a8fd7` del 2026-10-27. Los refinamientos posteriores incorporados en `main` también forman parte de
 la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
 ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+
+## Nota de la iteración 5 (2026-11-22)
+
+La puerta de entrada enruta cinco rutas nuevas (sugerencias, feedback, preferencias y borrado del perfil) al proceso de recomendación de la región, con prioridad baja ([ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).

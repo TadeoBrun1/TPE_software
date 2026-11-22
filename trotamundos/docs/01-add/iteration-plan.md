@@ -1,7 +1,7 @@
 # Plan de iteraciones
 
 **Qué es:** qué iteraciones haremos, con qué objetivo y en qué orden.
-**Mantiene:** ambos. **Estado:** iteraciones 1 a 4 integradas; seguimiento de validaciones en el cierre documental.
+**Mantiene:** ambos. **Estado:** iteraciones 1 a 4 integradas; iteración 5 (segunda entrega) en revisión; seguimiento de validaciones en el cierre documental.
 
 El enunciado pide 4 iteraciones como mínimo. Las dos primeras reglas de ordenamiento son: la 1ra estructura el
 sistema, y las siguientes atacan los drivers de mayor prioridad, empezando por lo que sostiene el negocio.
@@ -14,13 +14,14 @@ sistema, y las siguientes atacan los drivers de mayor prioridad, empezando por l
 | 2 | Ingesta de reservas desde correo y terceros: frescura, interoperabilidad y acceso seguro a correos | RF-01, RF-02, RF-03, RF-06, QA-1, QA-6, QA-8, CRN-3, CRN-4 | Tomas Lateana |
 | 3 | Consulta de itinerarios: latencia, disponibilidad y escala ante picos; aplicación de novedades en el núcleo | RF-04, RF-05, QA-2, QA-3, QA-4, QA-5; etapas de núcleo y cliente de QA-1; QA-6 del lado consumidor | Tadeo Brun |
 | 4 | Seguridad de compartición, internacionalización, analítica sin afectar a los usuarios y evolucionabilidad | RF-07, RF-08, QA-7, QA-9, QA-10, CRN-2, interoperabilidad con redes sociales | Ambos |
-| 5 (opcional) | Opción avanzada (A o B) y refinamientos si sobra tiempo; candidato: mitigar el riesgo de QA-1 a escala | A definir | A definir |
+| 5 | Segunda entrega: módulo avanzado, opción A (recomendación de alternativas con human-in-the-loop) | RF-09, QA-11, QA-12, QA-13, QA-14, QA-15, QA-16; aplican CON-1, CON-2, CON-3, CON-5 | Ambos |
 
 Cada fila enlaza a su documento:
 [1](iteration-1-structure.md) ·
 [2](iteration-2-ingestion.md) ·
 [3](iteration-3-query-scale.md) ·
-[4](iteration-4-security-evolvability.md)
+[4](iteration-4-security-evolvability.md) ·
+[5](iteration-5-recommendation.md)
 
 ## Dependencias entre iteraciones (zonas de riesgo)
 
@@ -47,3 +48,5 @@ Anotar acá cualquier cambio con fecha y razón.
 | 2026-10-28 | Se corrigen los nombres de tácticas de disponibilidad en las iteraciones 1 y 3 según Bass, 4ta edición (*redundant spare*, *ping/echo*) | Auditoría de la iteración 3 |
 | 2026-10-28 | La iteración 4 agrega la interoperabilidad con redes sociales a sus drivers | El enunciado la pide junto con la compartición y no estaba asignada |
 | 2026-10-28 | El recorrido de QA-9 usa un medio que no existe (ferry) en lugar de trenes | `train` ya está en el vocabulario de tipos desde la iteración 2 |
+| 2026-11-22 | La iteración 5 pasa de opcional a la segunda entrega: opción A, recomendación (ADR-0080) | El enunciado pide el módulo avanzado en la segunda entrega; el análisis de las dos opciones está en ADR-0080 |
+| 2026-11-22 | QA-1 a escala no entra en la iteración 5 | La iteración se dedica al módulo avanzado; el riesgo sigue registrado en la revisión de la primera entrega |

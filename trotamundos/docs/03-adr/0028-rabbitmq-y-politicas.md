@@ -88,3 +88,7 @@ Esta decisión forma parte del diseño integrado mediante [PR #4](https://github
 merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
 la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
 ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+
+## Nota de la iteración 5 (2026-11-22)
+
+Colas quorum nuevas: `recommendation.facts` (enlazada a `booking.facts.v1`) y `core.suggestions` (enlazada a `suggestion.accepted.v1`). `notifier.push` y las colas por instancia del notificador suman el enlace a `suggestions.available.v1` ([`ingestion-operations.md`](../../specs/ingestion-operations.md)).

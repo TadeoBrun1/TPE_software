@@ -134,6 +134,86 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 | Detección en 30 s y redirección en 60 s | QA-4 | El presupuesto de 5 min/mes solo admite unas pocas fallas por mes si cada una se resuelve en alrededor de un minuto |
 
 
-## Escenarios para la 2da entrega
+## Escenarios para la 2da entrega (opción A, RF-09)
 
-Se agregan cuando se elija la opción avanzada (A o B).
+Generados con `/generador-qas` a partir del texto de la opción A y de las decisiones del equipo, y auditados con
+`/test-qas` (QA-12, QA-14 y QA-15 se corrigieron en la auditoría: la respuesta de QA-12 describía la táctica, la
+medida de QA-14 mezclaba la residencia de datos y QA-15 tenía valores vagos).
+
+### QA-11 Performance: oportunidad de las sugerencias
+
+| Parte | Contenido |
+|---|---|
+| Fuente del estímulo | Sistema de una aerolínea u hotel |
+| Estímulo | Informa la cancelación de una reserva de un viajero que tiene la recomendación activada |
+| Artefacto | Módulo de recomendación |
+| Ambiente | Operación normal |
+| Respuesta | El sistema busca alternativas del mismo tipo, las ordena según el perfil del viajero, las deja disponibles en la app y le envía un aviso push |
+| Medida de respuesta | El 95 % de las sugerencias está disponible y avisada dentro de los 2 minutos de aplicada la cancelación en el panel |
+
+### QA-12 Escalabilidad: disrupción masiva
+
+| Parte | Contenido |
+|---|---|
+| Fuente del estímulo | Aerolíneas afectadas por una disrupción climática |
+| Estímulo | Cancelan 50 vuelos con 15.000 viajeros afectados en 10 minutos |
+| Artefacto | Módulo de recomendación y búsqueda de ofertas |
+| Ambiente | Operación con pico de carga (5 veces el promedio) |
+| Respuesta | El sistema busca alternativas para todos los viajeros afectados, las ordena y les avisa |
+| Medida de respuesta | QA-11 se cumple para el 95 % de los afectados, el sistema respeta el 100 % de los límites de consulta de cada proveedor y el panel sigue cumpliendo QA-2 |
+
+### QA-13 Usabilidad: adaptación al usuario (human-in-the-loop)
+
+| Parte | Contenido |
+|---|---|
+| Fuente del estímulo | Viajero |
+| Estímulo | Rechaza una sugerencia o ajusta un parámetro (precio máximo, máximo de escalas, franja horaria) |
+| Artefacto | Módulo de recomendación |
+| Ambiente | Operación normal |
+| Respuesta | El sistema reordena las sugerencias de ese viaje según el ajuste, guarda el feedback y lo incorpora al modelo |
+| Medida de respuesta | Las sugerencias reordenadas se muestran en 2 s o menos, el 100 % respeta los límites explícitos del usuario y el feedback entra en el modelo regional dentro de las 24 h |
+
+### QA-14 Seguridad y privacidad: control del perfil
+
+| Parte | Contenido |
+|---|---|
+| Fuente del estímulo | Viajero |
+| Estímulo | Desactiva la recomendación y pide borrar su perfil |
+| Artefacto | Almacén de perfiles y feedback del módulo de recomendación |
+| Ambiente | Operación normal |
+| Respuesta | El sistema deja de generar sugerencias para ese viajero, borra su perfil y su feedback identificable y le confirma el borrado |
+| Medida de respuesta | 0 sugerencias nuevas desde la desactivación y el 100 % del perfil y del feedback borrado en 24 h o menos |
+
+### QA-15 Modificabilidad del modelo
+
+| Parte | Contenido |
+|---|---|
+| Fuente del estímulo | Equipo de desarrollo |
+| Estímulo | Reemplaza el modelo de ranking por una versión nueva |
+| Artefacto | Módulo de recomendación |
+| Ambiente | Sistema en producción |
+| Respuesta | El sistema despliega la versión nueva para el 5 % de los usuarios, compara su tasa de aceptación con la de la versión actual y vuelve atrás si cae más de un 10 % relativo |
+| Medida de respuesta | El cambio no modifica código del núcleo, la ingesta ni el notificador, y la vuelta atrás a la versión anterior tarda 5 minutos o menos |
+
+### QA-16 Disponibilidad: falla de la recomendación
+
+| Parte | Contenido |
+|---|---|
+| Fuente del estímulo | API de búsqueda de un proveedor, o el propio módulo de recomendación |
+| Estímulo | Deja de responder durante una cancelación |
+| Artefacto | Módulo de recomendación |
+| Ambiente | Operación normal |
+| Respuesta | El sistema muestra la cancelación y su aviso sin sugerencias, guarda la búsqueda pendiente y la reintenta al volver el servicio |
+| Medida de respuesta | El panel sigue cumpliendo QA-2 y QA-4, y las sugerencias pendientes se generan dentro de los 10 minutos de recuperado el servicio |
+
+### Suposiciones de la 2da entrega
+
+| Valor asumido | Escenario | Criterio |
+|---|---|---|
+| 2 minutos desde la cancelación en el panel | QA-11 | Analogía con alertas de reprogramación de aerolíneas; se cuenta desde el panel para no mezclarlo con el presupuesto de QA-1 |
+| 50 vuelos y 15.000 viajeros en 10 minutos | QA-12 | Analogía con un cierre de aeropuerto por tormenta (vuelos de unos 300 pasajeros) |
+| 2 s para reordenar | QA-13 | Interacción en la app, con la misma referencia que QA-2 |
+| 24 h para incorporar el feedback | QA-13 | Reentrenamiento diario por lotes (CON-5) |
+| 24 h para borrar el perfil | QA-14 | Plazo operativo; la normativa concreta no está validada (CON-3) |
+| 5 % de usuarios, 10 % relativo, 5 minutos | QA-15 | Práctica habitual de despliegue canario con vuelta atrás automatizada |
+| 10 minutos tras la recuperación | QA-16 | Reintento con espera creciente, como la ingesta |

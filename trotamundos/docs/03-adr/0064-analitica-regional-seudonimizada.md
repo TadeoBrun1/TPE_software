@@ -163,3 +163,7 @@ Esta decisión forma parte del diseño integrado mediante [PR #7](https://github
 merge `00f21b9` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
 la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
 ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+
+## Nota de la iteración 5 (2026-11-22)
+
+`booking.facts.v1` tiene un segundo consumidor, la recomendación, que usa el `userId` real porque necesita un perfil por usuario; la seudonimización es del consumidor analítico. Los campos `startsAt` y `endsAt` (0.2.0) se guardan en la analítica a nivel día. Resuelve el impacto para la segunda entrega ([ADR-0081](0081-proceso-de-recomendacion-con-perfiles-regionales.md)).

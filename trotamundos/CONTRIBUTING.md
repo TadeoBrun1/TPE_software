@@ -34,7 +34,8 @@ Para que dos ramas paralelas no creen la misma ADR número 0007, cada iteración
 | 2 | 0020 – 0039 |
 | 3 | 0040 – 0059 |
 | 4 | 0060 – 0079 |
-| Extra | 0080 en adelante |
+| 5 (2da entrega, módulo avanzado) | 0080 – 0099 |
+| Extra | 0100 en adelante |
 
 Las ADRs se numeran en orden dentro de su bloque y **nunca se borran**: si una decisión cambia, la ADR vieja pasa a
 `superseded by ADR-XXXX` y se crea una nueva.

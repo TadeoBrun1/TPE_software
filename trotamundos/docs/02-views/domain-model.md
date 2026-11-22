@@ -1,7 +1,7 @@
 # Modelo de dominio
 
 **Tipo:** Soporte (vocabulario)
-**Actualizada en la iteración:** 4
+**Actualizada en la iteración:** 5
 **Mantiene:** Ambos. **Estado:** vocabulario del diseño integrado; implementación y validación pendientes.
 
 ## 1. Propósito
@@ -38,10 +38,35 @@ classDiagram
         precio : monto y moneda ISO 4217
         detalles : esquema por tipo
         codigoDelProveedor
-        estado : confirmada | modificada | cancelada | pendiente
-        origen : correo | tercero | manual
+        estado : confirmada | modificada | cancelada | pendiente | propuesta
+        origen : correo | tercero | manual | sugerencia
+        enlaceOferta : solo en propuestas
         camposEditadosPorUsuario
         version
+    }
+    class Sugerencia {
+        id
+        oferta : normalizada del proveedor
+        posicion
+        estado : disponible | aceptada | rechazada | vencida
+        motivos : códigos
+    }
+    class PerfilDePreferencias {
+        activada
+        preferenciasExplicitas
+        metricasResumidas
+        ajusteDelModelo
+    }
+    class Feedback {
+        accion : aceptar | rechazar | ajustar
+        motivo
+        fecha
+    }
+    class VersionDelModelo {
+        id
+        pesos
+        evaluacion
+        estado : canario | activa | retirada
     }
     class PanelDeUsuario {
         usuario
@@ -136,6 +161,11 @@ classDiagram
     Viaje "1" --> "*" RegistroDeAuditoria : accesos registrados
     Viaje "1" --> "0..1" TarjetaSocial : se publica como
     Reserva "*" --> "0..1" EsquemaDeDetalles : detalles según
+    Usuario "1" --> "0..1" PerfilDePreferencias : se recomienda según
+    Reserva "1" --> "0..*" Sugerencia : alternativas si se cancela
+    Sugerencia "*" --> "1" VersionDelModelo : ordenada por
+    Sugerencia "1" --> "0..*" Feedback : recibe
+    Sugerencia "1" --> "0..1" Reserva : aceptada como reserva propuesta
 ```
 
 ## 3. Elementos
@@ -159,6 +189,11 @@ classDiagram
 | Suscripcion | Registro técnico de avisos, con identificador externo, vencimiento y estado. Ingesta administra su ciclo; entrada global tiene una proyección mínima de región |
 | CursorSincronizacion | Posición opaca por flujo o carpeta, confirmada junto con resultados y outbox en ingesta; no es una versión de reserva |
 | CasoPendiente | Novedad o fallo que necesita resolución; conserva motivo y evidencia mínima. Una ambigüedad de dominio pertenece al núcleo y un fallo de extracción a ingesta |
+| Sugerencia (iteración 5) | Alternativa de alojamiento o transporte a una reserva cancelada, con la oferta normalizada del proveedor, su posición, la versión del modelo que la ordenó y su estado (disponible, aceptada, rechazada, vencida). Vive en el proceso de recomendación (ADR-0081, ADR-0083) |
+| Reserva propuesta (iteración 5) | Reserva con estado `proposed` y origen `suggestion`, creada en el núcleo al aceptar una sugerencia. No es una reserva real: no genera hechos analíticos, no mueve las fechas del viaje y la reemplaza la reserva real cuando llega por la ingesta (ADR-0084) |
+| PerfilDePreferencias (iteración 5) | Métricas resumidas, preferencias explícitas, activación y ajuste del modelo por viajero, en la región de origen; sobrevive al borrado de viajes y se borra a pedido (ADR-0081) |
+| Feedback (iteración 5) | Aceptación, rechazo (con motivo) o ajuste de parámetros sobre una sugerencia; es la señal del human-in-the-loop (ADR-0083) |
+| VersionDelModelo (iteración 5) | Pesos entrenados con el feedback de la región, con su evaluación y su estado (canario, activa, retirada) (ADR-0083) |
 
 Vinculación forma parte del vocabulario funcional; suscripción, cursor y caso técnico son conceptos de soporte de
 integración, no nuevos agregados obligatorios del dominio de viajes. `eventId` identifica un mensaje y no sustituye

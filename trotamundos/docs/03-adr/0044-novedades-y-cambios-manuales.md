@@ -128,3 +128,7 @@ Esta decisión forma parte del diseño integrado mediante [PR #6](https://github
 merge `54122ee` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
 la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
 ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+
+## Nota de la iteración 5 (2026-11-22)
+
+Nuevo origen `suggestion` con estado `proposed`: alternativas aceptadas que el viajero todavía no reservó. La reserva real que llega por la ingesta las reemplaza; las reglas de dueño por campo no cambian ([ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).

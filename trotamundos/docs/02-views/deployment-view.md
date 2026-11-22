@@ -1,10 +1,10 @@
 # Vista de despliegue
 
 **Tipo:** Asignación (software a infraestructura)
-**Actualizada en la iteración:** 4
+**Actualizada en la iteración:** 5
 **Mantiene:** Ambos
 **Estado:** Refinada en la iteración 3 (particiones, notificador, escalado y conmutación) y en la iteración 4
-(identidad, auditoría, analítica, observabilidad y canal entre regiones).
+(identidad, auditoría, analítica, observabilidad y canal entre regiones). Iteración 5: proceso y base de recomendación por región y trabajo de entrenamiento.
 
 ## 1. Propósito
 
@@ -51,6 +51,11 @@ flowchart TB
         A1["Analítica"]
         AS1[("Almacén analítico<br/>(seudonimizado)")]
         A1 --- AS1
+        RC1["Recomendación × n<br/>(zonas A y B)"]
+        RD1[("Base de recomendación<br/>(primaria A, réplica B)")]
+        RT1["Entrenamiento diario<br/>(trabajo programado)"]
+        RC1 --- RD1
+        RT1 --- RD1
         D1 -. "replicación sincrónica por nodo" .- D2
         AU1 -. "replicación sincrónica" .- AU2
         MB1 -. "ping/echo" .- D1
@@ -81,6 +86,8 @@ flowchart TB
 | Notificador | Conexiones SSE y envío de push (ADR-0046) | Varias instancias en A y B; escala por conexiones abiertas | Cada instancia tiene su cola de avisos; si cae, la app sigue con su caché |
 | Monitor de base | *Ping/echo* a las primarias cada 5 s; promoción de réplicas | 3 instancias, una por zona | Una promoción requiere acuerdo de dos de tres, para evitar promociones dobles |
 | Analítica y almacén analítico | Consumo de `booking.facts.v1` y `trip.changed.v1`, seudonimización y consultas pesadas (ADR-0064) | Por región; no hay almacén global | No está en el camino de los viajeros: su caída solo atrasa los datos analíticos, que esperan en su cola |
+| Recomendación y su base (iteración 5) | Consumo de `booking.facts.v1`, búsqueda de alternativas, ranking, API de sugerencias (ADR-0081 a ADR-0084) | Instancias en A y B que compiten por su cola; base con primaria en A y réplica sincrónica en B | No está en el camino del panel: si cae, los hechos esperan en su cola y la cancelación se muestra sin sugerencias (QA-16). Escala de forma reactiva (ADR-0043) |
+| Entrenamiento del modelo (iteración 5) | Trabajo diario por región que entrena una versión nueva con el feedback (ADR-0083) | Una ejecución por día y región, sin capacidad reservada (CON-5) | Los datos no salen de la región (CON-3); si falla, sigue activa la versión anterior |
 | Directorio global de regiones | `HMAC(email)` → región para el login, calculado por la entrada global con una clave propia (ADR-0060) | Replicado en varias regiones, como la entrada global | Guarda un seudónimo por usuario (aceptado por proporcionalidad frente a CON-3); si cae, no se puede iniciar sesión desde un dispositivo nuevo |
 | Proveedor de identidad | Login, tokens y revocación de los usuarios de la región (ADR-0060) | Instancias en A y B | Guarda credenciales y emails solo de su región (CON-3) |
 | Registro de auditoría | Accesos a viajes compartidos (ADR-0061) | Se opera como un nodo más de la base (ADR-0042): primaria en A, réplica sincrónica en B, mismo monitor de base y reconstrucción en C | Si no se puede escribir, la lectura compartida se rechaza (`503`) |
@@ -101,6 +108,7 @@ flowchart TB
 | Canal entre regiones | [0062](../03-adr/0062-lectura-de-viajes-compartidos-entre-regiones.md) |
 | Analítica solo regional | [0064](../03-adr/0064-analitica-regional-seudonimizada.md) |
 | Colector por región | [0067](../03-adr/0067-observabilidad-con-trazas-y-metricas.md) |
+| Recomendación por región, con base propia y entrenamiento regional | [0081](../03-adr/0081-proceso-de-recomendacion-con-perfiles-regionales.md), [0083](../03-adr/0083-ranking-aprendido-del-feedback.md) |
 
 ## 5. Drivers que sustenta
 
@@ -111,12 +119,13 @@ flowchart TB
 | QA-10 Multirregión | Cada región es una celda independiente que atiende a sus usuarios |
 | CON-3 (suposición) | Estado autoritativo y almacenes regionales; el viaje compartido se lee en origen y su respuesta autorizada transita sin persistencia en la puerta del lector. Excepciones y validación de CON-3 en ADR-0062 |
 | QA-7 | Identidad y auditoría con redundancia en dos zonas |
+| QA-12, QA-16 | La recomendación tiene instancias en dos zonas que compiten por su cola y no comparte procesos ni base con el panel |
 
 ## 6. Prototipo
 
 El prototipo levanta dos regiones en una máquina con `docker compose`. Cada región tiene PostgreSQL (dos bases que
-hacen de nodos de la partición, más auditoría, ingesta, identidad y push), RabbitMQ y los procesos núcleo,
-notificador, ingesta, proveedor de identidad y puerta de entrada; la entrada global, con el directorio, es común a
+hacen de nodos de la partición, más auditoría, ingesta, identidad, push y recomendación), RabbitMQ y los procesos
+núcleo, notificador, ingesta, recomendación, proveedor de identidad y puerta de entrada; la entrada global, con el directorio, es común a
 las dos. Las zonas, la réplica sincrónica, el monitor de base, el quórum de tres miembros y el escalado se
 documentan acá, pero no se simulan. Las pruebas automáticas corren las mismas dos regiones en un solo proceso (ver
 [prototype/README.md](../../prototype/README.md)).

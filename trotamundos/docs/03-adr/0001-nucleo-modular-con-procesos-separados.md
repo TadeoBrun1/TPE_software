@@ -137,3 +137,7 @@ Esta decisión forma parte del diseño integrado mediante [PR #3](https://github
 merge `05a8fd7` del 2026-10-27. Los refinamientos posteriores incorporados en `main` también forman parte de
 la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
 ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+
+## Nota de la iteración 5 (2026-11-22)
+
+Se suma el proceso `recomendacion` por región, separado como la ingesta y la analítica, con su propia base: no lee la base del núcleo y el núcleo no lee la suya ([ADR-0081](0081-proceso-de-recomendacion-con-perfiles-regionales.md)).

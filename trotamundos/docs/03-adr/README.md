@@ -14,7 +14,8 @@ Plantilla: [adr-template.md](adr-template.md).
    | 2 | 0020 – 0039 |
    | 3 | 0040 – 0059 |
    | 4 | 0060 – 0079 |
-   | Extra | 0080 en adelante |
+   | 5 (2da entrega, módulo avanzado) | 0080 – 0099 |
+   | Extra | 0100 en adelante |
 
 3. Una ADR **no se borra**. Si cambia la decisión, la vieja pasa a `superseded by ADR-XXXX` y se crea otra.
 4. Toda ADR indica el driver que la motiva y las **alternativas descartadas** (al menos 2 opciones consideradas).
@@ -57,5 +58,10 @@ Plantilla: [adr-template.md](adr-template.md).
 | [0065](0065-internacionalizacion-en-el-cliente.md) | Internacionalización: catálogos remotos, datos neutros y formato en el cliente | accepted | 4 | QA-10, QA-2, QA-3 |
 | [0066](0066-detalles-de-reserva-extensibles-por-tipo.md) | Reserva con campos comunes y detalles con esquema propio por tipo | accepted | 4 | QA-9, RF-05 |
 | [0067](0067-observabilidad-con-trazas-y-metricas.md) | Observabilidad con trazas, métricas por etapa y logs estructurados | accepted | 4 | CRN-2, QA-1, QA-4, CON-3 |
+| [0080](0080-eleccion-del-modulo-avanzado.md) | Módulo avanzado de la segunda entrega: sistema de recomendación (opción A) | accepted | 5 | Enunciado (2da entrega), RF-09 |
+| [0081](0081-proceso-de-recomendacion-con-perfiles-regionales.md) | Proceso de recomendación por región, alimentado por eventos y con su propio almacén de perfiles | accepted | 5 | RF-09, QA-11, QA-14, QA-16, CON-3, CON-5 |
+| [0082](0082-busqueda-de-alternativas-con-cache-corta.md) | Búsqueda de alternativas en las APIs de los proveedores, con caché corta y búsquedas agrupadas | accepted | 5 | QA-11, QA-12, QA-16, CON-1, CON-2 |
+| [0083](0083-ranking-aprendido-del-feedback.md) | Ranking de ofertas por características, aprendido del feedback, con un modelo regional versionado | accepted | 5 | RF-09.3, QA-13, QA-15, CON-5 |
+| [0084](0084-entrega-y-aceptacion-de-sugerencias.md) | Sugerencias por una API propia con aviso del notificador, y aceptación como reserva propuesta en el núcleo | accepted | 5 | RF-09.1, RF-09.2, QA-11, QA-2, QA-7 |
 
 Mantener esta tabla actualizada al crear una ADR o cambiar su estado. La revisión cruzada y las pruebas se registran por separado.
