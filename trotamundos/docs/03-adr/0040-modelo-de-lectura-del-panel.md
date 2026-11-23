@@ -59,7 +59,7 @@ Reglas:
   cliente (ADR-0046).
 * **Tamaño del panel:** leer por clave evita las uniones, pero leer, serializar y enviar el documento cuesta más
   cuanto más grande es. Los viajes archivados no están en el documento (ADR-0045), pero siguen creciendo las
-  reservas activas, futuras y sin asignar. Tamaños de referencia (suposición, a validar):
+  reservas activas, futuras y sin asignar. Tamaños de referencia (suposición aceptada por el equipo):
 
   | Caso | Viajes activos | Reservas | Tamaño aproximado del documento |
   |---|---|---|---|

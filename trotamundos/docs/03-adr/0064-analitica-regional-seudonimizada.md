@@ -20,7 +20,7 @@ entre regiones y qué pasa con los datos de viajes que se eliminan al año (ADR-
 
 * RF-07: consultas pesadas del equipo de datos.
 * QA-4 y QA-5: las consultas pesadas no deben afectar a los viajeros.
-* CON-3 (suposición): persistencia analítica regional y criterios de divulgación y retención aún por validar.
+* CON-3 (suposición): persistencia analítica regional y criterios de divulgación y retención aceptados por el equipo al cierre de la segunda entrega.
 * ADR-0045: los viajes se eliminan al año.
 
 ## Considered Options

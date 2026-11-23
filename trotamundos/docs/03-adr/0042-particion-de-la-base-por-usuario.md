@@ -14,7 +14,7 @@ ADR-0003 fijó para cada región una base con réplica sincrónica en otra zona 
 de origen forma parte de la clave de partición. No fijó si la región usa **un solo** par primaria/réplica o **varios**.
 Hay que decidirlo, junto con cómo se detectan las fallas y qué pasa cuando cae una zona.
 
-Estimación de carga (suposición a partir de QA-5, a validar con pruebas): con 2 millones de usuarios activos por
+Estimación de carga (suposición a partir de QA-5, aceptada por el equipo): con 2 millones de usuarios activos por
 semana y hasta 50 cargas del panel por usuario y semana, la lectura **global** promedio es de unas 165 solicitudes/s,
 y con el pico de 5 veces (que ya incluye las disrupciones), unas 830/s. La iteración 2 usa como hipótesis de prueba
 50 a 250 novedades/s **por región**. Con estas cifras, un solo par primaria/réplica por región alcanza en

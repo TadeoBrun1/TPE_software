@@ -2,7 +2,7 @@
 
 **Mantienen:** Tadeo Brun y Tomas Lateana.
 
-**Estado:** iteraciones 1 a 4 integradas en main; decisiones adoptadas documentalmente. Cierre de primera entrega arquitectónica registrado; implementación, mediciones y riesgos abiertos detallados en docs/04-evaluation/first-delivery-review.md. Iteración 5 (segunda entrega, opción A) documentada y prototipada; se integra con la revisión de su PR.
+**Estado:** segunda entrega cerrada (2026-11-23). Iteraciones 1 a 5 integradas en `main`; decisiones, suposiciones y riesgos aceptados por el equipo. El prototipo implementa las iteraciones 2 a 5; las mediciones con infraestructura real no forman parte de la entrega (ver [cierre](04-evaluation/first-delivery-review.md) y [iteración 5](01-add/iteration-5-recommendation.md)).
 
 Este documento resume la arquitectura y enlaza al detalle de requisitos, iteraciones, decisiones, vistas y contratos.
 
@@ -17,10 +17,10 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 | Iteración | Estado | Aporte |
 |---|---|---|
 | [1 — Estructura general](01-add/iteration-1-structure.md) | Diseño integrado; ADRs aceptadas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
-| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Diseño integrado; QA-1 a escala y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
+| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Diseño integrado; QA-1 a escala como riesgo aceptado | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
 | [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; decisiones confirmadas por ambos | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
 | [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pasos 2–7 documentados y auditados; decisiones de ambos integrantes | Identidad por región, compartición con cuenta y auditoría, lectura entre regiones, tarjeta para redes, analítica regional seudonimizada, internacionalización en el cliente, detalles por tipo de reserva y observabilidad. |
-| [5 — Recomendación (2da entrega)](01-add/iteration-5-recommendation.md) | Pasos 2–7 documentados; decisiones de ambos integrantes; prototipo con 27 pruebas; auditoría independiente corregida | Proceso de recomendación por región, búsqueda de alternativas con caché corta, ranking aprendido del feedback con modelo versionado y sugerencias que se aceptan como reserva propuesta; eliminación de la cuenta en todos los procesos. |
+| [5 — Recomendación (2da entrega)](01-add/iteration-5-recommendation.md) | Integrada (PR #12); auditoría independiente corregida y revisión de Tomas Lateana; prototipo con 32 pruebas de la iteración | Proceso de recomendación por región, búsqueda de alternativas con caché corta, ranking aprendido del feedback con modelo versionado y sugerencias que se aceptan como reserva propuesta; eliminación de la cuenta en todos los procesos. |
 
 La segunda entrega exige al menos un módulo avanzado. Se eligió la opción A, sistema de recomendación con
 human-in-the-loop ([ADR-0080](03-adr/0080-eleccion-del-modulo-avanzado.md)); la opción B (asistente virtual) quedó
@@ -58,7 +58,7 @@ Obtener información sobre una cancelación no equivale a ejecutar una cancelaci
 
 Los percentiles, el pico de tráfico 5× y otras medidas identificadas como supuestos deben validarse. No se presentan como valores textuales de la consigna.
 
-CON-3, relacionada con políticas regionales de datos, continúa como suposición a validar.
+CON-3, relacionada con políticas regionales de datos, quedó como suposición aceptada por el equipo al cierre de la segunda entrega.
 
 Las modificaciones de entradas compartidas deben revisarse entre ambos integrantes y registrarse.
 
@@ -144,7 +144,7 @@ La región de origen no se obtiene de la ubicación momentánea del viajero.
 - La recuperación ante caída de una región completa no está diseñada en esta base.
 - No se afirma cumplimiento de políticas regionales de datos sin definir y validar sus criterios.
 
-Los tiempos de detección y redirección agregados a QA-4 son supuestos de diseño a validar. No sustituyen el límite de cinco minutos mensuales de inactividad no planificada.
+Los tiempos de detección y redirección agregados a QA-4 son supuestos de diseño aceptados por el equipo. No sustituyen el límite de cinco minutos mensuales de inactividad no planificada.
 
 ## 8. Refinamiento propuesto de ingesta
 
@@ -266,7 +266,7 @@ Las decisiones de la segunda a la quinta iteración se revisan conjuntamente ant
 
 ## 11. Trazabilidad inicial
 
-| Driver | Iteraciones | Decisiones relacionadas | Validación pendiente |
+| Driver | Iteraciones | Decisiones relacionadas | Qué no se midió (aceptado al cierre) |
 |---|---|---|---|
 | QA-1 | 1, 2, 3 y 4 | 0001, 0002, 0020, 0024, 0040, 0044, 0046, 0067 | Tiempo completo desde generación externa hasta visualización, medido por etapa con trazas. |
 | QA-2 y QA-3 | 3 | 0040, 0041, 0043, 0047 | Prueba de carga del panel y primer contenido móvil con caché. |

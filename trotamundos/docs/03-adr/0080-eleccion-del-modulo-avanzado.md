@@ -37,8 +37,8 @@ elección y la comparación; las decisiones de diseño del módulo están en ADR
 Chosen option: "A. Sistema de recomendación", because se suma a la arquitectura como un consumidor nuevo de eventos
 sin tocar el núcleo (ADR-0002), no compromete la latencia del panel (QA-2) y, una vez incorporado, escala y opera
 con costo bajo: las sugerencias se calculan ante eventos y el modelo se entrena por lotes. El equipo la consideró
-además la opción más útil para el viajero; ese juicio de valor es una suposición del equipo que ningún stakeholder
-validó, y no se usa como criterio de arquitectura. Los costos que trae (un almacén de perfiles, una fuente externa de ofertas
+además la opción más útil para el viajero; ese juicio de valor es una suposición aceptada por el equipo, y no se usa como criterio de
+arquitectura. Los costos que trae (un almacén de perfiles, una fuente externa de ofertas
 y reglas nuevas) se resuelven con decisiones propias en esta misma iteración.
 
 Alcance acordado por el equipo (RF-09): sugiere **alojamiento y transporte** (las rutas de varios tramos quedan

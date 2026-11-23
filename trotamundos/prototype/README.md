@@ -246,7 +246,8 @@ Correcciones de la auditoría independiente de la iteración 5 (detalle en el do
     caché; una oferta vencida responde `409`; los enlaces de las ofertas se validan (https y dominio del
     proveedor); las sugerencias vencidas se borran a los 30 días.
 
-El hallazgo 3 necesita una decisión del equipo (el 1 se resolvió en la iteración 5); el resto está registrado en el
+Los hallazgos 1 y 3 se resolvieron en la iteración 5 (el 3, con la excepción declarada en `access-audit.md`); el
+resto está registrado en el
 [registro de impactos](../docs/01-add/impact-log.md).
 
 ## Revisión del PR #12

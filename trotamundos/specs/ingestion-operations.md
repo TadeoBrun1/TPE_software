@@ -1,6 +1,6 @@
 # Políticas operativas de ingesta y mensajería
 
-**Estado:** decisión de diseño de iteración 2; valores iniciales son hipótesis para validar en prototipo, no cifras del
+**Estado:** decisión de diseño de iteración 2; valores iniciales aceptados por el equipo al cierre de la segunda entrega, no cifras del
 cliente ni mediciones de producción. **ADR:** 0028. No se modifica el texto de los requisitos.
 
 ## 1. Broker y topología

@@ -65,7 +65,7 @@ Plantilla: [adr-template.md](adr-template.md).
 | [0084](0084-entrega-y-aceptacion-de-sugerencias.md) | Sugerencias por una API propia con aviso del notificador, y aceptación como reserva propuesta en el núcleo | accepted | 5 | RF-09.1, RF-09.2, QA-2, QA-7, QA-11, QA-13 |
 | [0085](0085-eliminacion-de-la-cuenta.md) | Eliminación de la cuenta: borrado inmediato en el núcleo y aviso por evento al resto de los procesos | accepted | 5 | QA-14, QA-7, CON-3 (pendiente de 0081 y 0064) |
 
-Las ADRs 0080 a 0085 están `accepted` por decisión de los dos integrantes; su integración en `main` depende de la
-revisión del PR #12.
+Las ADRs 0080 a 0085 están `accepted` por decisión de los dos integrantes y quedaron integradas en `main` con el
+PR #12, revisado por Tomas Lateana.
 
 Mantener esta tabla actualizada al crear una ADR o cambiar su estado. La revisión cruzada y las pruebas se registran por separado.

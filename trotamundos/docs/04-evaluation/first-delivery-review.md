@@ -71,7 +71,7 @@ Esta es una revisión analítica de riesgos, no una sesión grupal registrada ni
 | Caída de zona y una sola copia | Ventana de durabilidad reducida | Política explícita de ADR-0042, reconstrucción y alarmas | Equipo de despliegue |
 | Auditoría indisponible | Se rechaza lectura compartida | Fallo cerrado, registro alternativo y alarma; riesgo residual documentado | Ambos, seguridad |
 | Error de identidad o proyección | Acceso ajeno o exposición de contenido | Perfil JWT, principal regional, permisos y SharedBooking sin details | Ambos, seguridad |
-| Respuesta compartida entre regiones | Transferencia aunque no se persista réplica | mTLS, no-store y criterio de CON-3 todavía por validar | Ambos |
+| Respuesta compartida entre regiones | Transferencia aunque no se persista réplica | mTLS, no-store y criterio de CON-3 aceptado al cierre de la segunda entrega | Ambos |
 | Rotación de claves y reprocesamiento | Hechos tardíos pendientes o análisis incompleto | Período committedAt, deduplicación previa y resolución durable | Ambos, analítica |
 | Reportes faltantes o relojes distintos | Percentiles sesgados | Cobertura, incertidumbre y reintentos; desconocido no cuenta como éxito | Ambos, observabilidad |
 

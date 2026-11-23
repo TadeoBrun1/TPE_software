@@ -47,7 +47,7 @@ después de instalar, un dispositivo nuevo, una reinstalación o que el sistema 
 la app dejan la sesión sin panel guardado. El escenario QA-3 no excluye esos casos, así que **cuentan dentro del
 95 %**:
 
-* Suposición (a validar con métricas de uso): las aperturas sin caché son menos del 5 % del total, porque la caché
+* Suposición (aceptada por el equipo; sin métricas de uso reales): las aperturas sin caché son menos del 5 % del total, porque la caché
   se conserva entre aperturas y solo se pierde en esos casos puntuales. Si es así, el 95 % se puede cumplir aunque
   esas aperturas tarden más.
 * Para que también sean rápidas, la respuesta del panel va comprimida y un panel típico pesa hasta 20 KB (ADR-0040).
@@ -69,7 +69,7 @@ Patrones y tácticas que aplica:
 * Good, because las revalidaciones sin cambios son baratas para el servidor.
 * Bad, because la app puede mostrar datos viejos durante la revalidación (normalmente menos de un segundo).
 * Bad, because las aperturas sin caché (instalación, dispositivo nuevo, caché borrada) dependen de la red y cuentan
-  dentro del 95 % de QA-3; su cumplimiento depende de que sean pocas (suposición a validar).
+  dentro del 95 % de QA-3; su cumplimiento depende de que sean pocas (suposición aceptada por el equipo).
 
 ### Confirmation
 

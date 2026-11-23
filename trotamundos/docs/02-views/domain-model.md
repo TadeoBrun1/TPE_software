@@ -2,7 +2,7 @@
 
 **Tipo:** Soporte (vocabulario)
 **Actualizada en la iteración:** 5
-**Mantiene:** Ambos. **Estado:** vocabulario del diseño integrado; implementación y validación pendientes.
+**Mantiene:** Ambos. **Estado:** vocabulario del diseño integrado y aceptado; implementado en el prototipo.
 
 ## 1. Propósito
 

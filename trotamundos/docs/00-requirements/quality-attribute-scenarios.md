@@ -121,7 +121,11 @@ en móvil en menos de 1,4 s; máximo 5 minutos por mes de inactividad no planifi
 | Respuesta | El sistema muestra el contenido en el idioma y formato del usuario y atiende la solicitud desde la región de origen del usuario |
 | Medida de respuesta | El 100 % de los textos y formatos de los idiomas soportados se muestra según la configuración del usuario, y se siguen cumpliendo QA-2 (800 ms) y QA-3 (1,4 s) aunque el usuario esté fuera de su región |
 
-## Suposiciones a validar
+## Suposiciones
+
+Todas las suposiciones de esta página quedaron aceptadas por el equipo al cierre de la segunda entrega
+(2026-11-23) como valores de diseño. Se tomaron por analogía y por el criterio indicado; no se midieron con
+infraestructura ni usuarios reales.
 
 | Valor asumido | Escenario | Criterio |
 |---|---|---|
@@ -219,12 +223,14 @@ medida de QA-14 mezclaba la residencia de datos y QA-15 tenía valores vagos).
 
 ### Suposiciones de la 2da entrega
 
+Aceptadas por el equipo al cierre de la segunda entrega (2026-11-23).
+
 | Valor asumido | Escenario | Criterio |
 |---|---|---|
 | 2 minutos desde la cancelación en el panel | QA-11 | Analogía con alertas de reprogramación de aerolíneas; se cuenta desde el panel para no mezclarlo con el presupuesto de QA-1 |
 | 50 vuelos y 15.000 viajeros en 10 minutos | QA-12 | Analogía con un cierre de aeropuerto por tormenta (vuelos de unos 300 pasajeros) |
 | 2 s para reordenar | QA-13 | Interacción en la app, con la misma referencia que QA-2 |
 | Trabajo diario para evaluar el entrenamiento | QA-13 | El guardado y ajuste por viajero son inmediatos; el entrenamiento y publicación regional dependen de muestra y evaluación (precisión de la suposición en la revisión del PR #12) |
-| 24 h para borrar el perfil | QA-14 | Plazo operativo; la normativa concreta no está validada (CON-3) |
+| 24 h para borrar el perfil | QA-14 | Plazo operativo, coherente con el criterio aceptado para CON-3 |
 | 5 % de usuarios, 10 % relativo, 5 minutos | QA-15 | Práctica habitual de despliegue canario con vuelta atrás automatizada |
 | 10 minutos tras la recuperación | QA-16, QA-17 | Reintento con espera creciente, como la ingesta |

@@ -3,7 +3,7 @@
 **Qué es:** escenarios de calidad organizados por atributo y refinamiento, con (Importancia, Dificultad).
 **Mantiene:** ambos. **Estado:** COMPLETADO (coincide con los escenarios revisados con `/test-qas`).
 
-Las prioridades de esta tabla son **propuestas a validar** (ningún stakeholder las confirmó todavía).
+Las prioridades de esta tabla fueron **aceptadas por el equipo** al cierre de la segunda entrega (2026-11-23).
 
 ## Tabla de priorización
 
@@ -89,7 +89,7 @@ los (H, M); ver [architectural-drivers.md](architectural-drivers.md).
 - QA-10 es (M, H): importancia media y dificultad alta. Su parte multirregión se atiende igual en la iteración 1
   porque condiciona la estructura de despliegue; la parte de idiomas y formatos queda para la iteración 4.
 - QA-3 (M, M) se atiende en la iteración 3 junto con QA-2.
-- Las prioridades son una propuesta del equipo: ningún stakeholder las confirmó.
+- Las prioridades las definió y aceptó el equipo al cierre de la segunda entrega.
 - Los escenarios QA-11 a QA-17 son de la 2da entrega (opción A, RF-09) y se atienden en la
   [iteración 5](../01-add/iteration-5-recommendation.md). QA-12 es (H, H) porque las cancelaciones masivas
   coinciden con los picos de QA-5 y dependen de proveedores externos con límites de consulta. QA-17 salió de dividir

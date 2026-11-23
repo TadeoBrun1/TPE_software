@@ -2,7 +2,7 @@
 
 **Responsable:** Ambos (Tadeo Brun y Tomas Lateana). Las decisiones las tomaron los dos; Tomas revisa el PR.
 **Fecha:** 2026-11-22
-**Estado:** en revisión (PR de la rama `iteracion5`).
+**Estado:** integrada en `main` mediante el PR #12, revisado por Tomas Lateana; decisiones y suposiciones aceptadas al cierre de la segunda entrega (2026-11-23).
 **Rango de ADRs:** 0080 a 0099 (ver [CONTRIBUTING](../../CONTRIBUTING.md))
 
 > Segunda entrega. Las decisiones se tomaron eligiendo entre alternativas planteadas para cada punto; las descartadas
@@ -309,7 +309,8 @@ sumar una señal colaborativa al ranking (opción C de ADR-0083).
 | Rutas de prioridad baja en la puerta y servicios nuevos en `docker-compose.yml` | OpenAPI 0.4.0 | 0047, 0084 |
 | Eliminación de la cuenta en el núcleo, identidad, directorio, ingesta, notificador y recomendación | `account-deleted.v1.yaml`, OpenAPI 0.4.0, `access-audit.md` | 0085 |
 
-Lo que comprueban las 21 pruebas de `tests/test_iteracion5_recomendacion.py` y las 6 de `tests/test_iteracion5_cuenta.py`:
+Lo que comprueban las 21 pruebas de `tests/test_iteracion5_recomendacion.py`, las 6 de `tests/test_iteracion5_cuenta.py`
+y las 5 de `tests/test_revision_iteracion5.py` (agregadas en la revisión del PR #12):
 
 | Driver | Prueba | Resultado |
 |---|---|---|
@@ -351,8 +352,7 @@ Las correcciones aplicadas fueron:
   * la analítica conserva su control de recepción y deja una marca (`analytics-processing.md`).
 * **QA-11:** una sola definición, desde la cancelación confirmada hasta el push, medida por el notificador con
   `cancellationCommittedAt`. Los resultados del prototipo dicen qué se verificó y qué no se mide.
-* **QA-15:** el canario se evalúa cada 5 minutos; la medida se cuenta desde que junta la muestra; el trade-off con
-  QA-13 queda registrado (ADR-0083).
+* **QA-15:** el canario se evalúa cada 5 minutos y la medida se cuenta desde que junta la muestra (ADR-0083).
 * **QA-16 y QA-17:** QA-16 tenía dos fuentes de estímulo; se dividió en falla del proceso (QA-16) y proveedor caído
   (QA-17).
 * **Opciones de disparador** (cancelación, viaje con huecos, a pedido) agregadas a ADR-0081.
@@ -362,4 +362,24 @@ Las correcciones aplicadas fueron:
   "programar recursos" y "escalonar los despliegues", drivers alineados entre ADRs e índice, documentos
   desactualizados, `409` para ofertas vencidas, `offerUrl` solo https y dominios del proveedor, resultados parciales
   fuera de la caché, retención de sugerencias vencidas, entrenamiento como trabajo único por región.
+
+### Revisión del PR #12 y cierre de la segunda entrega
+
+Tomas Lateana revisó el PR y corrigió (detalle en el [registro de impactos](impact-log.md#correcciones-de-revisión-del-pr-12)):
+
+* **QA-13:** se precisó la suposición de 24 horas. El feedback y el ajuste del viajero se guardan en la misma
+  solicitud; el entrenamiento regional es un trabajo diario condicionado (mínimo 30 ejemplos y sin canario
+  pendiente), sin garantía de publicar una versión en 24 h.
+* **QA-15:** el canario se conserva hasta evaluarlo, y cada promoción guarda la versión activa anterior para que la
+  vuelta atrás nunca elija un canario descartado.
+* **QA-17:** un resultado parcial deja la búsqueda pendiente; al completarse se conservan identificadores y feedback,
+  sin duplicar ofertas.
+* **Monedas:** una oferta en una moneda distinta del presupuesto explícito se excluye.
+* **Características:** ADR-0083 y `recommendation.md` listan solo las implementadas.
+* Cinco pruebas de regresión (`test_revision_iteracion5.py`).
+
+Con esa revisión se cerró la segunda entrega (2026-11-23). Las decisiones (ADR-0080 a ADR-0085), las suposiciones
+marcadas en la documentación y los riesgos registrados quedaron **aceptados por el equipo**. Lo que el prototipo no
+mide (tiempos con proveedores e infraestructura reales, carga completa de QA-12, calidad del modelo con feedback
+real) queda declarado como alcance de la entrega, no como pendiente.
 
