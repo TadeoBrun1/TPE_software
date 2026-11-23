@@ -5,6 +5,8 @@ contenga un tripId: solo las operaciones remotas de la tabla.
 
 * `local`: se ejecuta en la región del usuario autenticado.
 * `prefijo`: se ejecuta en la región del prefijo del identificador (viaje o invitación).
+* `recomendacion`: se ejecuta en el proceso de recomendación de la región del usuario (iteración 5, ADR-0084); si
+  la ruta lleva un identificador con prefijo, tiene que ser de esta región (no se reenvía entre regiones).
 * `recurso`: la puerta audita sus rechazos previos al núcleo (`specs/access-audit.md`).
 """
 from __future__ import annotations
@@ -17,7 +19,7 @@ from dataclasses import dataclass
 class Ruta:
     metodo: str
     plantilla: str
-    destino: str        # local | prefijo | puerta | notificador | ingesta
+    destino: str        # local | prefijo | puerta | notificador | ingesta | recomendacion
     prioridad: str      # alta | media | baja
     recurso: bool
     parametro: str | None = None  # parámetro con el prefijo de región
@@ -48,6 +50,13 @@ RUTAS = [
     Ruta("PATCH", "/bookings/{bookingId}", "local", "media", True),
     Ruta("DELETE", "/bookings/{bookingId}", "local", "media", True),
     Ruta("POST", "/avisos/{providerId}", "ingesta", "alta", False),
+    Ruta("DELETE", "/account", "local", "media", False),  # iteración 5 (ADR-0085)
+    # Iteración 5 (ADR-0084): sugerencias y preferencias, siempre de prioridad baja (ADR-0047).
+    Ruta("GET", "/trips/{tripId}/suggestions", "recomendacion", "baja", False, "tripId"),
+    Ruta("POST", "/suggestions/{suggestionId}/feedback", "recomendacion", "baja", False),
+    Ruta("GET", "/recommendations/preferences", "recomendacion", "baja", False),
+    Ruta("PUT", "/recommendations/preferences", "recomendacion", "baja", False),
+    Ruta("DELETE", "/recommendations/profile", "recomendacion", "baja", False),
 ]
 
 # Operaciones que una puerta acepta por el canal entre regiones (un solo salto).

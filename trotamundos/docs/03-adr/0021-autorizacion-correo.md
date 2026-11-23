@@ -87,7 +87,12 @@ iniciadas no se cancelan retroactivamente. La implementación debe probar carrer
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4),
-merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4), junto con el resto de la iteración 2,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
+
+## Nota de la iteración 5 (2026-11-22)
+
+Al eliminar la cuenta, la ingesta borra las vinculaciones del usuario y revoca las autorizaciones delegadas en el proveedor de correo o de reservas ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

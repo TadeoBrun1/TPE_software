@@ -1,7 +1,7 @@
 asyncapi: 2.6.0
 info:
   title: Avisos de cambio del panel
-  version: 0.2.0
+  version: 0.3.0
   description: >
     Contrato propuesto de la iteración 3 (ADR-0046). Lo publica el núcleo desde su outbox (ADR-0027) en la misma
     transacción que cambia panel_por_usuario (ADR-0040). Lo consume solo el notificador: cada instancia con una
@@ -9,6 +9,8 @@ info:
     operativo de relevancia important. Transporte: RabbitMQ, exchange travel.domain, routing key panel.changed.v1
     (ADR-0028). No lleva datos de reservas: el cliente los pide por la API autenticada.
     0.2.0 (iteración 4, ADR-0067): agrega correlationIds y el encabezado traceparent para medir QA-1 de punta a punta.
+    0.3.0 (iteración 5, ADR-0084): agrega collapseKey opcional; en booking_cancelled es booking-cancel:<bookingId>, la
+    misma que usa suggestions.available.v1, para que el push de las alternativas reemplace al de la cancelación.
 defaultContentType: application/json
 channels:
   panel.changed.v1:
@@ -81,6 +83,11 @@ components:
           committedAt:
             type: string
             format: date-time
+          collapseKey:
+            type: string
+            minLength: 1
+            description: Clave de colapso del push. Ausente salvo en booking_cancelled (ADR-0084); sin ella el
+              notificador deriva la clave de eventId y dispositivo (ADR-0046).
           correlationIds:
             type: array
             description: correlationId de las novedades que originaron este cambio del panel (ADR-0067). Vacío o

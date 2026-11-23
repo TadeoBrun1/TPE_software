@@ -118,7 +118,12 @@ solapamiento de incidentes, 503 de telemetría, reentrega del reporte y desfase 
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7),
-merge `00f21b9` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7), junto con el resto de la iteración 4,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
+
+## Nota de la iteración 5 (2026-11-22)
+
+Los eventos de la recomendación propagan `correlationId` y `traceparent`. Métricas nuevas de QA-11, desde la cancelación confirmada en el núcleo (`committedAt` del hecho): `qa11_cancelacion_a_sugerencias_s` (hasta las sugerencias generadas, en la recomendación) y `qa11_cancelacion_a_aviso_s` (hasta el push, en el notificador, con el `cancellationCommittedAt` de `suggestions.available.v1`) ([ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).

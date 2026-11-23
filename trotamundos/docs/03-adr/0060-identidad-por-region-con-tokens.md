@@ -195,7 +195,12 @@ distintas con el mismo identificador local no comparten permisos.
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7),
-merge `00f21b9` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7), junto con el resto de la iteración 4,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
+
+## Nota de la iteración 5 (2026-11-22)
+
+El token de acceso suma el reclamo `auth_time` (momento del inicio de sesión; un token renovado conserva el del login original), que `DELETE /account` usa para exigir un login reciente. Con `account.deleted.v1`, el proveedor de identidad borra la cuenta, sus tokens de renovación y la entrada del directorio global; mientras tanto, la marca de cuenta eliminada del núcleo rechaza los tokens de acceso que siguen vigentes ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

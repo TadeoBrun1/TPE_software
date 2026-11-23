@@ -39,6 +39,7 @@ def reserva_a_api(fila: dict) -> dict:
         "origin": fila["origen"],
         "provider": fila.get("proveedor"),
         "providerReference": fila.get("referencia_proveedor"),
+        "offerUrl": fila.get("url_oferta"),
         "startsAt": fila.get("inicio"),
         "endsAt": fila.get("fin"),
         "timeZone": fila.get("zona"),

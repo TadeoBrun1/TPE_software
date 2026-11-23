@@ -72,7 +72,14 @@ reentrega no repite el efecto. Verificar que una transacción fallida no deja un
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4),
-merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4), junto con el resto de la iteración 2,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
+
+## Nota de la iteración 5 (2026-11-22)
+
+`booking.changed.v1` se retira: nunca tuvo consumidor. `booking.facts.v1` pasa a 0.2.0 con dos consumidores y `startsAt`/`endsAt` opcionales. Las reservas propuestas no generan hechos ([ADR-0081](0081-proceso-de-recomendacion-con-perfiles-regionales.md), [ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).
+
+La outbox del núcleo publica también `account.deleted.v1` en la misma transacción que borra los datos del usuario, y en esa transacción se borran los eventos de ese usuario que estaban en la outbox ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

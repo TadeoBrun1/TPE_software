@@ -20,10 +20,11 @@ from comun.infraestructura.broker import Broker
 from comun.infraestructura.db import BaseDatos
 from comun.infraestructura.reloj import Reloj
 from comun.observabilidad import Logger, metricas
-from contratos.topologia import topologia_region
+from contratos.topologia import COLA_INGESTA_CUENTAS, topologia_region
 from ingesta.adaptadores.acceso import AdaptadorAcceso, AdaptadorAerolinea, AdaptadorCorreo, AdaptadorHotel
 from ingesta.avisos.receptor import Receptor, firma_aviso  # noqa: F401 - firma_aviso se usa en pruebas y demo
 from ingesta.coordinacion.coordinador import Coordinador
+from ingesta.cuentas.bajas import BajasDeCuentas
 from ingesta.mensajeria.publicador import crear_publicador
 from ingesta.persistencia.registro import Registro
 from ingesta.planificacion.planificador import Planificador
@@ -47,6 +48,7 @@ class Ingesta:
         self.coordinador = Coordinador(self)
         self.publicador = crear_publicador(base, broker, self.reloj, self.logger)
         self.receptor = Receptor(self.registro, self.vinculaciones, self.planificador, self.reloj)
+        self.bajas = BajasDeCuentas(self)  # iteración 5 (ADR-0085)
 
         async def estado(request):
             return JSONResponse(metricas.resumen())
@@ -54,6 +56,11 @@ class Ingesta:
         self.app = Starlette(routes=[Route("/avisos/{providerId}", self.receptor.recibir, methods=["POST"]),
                                      Route("/metrics", estado, methods=["GET"])])
         self._activo = False
+
+    def preparar_mensajeria(self):
+        """La ingesta solo consume las bajas de cuentas; publica por su outbox."""
+        self.broker.declarar(topologia_region())
+        self.broker.consumir(COLA_INGESTA_CUENTAS, self.bajas.procesar, prefetch=20)
 
     def agendar(self, connection_id: str, tipo: str) -> str:
         return self.planificador.agendar(connection_id, tipo)
@@ -65,6 +72,7 @@ class Ingesta:
 
     def iniciar_trabajadores(self, intervalo: float = 0.5):
         self._activo = True
+        self.broker.iniciar()  # consumo de bajas de cuentas (ADR-0085)
 
         def trabajar():
             while self._activo:
@@ -89,8 +97,8 @@ def desde_entorno() -> Ingesta:  # pragma: no cover - docker compose
     region = os.environ["REGION"]
     adaptadores, fuentes = proveedores_simulados()
     broker = broker_mod.abrir(os.environ.get("BROKER", "memoria"))
-    broker.declarar(topologia_region())
     ingesta = Ingesta(region, db_mod.abrir(os.environ["BASE_INGESTA"], f"{region}-ingesta"), broker, adaptadores)
+    ingesta.preparar_mensajeria()
     ingesta.fuentes = fuentes
     if os.environ.get("CLAVE_ADMIN"):
         from simuladores.admin import rutas_ingesta

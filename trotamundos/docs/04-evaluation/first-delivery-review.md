@@ -1,6 +1,6 @@
 # Cierre documental de primera entrega — Trotamundos
 
-**Fecha:** 2026-10-28. **Base revisada:** main, commit `00f21b9`.
+**Fecha:** 2026-10-28. **Base revisada:** `main` con las cuatro iteraciones integradas (hasta el PR #7).
 **Preparación:** revisión analítica de ambos integrantes, con asistencia de IA (ver [uso de IA](../../ai/prompts.md)).
 La revisión de este cierre por el equipo se registra mediante el PR que lo integra. No se afirma una reunión grupal de
 Risk Storming.
@@ -71,7 +71,7 @@ Esta es una revisión analítica de riesgos, no una sesión grupal registrada ni
 | Caída de zona y una sola copia | Ventana de durabilidad reducida | Política explícita de ADR-0042, reconstrucción y alarmas | Equipo de despliegue |
 | Auditoría indisponible | Se rechaza lectura compartida | Fallo cerrado, registro alternativo y alarma; riesgo residual documentado | Ambos, seguridad |
 | Error de identidad o proyección | Acceso ajeno o exposición de contenido | Perfil JWT, principal regional, permisos y SharedBooking sin details | Ambos, seguridad |
-| Respuesta compartida entre regiones | Transferencia aunque no se persista réplica | mTLS, no-store y criterio de CON-3 todavía por validar | Ambos |
+| Respuesta compartida entre regiones | Transferencia aunque no se persista réplica | mTLS, no-store y criterio de CON-3 aceptado al cierre de la segunda entrega | Ambos |
 | Rotación de claves y reprocesamiento | Hechos tardíos pendientes o análisis incompleto | Período committedAt, deduplicación previa y resolución durable | Ambos, analítica |
 | Reportes faltantes o relojes distintos | Percentiles sesgados | Cobertura, incertidumbre y reintentos; desconocido no cuenta como éxito | Ambos, observabilidad |
 
@@ -85,5 +85,7 @@ Esta es una revisión analítica de riesgos, no una sesión grupal registrada ni
 * No se registra una sesión de Risk Storming del equipo si no ocurrió. Si la realizan, agregar participantes,
   fecha, escenarios revisados y acuerdos reales.
 * Confirmar alcance por fecha con lo indicado por la cátedra y seleccionar la opción avanzada de la segunda entrega.
+  Seleccionada después del cierre: opción A, sistema de recomendación ([ADR-0080](../03-adr/0080-eleccion-del-modulo-avanzado.md),
+  [iteración 5](../01-add/iteration-5-recommendation.md)).
 
 

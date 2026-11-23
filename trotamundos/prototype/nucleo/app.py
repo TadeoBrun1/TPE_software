@@ -6,6 +6,7 @@ entrada. Los trabajadores son el publicador de la outbox, el consumidor de noved
 from __future__ import annotations
 
 import os
+import secrets
 import threading
 import time
 
@@ -16,7 +17,7 @@ from comun.infraestructura.db import BaseDatos
 from comun.infraestructura.outbox import PublicadorOutbox
 from comun.infraestructura.reloj import Reloj
 from comun.observabilidad import Logger
-from contratos.topologia import topologia_region
+from contratos.topologia import COLA_NUCLEO_CUENTAS, topologia_region
 from nucleo.api.rutas import crear_app
 from nucleo.auditoria.registro import RegistroAuditoria
 from nucleo.comparticion.correo import CorreoSimulado
@@ -25,18 +26,22 @@ from nucleo.datos.esquema import DDL_AUDITORIA, DDL_NODO
 from nucleo.datos.ruteo import RuteoParticiones
 from nucleo.esquemas.registro import ESQUEMAS_POR_DEFECTO, RegistroEsquemas
 from nucleo.mensajeria.consumidor_novedades import ConsumidorNovedades
+from nucleo.mensajeria.consumidor_sugerencias import ConsumidorSugerencias
 from nucleo.viajes import ciclo_vida
 
 
 class Nucleo:
     def __init__(self, region: str, nodos: list[BaseDatos], base_auditoria: BaseDatos, broker: Broker,
                  clave_puerta: str, clave_email: bytes, reloj: Reloj | None = None, correo=None,
-                 esquemas=ESQUEMAS_POR_DEFECTO, logger: Logger | None = None):
+                 esquemas=ESQUEMAS_POR_DEFECTO, logger: Logger | None = None, clave_seudonimos: bytes | None = None):
         self.region = region
         self.reloj = reloj or Reloj()
         self.logger = logger or Logger("nucleo", region)
         self.broker = broker
         self.clave_puerta = clave_puerta
+        # Clave propia para seudonimizar al actor de una cuenta eliminada en la auditoría (ADR-0085). La custodia el
+        # equipo de seguridad; no es la del HMAC del email.
+        self.clave_seudonimos = clave_seudonimos or secrets.token_bytes(32)
         for nodo in nodos:
             nodo.crear_esquema(DDL_NODO)
         base_auditoria.crear_esquema(DDL_AUDITORIA)
@@ -47,12 +52,17 @@ class Nucleo:
         self.comparticion = Comparticion(region, self.ruteo, self.auditoria, self.reloj, clave_email, self.correo)
         self.publicador = PublicadorOutbox(nodos, broker, self.reloj, self.logger)
         self.consumidor = ConsumidorNovedades(self)
+        self.consumidor_sugerencias = ConsumidorSugerencias(self)  # iteración 5 (ADR-0084)
         self.app = crear_app(self)
         self._activo = False
 
     def preparar_mensajeria(self):
         self.broker.declarar(topologia_region())
         self.consumidor.suscribir(self.broker)
+        self.consumidor_sugerencias.suscribir(self.broker)
+        from nucleo.usuarios import eliminacion
+
+        self.broker.consumir(COLA_NUCLEO_CUENTAS, lambda mensaje: eliminacion.completar(self, mensaje))
 
     def registrar_vinculacion(self, connection_id: str, user_id: str, provider_id: str, estado: str = "activa"):
         """El núcleo es la autoridad de las vinculaciones (iteración 2). RF-02 no está en el alcance del prototipo,
@@ -63,7 +73,12 @@ class Nucleo:
                         (connection_id, user_id, self.region, provider_id, estado))
 
     def tarea_diaria(self) -> dict:
-        return ciclo_vida.tarea_diaria(self.ruteo, self.reloj, self.region, self.logger)
+        from nucleo.usuarios.eliminacion import purgar_marcas
+
+        resultado = ciclo_vida.tarea_diaria(self.ruteo, self.reloj, self.region, self.logger)
+        resultado["marcas_de_cuenta_purgadas"] = purgar_marcas(self.ruteo, self.reloj)  # ADR-0085
+        resultado["outbox_limpiada"] = self.publicador.limpiar_enviados()
+        return resultado
 
     def iniciar_trabajadores(self, intervalo_outbox: float = 0.2, hora_tarea_diaria: int = 4):
         """Modo servicio: publicador de outbox en un hilo, consumo del broker y tarea diaria a la hora configurada."""
@@ -105,6 +120,8 @@ def desde_entorno() -> Nucleo:  # pragma: no cover - docker compose
         broker=broker_mod.abrir(os.environ.get("BROKER", "memoria")), clave_puerta=os.environ["CLAVE_PUERTA"],
         clave_email=os.environ["CLAVE_EMAIL_HMAC"].encode(),
         correo=CorreoSimulado(os.environ.get("BUZON_SIMULADO")),
+        clave_seudonimos=os.environ["CLAVE_SEUDONIMOS_AUDITORIA"].encode()
+        if os.environ.get("CLAVE_SEUDONIMOS_AUDITORIA") else None,
     )
     nucleo.preparar_mensajeria()
     if os.environ.get("CLAVE_ADMIN"):

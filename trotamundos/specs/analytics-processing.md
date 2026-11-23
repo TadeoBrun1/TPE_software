@@ -26,6 +26,15 @@ las ventanas de republicación y reproceso. Es metadata operativa protegida, no 
 una garantía de anonimato. Borrar un registro de recepción mientras todavía puede reproducirse su hecho obliga a
 revisar la estrategia; los 30 días de deduplicación del consumidor del núcleo no se aplican automáticamente aquí.
 
+## Cuenta eliminada (iteración 5, ADR-0085)
+
+La analítica también consume `account.deleted.v1` por `analytics.facts`. Al recibirlo calcula el código del usuario
+con la clave del período vigente y borra los hechos con ese código; los de períodos cuya clave ya se destruyó no se
+pueden ubicar y quedan como están. Conserva el control de recepción (es metadata operativa sin datos del usuario) y
+guarda una marca con el código del usuario en el período vigente durante 30 días (suposición): un hecho de ese
+usuario que llegue después (reentregado o atrasado) se descarta en vez de volver a insertarse. La recepción de la
+baja es idempotente como la de los hechos.
+
 ## Período estable y claves anuales
 
 El período de un hecho es el año UTC de `committedAt`, validado contra un rango de fechas admisible; no el año de

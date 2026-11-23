@@ -14,7 +14,7 @@ ADR-0003 fijó para cada región una base con réplica sincrónica en otra zona 
 de origen forma parte de la clave de partición. No fijó si la región usa **un solo** par primaria/réplica o **varios**.
 Hay que decidirlo, junto con cómo se detectan las fallas y qué pasa cuando cae una zona.
 
-Estimación de carga (suposición a partir de QA-5, a validar con pruebas): con 2 millones de usuarios activos por
+Estimación de carga (suposición a partir de QA-5, aceptada por el equipo): con 2 millones de usuarios activos por
 semana y hasta 50 cargas del panel por usuario y semana, la lectura **global** promedio es de unas 165 solicitudes/s,
 y con el pico de 5 veces (que ya incluye las disrupciones), unas 830/s. La iteración 2 usa como hipótesis de prueba
 50 a 250 novedades/s **por región**. Con estas cifras, un solo par primaria/réplica por región alcanza en
@@ -151,7 +151,8 @@ Patrones y tácticas que aplica:
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #6](https://github.com/TadeoBrun1/TPE_software/pull/6),
-merge `54122ee` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #6](https://github.com/TadeoBrun1/TPE_software/pull/6), junto con el resto de la iteración 3,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.

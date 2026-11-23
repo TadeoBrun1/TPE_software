@@ -134,7 +134,12 @@ tarea no lo vuelve a archivar antes de `reactivadoHasta`.
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #6](https://github.com/TadeoBrun1/TPE_software/pull/6),
-merge `54122ee` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #6](https://github.com/TadeoBrun1/TPE_software/pull/6), junto con el resto de la iteración 3,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
+
+## Nota de la iteración 5 (2026-11-22)
+
+La tarea diaria también elimina las reservas propuestas cuya fecha de inicio pasó. El perfil de recomendación no contiene viajes y sobrevive a su eliminación; se borra a pedido o con la cuenta ([ADR-0081](0081-proceso-de-recomendacion-con-perfiles-regionales.md)).

@@ -16,6 +16,7 @@ Es diseño de un sistema nuevo (greenfield) y la 1ra iteración considera todo e
 | RF-01 | Procesamiento de correo | Alta |
 | RF-03 | Integración con terceros | Alta |
 | RF-05 | Ciclo de vida del viaje | Alta |
+| RF-09 | Recomendación de alternativas con human-in-the-loop (2da entrega, opción A) | Alta |
 
 Detalle completo en [functional-rqmts.md](functional-rqmts.md).
 
@@ -33,6 +34,13 @@ Detalle completo en [functional-rqmts.md](functional-rqmts.md).
 | QA-7 | Seguridad (compartir) | M | M | No |
 | QA-9 | Evolucionabilidad | M | M | No |
 | QA-10 | Usabilidad e i18n | M | H | No |
+| QA-12 | Escalabilidad (disrupción masiva, 2da entrega) | H | H | Sí |
+| QA-11 | Performance (oportunidad de sugerencias, 2da entrega) | H | M | Sí |
+| QA-13 | Usabilidad (adaptación al usuario, 2da entrega) | H | M | Sí |
+| QA-14 | Seguridad (control del perfil, 2da entrega) | H | M | Sí |
+| QA-16 | Disponibilidad (falla de la recomendación, 2da entrega) | H | M | Sí |
+| QA-17 | Disponibilidad (proveedor de búsqueda caído, 2da entrega) | M | M | No |
+| QA-15 | Modificabilidad (versiones del modelo, 2da entrega) | M | M | No |
 
 Criterio: es **driver principal** todo escenario de importancia alta (H). Los de importancia media también se
 atienden, en la iteración que indica el [plan](../01-add/iteration-plan.md). QA-9 y la parte multirregión de QA-10 se
@@ -48,9 +56,9 @@ Escenarios completos en [quality-attribute-scenarios.md](quality-attribute-scena
 |---|---|---|
 | CON-1 | Integración con terceros solo por APIs estándar | Confirmada |
 | CON-2 | Sistemas externos que no se pueden modificar | Confirmada |
-| CON-3 | Datos personales según la normativa de cada región | Suposición a validar |
+| CON-3 | Datos personales según la normativa de cada región | Suposición aceptada por el equipo |
 | CON-4 | El cliente móvil aprovecha capacidades nativas (GPS) | Confirmada |
-| CON-5 | Startup con recursos limitados: sin capacidad ociosa sin evidencia de uso | Suposición a validar |
+| CON-5 | Startup con recursos limitados: sin capacidad ociosa sin evidencia de uso | Suposición aceptada por el equipo |
 | CRN-1 | Estructura general del sistema | Iteración 1 |
 | CRN-2 | Logging, monitoreo y trazas | Iteración 4 |
 | CRN-3 | Errores y reintentos con sistemas externos | Iteración 2 |
@@ -65,5 +73,6 @@ disrupciones de viaje.
 
 ## Decisiones pendientes que afectan los drivers
 
-- [ ] Opción avanzada A (recomendación) o B (chatbot).
+- [x] Opción avanzada A (recomendación) o B (chatbot): se eligió la A (ADR-0080, 2026-11-22). Los drivers de la
+  2da entrega (RF-09, QA-11 a QA-17) se agregaron por PR de ambos, como pide la regla de drivers inmutables.
 - [ ] Alcance exacto del prototipo (qué escenarios se implementan).

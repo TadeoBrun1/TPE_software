@@ -1,16 +1,21 @@
 asyncapi: 2.6.0
 info:
-  title: Hechos de reservas para la analítica
-  version: 0.1.0
+  title: Hechos de reservas para la analítica y la recomendación
+  version: 0.2.0
   description: >
     Contrato propuesto de la iteración 4 (ADR-0064). Lo publica el núcleo desde su outbox, en la misma transacción
-    que cada cambio de reserva (ADR-0027). Lo consume solo la analítica de la misma región, que reemplaza userId,
+    que cada cambio de reserva (ADR-0027). Lo consumen la analítica de la misma región, que reemplaza userId,
     tripId y bookingId por códigos calculados con su clave anual y descarta correlationId antes de guardar.
     Lleva solo los campos de la lista permitida: no incluye códigos de reserva, nombres, notas, precios ni el bloque
     de detalles por tipo. Transporte: RabbitMQ, exchange travel.domain, routing key booking.facts.v1 (ADR-0028),
-    cola quorum propia de la analítica. El consumidor deduplica por homeRegion, tipo lógico y eventId,
+    cola quorum propia de cada consumidor. El consumidor analítico deduplica por homeRegion, tipo lógico y eventId,
     con hecho y recepción atómicos antes del ACK. El período anual deriva de committedAt, no de la recepción;
     ver specs/analytics-processing.md. Son datos seudonimizados con riesgo residual, no anonimato demostrado.
+    0.2.0 (iteración 5, ADR-0081): un segundo consumidor de la misma región, el proceso de recomendación, con su cola
+    quorum recommendation.facts. Usa el userId real porque mantiene un perfil por usuario en su región; la
+    seudonimización es una regla del consumidor analítico, no del evento. Las reservas propuestas (estado proposed,
+    ADR-0084) no generan este evento. Agrega startsAt y endsAt opcionales (con hora y desfase), porque la
+    recomendación compara horarios con la reserva cancelada; la analítica los sigue guardando a nivel día (ADR-0064).
 defaultContentType: application/json
 channels:
   booking.facts.v1:
@@ -109,6 +114,14 @@ components:
           endDate:
             type: string
             format: date
+          startsAt:
+            type: string
+            format: date-time
+            description: Inicio con hora y desfase del lugar (0.2.0). Lo usa la recomendación; la analítica lo
+              trunca al día antes de guardar (ADR-0064).
+          endsAt:
+            type: string
+            format: date-time
           locationCity:
             type: string
             description: Ciudad o código de aeropuerto; nunca una dirección.

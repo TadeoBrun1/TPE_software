@@ -45,8 +45,16 @@ No se guardan datos del itinerario, emails, direcciones IP ni tokens.
 * Si la escritura falla, la solicitud se rechaza con `503` y el evento queda en los logs estructurados de la puerta
   de entrada con una alerta (ADR-0067). El rechazo está garantizado siempre; el registro, salvo que fallen a la vez el
   registro de auditoría y los logs de la región (riesgo residual aceptado).
+* Un descarte por sobrecarga (`503` de ADR-0047) no se audita, aunque sea sobre una ruta de recurso: no es una
+  decisión de acceso sobre el viaje sino de capacidad, se rechaza sin mirar el recurso y escribir el registro en ese
+  momento sumaría carga justo cuando hay que quitarla. Queda en la métrica `puerta_descarte_prioridad_<prioridad>`
+  y en los logs (ADR-0067). Excepción declarada en la iteración 5 (registro de impactos), que cierra el hallazgo del
+  prototipo.
 * Solo agregado: ningún proceso de la aplicación puede modificar ni borrar registros. Solo la tarea de retención
-  borra los registros de más de 1 año (suposición, mismo plazo que ADR-0045).
+  borra los registros de más de 1 año (suposición, mismo plazo que ADR-0045). Única modificación permitida: al
+  eliminar una cuenta, el núcleo de la región reemplaza `actorUserId` por un seudónimo estable
+  (`eliminada:<HMAC>`) y vacía `actorIssuer` en los registros donde esa cuenta es el actor; el resto del registro
+  queda igual (ADR-0085). Los registros de otras regiones conservan el identificador hasta su retención.
 * El registro de cada región se opera como un nodo más de la base (ADR-0042): primaria y réplica sincrónica en dos
   zonas, el mismo monitor de base con acuerdo de dos de tres y reconstrucción de la réplica en la zona C.
 * Lo consulta el equipo de seguridad. Un aumento de rechazos para un mismo viaje o de un mismo actor genera una

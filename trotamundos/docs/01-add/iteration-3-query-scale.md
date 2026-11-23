@@ -203,7 +203,7 @@ mediciones: las cifras de carga son suposiciones que el prototipo y las pruebas 
 |---|---|---|
 | QA-1 a escala: si se pierde un aviso del proveedor de correo, las cuentas con reconciliación de 15 min o 6 h superan los 5 minutos (de la iteración 2). No se estimó qué fracción de las actualizaciones afecta frente al 1 % que permite el percentil 99 | QA-1 | **Aceptado** por ambos integrantes (2026-10-28). Mitigación posible: detectar buzones que dejaron de recibir avisos y adelantar su reconciliación. Para una iteración 5 si hay tiempo |
 | Un escalón de carga mayor a 1,67 veces durante el arranque de instancias | QA-2, QA-5 | Aceptado por CON-5: los días de pico del enunciado son una expectativa, no una garantía. Mitigado con priorización. Si en operación hay picos regulares, se agrega escalado programado con datos reales |
-| Las cifras de carga son suposiciones | QA-5 | Validar con pruebas de carga del prototipo |
+| Las cifras de carga son suposiciones | QA-5 | Aceptadas por el equipo al cierre de la segunda entrega; sin pruebas de carga |
 | Falla de una región completa | QA-4 | Aceptado desde la iteración 1 |
 | Ventana con durabilidad reducida cuando un nodo de la base queda con una sola copia (cae la primaria, la réplica o una zona) | QA-4 | Aceptado: se priorizan las escrituras disponibles sobre bloquearlas; la réplica se reconstruye de inmediato y el tiempo en esa situación genera alerta |
 | Desincronización entre tablas y panel por un error de programación | QA-2 | Único escritor, versión en el documento y reconstrucción |

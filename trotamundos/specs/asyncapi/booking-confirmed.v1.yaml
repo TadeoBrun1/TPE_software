@@ -2,8 +2,11 @@ asyncapi: 2.6.0
 info:
   title: Cambios confirmados de reservas
   version: 0.1.0
-  description: Contrato de diseño iteración 2 coordinado con 3/4. AMQP 0-9-1 sobre
-    RabbitMQ, exchange travel.domain; ADR-0027/0028.
+  description: >
+    RETIRADO en la iteración 5 (ADR-0081). Contrato de diseño de la iteración 2 coordinado con 3/4 (AMQP 0-9-1 sobre
+    RabbitMQ, exchange travel.domain; ADR-0027/0028). Nunca tuvo consumidor y, con mandatory, publicarlo sin cola
+    dejaba la outbox del núcleo trabada; su papel lo cubre booking.facts.v1, que consumen la analítica y la
+    recomendación. El núcleo no lo publica. Se conserva como registro del diseño.
 defaultContentType: application/json
 channels:
   booking.changed.v1:

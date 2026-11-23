@@ -135,9 +135,37 @@ def main(con_logs: bool):
             ver(f"auditoría {region}", f"{r['action']} {r['result']} {r['reason'] or '-'} "
                                        f"actor={r['actor_region'] or '-'} entrada={r['entry_region']}")
 
-    paso(6, "Métricas del proceso (ADR-0067)")
+    paso(6, "Recomendación: el hotel cancela y llegan alternativas; Juan rechaza una y acepta otra (iteración 5)")
+    sa.fuentes["hotel"].publicar("con-hotel", {"reservationId": "HS-77", "version": 3, "status": "CANCELLED",
+                                               "checkIn": "2026-12-11", "checkOut": "2026-12-14",
+                                               "city": "Toledo", "timeZone": "Europe/Madrid"})
+    sa.ingesta.agendar("con-hotel", "aviso")
+    sistema.procesar()
+    push = [p for p in sa.notificador.push.enviados if p["reason"] in ("booking_cancelled", "alternatives_available")]
+    ver("push (misma collapseKey: el segundo reemplaza al primero)",
+        [f"{p['reason']} {p['collapseKey']}" for p in push])
+    lista = juan.pedir("GET", f"/trips/{viaje_id}/suggestions").json()
+    validar_api("SuggestionList", lista)
+    for s in lista["suggestions"]:
+        ver(f"sugerencia {s['rank']}", f"{s['provider']} {s['price']['amount']} {s['price']['currency']} "
+                                       f"motivos={s.get('reasonCodes')}")
+    rechazo = juan.pedir("POST", f"/suggestions/{lista['suggestions'][0]['id']}/feedback",
+                         {"action": "reject", "reason": "too_expensive"}).json()
+    ver("tras rechazar la primera", [f"{s['rank']}:{s['provider']}:{s['status']}" for s in rechazo["suggestions"]])
+    elegida = next(s for s in rechazo["suggestions"] if s["status"] == "available")
+    aceptada = juan.pedir("POST", f"/suggestions/{elegida['id']}/feedback", {"action": "accept"})
+    ver("aceptar", f"{aceptada.status_code} → {aceptada.json()['offerUrl']}")
+    sistema.procesar()
+    propuesta = next(r for r in juan.pedir("GET", "/panel").json()["trips"][0]["bookings"]
+                     if r["status"] == "proposed")
+    ver("reserva propuesta en el panel", f"{propuesta['type']} {propuesta['startsAt']} origen={propuesta['origin']}")
+    ver("Ana no ve la propuesta en el viaje compartido",
+        all(r.get("status") != "proposed" for r in ana.pedir("GET", f"/shared/trips/{viaje_id}").json()["bookings"]))
+    ver("entrenamiento diario", sa.recomendacion.entrenar())
+
+    paso(7, "Métricas del proceso (ADR-0067)")
     for nombre, valor in sorted(metricas.resumen()["contadores"].items()):
-        if nombre.startswith(("ingesta_publicados", "novedades_", "push_", "puerta_")):
+        if nombre.startswith(("ingesta_publicados", "novedades_", "push_", "puerta_", "recomendacion_", "sugerencia")):
             ver(nombre, valor)
     for nombre, valores in metricas.resumen()["duraciones"].items():
         ver(nombre, valores)

@@ -2,7 +2,7 @@
 
 **Mantienen:** Tadeo Brun y Tomas Lateana.
 
-**Estado:** iteraciones 1 a 4 integradas en main; decisiones adoptadas documentalmente. Cierre de primera entrega arquitectónica registrado; implementación, mediciones y riesgos abiertos detallados en docs/04-evaluation/first-delivery-review.md.
+**Estado:** segunda entrega cerrada (2026-11-23). Iteraciones 1 a 5 integradas en `main`; decisiones, suposiciones y riesgos aceptados por el equipo. El prototipo implementa las iteraciones 2 a 5; las mediciones con infraestructura real no forman parte de la entrega (ver [cierre](04-evaluation/first-delivery-review.md) y [iteración 5](01-add/iteration-5-recommendation.md)).
 
 Este documento resume la arquitectura y enlaza al detalle de requisitos, iteraciones, decisiones, vistas y contratos.
 
@@ -17,11 +17,14 @@ El diseño contempla 15 millones de cuentas, 2 millones de usuarios activos sema
 | Iteración | Estado | Aporte |
 |---|---|---|
 | [1 — Estructura general](01-add/iteration-1-structure.md) | Diseño integrado; ADRs aceptadas | Arquitectura de referencia, núcleo modular, ingesta separada, mensajería y despliegue regional. |
-| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Diseño integrado; QA-1 a escala y validación pendientes | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
+| [2 — Ingesta](01-add/iteration-2-ingestion.md) | Diseño integrado; QA-1 a escala como riesgo aceptado | Obtención autorizada de novedades, adaptadores, procesamiento, publicación durable y contrato propuesto. |
 | [3 — Consulta y escala](01-add/iteration-3-query-scale.md) | Pasos 2–7 documentados; decisiones confirmadas por ambos | Modelo de lectura del panel, caché local y notificador, particiones por usuario, escalado y degradación, aplicación de novedades y archivado. |
 | [4 — Seguridad y evolución](01-add/iteration-4-security-evolvability.md) | Pasos 2–7 documentados y auditados; decisiones de ambos integrantes | Identidad por región, compartición con cuenta y auditoría, lectura entre regiones, tarjeta para redes, analítica regional seudonimizada, internacionalización en el cliente, detalles por tipo de reserva y observabilidad. |
+| [5 — Recomendación (2da entrega)](01-add/iteration-5-recommendation.md) | Integrada (PR #12); auditoría independiente corregida y revisión de Tomas Lateana; prototipo con 32 pruebas de la iteración | Proceso de recomendación por región, búsqueda de alternativas con caché corta, ranking aprendido del feedback con modelo versionado y sugerencias que se aceptan como reserva propuesta; eliminación de la cuenta en todos los procesos. |
 
-La incorporación de al menos un módulo avanzado —recomendaciones o chatbot— es obligatoria para la segunda entrega. Su elección continúa pendiente.
+La segunda entrega exige al menos un módulo avanzado. Se eligió la opción A, sistema de recomendación con
+human-in-the-loop ([ADR-0080](03-adr/0080-eleccion-del-modulo-avanzado.md)); la opción B (asistente virtual) quedó
+descartada, con su análisis en la misma ADR.
 
 ## 2. Contexto y alcance
 
@@ -55,7 +58,7 @@ Obtener información sobre una cancelación no equivale a ejecutar una cancelaci
 
 Los percentiles, el pico de tráfico 5× y otras medidas identificadas como supuestos deben validarse. No se presentan como valores textuales de la consigna.
 
-CON-3, relacionada con políticas regionales de datos, continúa como suposición a validar.
+CON-3, relacionada con políticas regionales de datos, quedó como suposición aceptada por el equipo al cierre de la segunda entrega.
 
 Las modificaciones de entradas compartidas deben revisarse entre ambos integrantes y registrarse.
 
@@ -78,6 +81,7 @@ La arquitectura separa tres clases de trabajo:
 | Núcleo modular | Consultar y gestionar viajes, reservas, usuarios y permisos. Es el único dueño del estado oficial. |
 | Ingesta | Obtener información externa autorizada, normalizarla y publicar novedades. |
 | Analítica | Ejecutar procesamiento analítico separado de las operaciones habituales, con un almacén por región y los datos seudonimizados al entrar ([ADR-0064](03-adr/0064-analitica-regional-seudonimizada.md)). |
+| Recomendación | Sugerir alternativas ante una cancelación y aprender del feedback del viajero, con perfiles propios en la región de origen ([ADR-0081](03-adr/0081-proceso-de-recomendacion-con-perfiles-regionales.md)). |
 
 El núcleo es inicialmente un único desplegable con módulos internos.
 
@@ -100,13 +104,15 @@ Ver la [vista de componentes y conectores](02-views/cc-view.md).
 | Base operativa | Conservar los datos oficiales de los usuarios de la región, en particiones por usuario con réplica sincrónica (ADR-0042). |
 | Notificador | Avisar a las apps que su panel cambió, por SSE o push (ADR-0046). |
 | Analítica | Consumir cambios confirmados para preparar análisis. |
+| Recomendación | Consumir cambios confirmados, buscar alternativas en los proveedores, ordenarlas para cada viajero y publicar sugerencias y aceptaciones (ADR-0081 a ADR-0084). |
 
-### Dos flujos de mensajes
+### Flujos de mensajes
 
 | Flujo | Productor | Consumidor | Significado |
 |---|---|---|---|
 | Novedad externa detectada | Ingesta | Núcleo | Información externa que debe validarse y evaluarse. |
-| Cambio confirmado | Núcleo | Analítica y otros consumidores autorizados | Modificación ya confirmada sobre el estado oficial. |
+| Cambio confirmado | Núcleo | Analítica, recomendación y otros consumidores autorizados | Modificación ya confirmada sobre el estado oficial. |
+| Sugerencias disponibles y sugerencia aceptada | Recomendación | Notificador y núcleo | Alternativas listas para el viajero; alternativa aceptada que el núcleo deja como reserva propuesta (iteración 5). |
 
 El núcleo publica cambios confirmados provenientes tanto de la ingesta como de operaciones manuales.
 
@@ -138,7 +144,7 @@ La región de origen no se obtiene de la ubicación momentánea del viajero.
 - La recuperación ante caída de una región completa no está diseñada en esta base.
 - No se afirma cumplimiento de políticas regionales de datos sin definir y validar sus criterios.
 
-Los tiempos de detección y redirección agregados a QA-4 son supuestos de diseño a validar. No sustituyen el límite de cinco minutos mensuales de inactividad no planificada.
+Los tiempos de detección y redirección agregados a QA-4 son supuestos de diseño aceptados por el equipo. No sustituyen el límite de cinco minutos mensuales de inactividad no planificada.
 
 ## 8. Refinamiento propuesto de ingesta
 
@@ -245,11 +251,22 @@ Ver el [índice completo de ADRs](03-adr/README.md).
 | [0066](03-adr/0066-detalles-de-reserva-extensibles-por-tipo.md) | Campos comunes y detalles con esquema propio por tipo de reserva. | accepted |
 | [0067](03-adr/0067-observabilidad-con-trazas-y-metricas.md) | Trazas distribuidas, métricas por etapa y logs estructurados. | accepted |
 
-Las decisiones de la segunda, la tercera y la cuarta iteración se revisan conjuntamente antes de aceptarse.
+### Quinta iteración (segunda entrega)
+
+| ADR | Decisión adoptada | Estado |
+|---|---|---|
+| [0080](03-adr/0080-eleccion-del-modulo-avanzado.md) | Módulo avanzado: sistema de recomendación (opción A). | accepted |
+| [0081](03-adr/0081-proceso-de-recomendacion-con-perfiles-regionales.md) | Proceso por región alimentado por `booking.facts.v1`, con perfiles propios; retiro de `booking.changed.v1`. | accepted |
+| [0082](03-adr/0082-busqueda-de-alternativas-con-cache-corta.md) | Búsqueda en las APIs de los proveedores con caché corta, búsquedas agrupadas y límite por proveedor. | accepted |
+| [0083](03-adr/0083-ranking-aprendido-del-feedback.md) | Ranking por características aprendido del feedback, con modelo regional versionado y canario. | accepted |
+| [0084](03-adr/0084-entrega-y-aceptacion-de-sugerencias.md) | API propia con aviso del notificador; aceptar deja una reserva propuesta en el núcleo. | accepted |
+| [0085](03-adr/0085-eliminacion-de-la-cuenta.md) | Eliminación de la cuenta: borrado inmediato en el núcleo y `account.deleted.v1` para el resto de los procesos. | accepted |
+
+Las decisiones de la segunda a la quinta iteración se revisan conjuntamente antes de aceptarse.
 
 ## 11. Trazabilidad inicial
 
-| Driver | Iteraciones | Decisiones relacionadas | Validación pendiente |
+| Driver | Iteraciones | Decisiones relacionadas | Qué no se midió (aceptado al cierre) |
 |---|---|---|---|
 | QA-1 | 1, 2, 3 y 4 | 0001, 0002, 0020, 0024, 0040, 0044, 0046, 0067 | Tiempo completo desde generación externa hasta visualización, medido por etapa con trazas. |
 | QA-2 y QA-3 | 3 | 0040, 0041, 0043, 0047 | Prueba de carga del panel y primer contenido móvil con caché. |
@@ -264,6 +281,7 @@ Las decisiones de la segunda, la tercera y la cuarta iteración se revisan conju
 | CRN-2 | 4 | 0067 | Propagación del contexto a través del broker. |
 | RF-06 | 2, implementación coordinada con 3 | 0026: asistencia saliente del núcleo | Solicitud de asistencia a la agencia preferida. |
 | RF-07 | 1 y 4 | 0001, 0064 | Consultas del equipo de datos y seudonimización. |
+| RF-09, QA-11 a QA-17 | 5 | 0080 a 0085, 0046, 0047 | Tiempos con proveedores reales, disrupción a escala completa y calidad del modelo con feedback real (el prototipo usa datos sintéticos). |
 
 Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 
@@ -277,7 +295,7 @@ Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 | Una notificación externa puede no indicar usuario ni región. | Resolver y verificar su vinculación antes del enrutamiento. | Iteración 2 |
 | La caída de una zona puede consumir el presupuesto mensual. | *Ping/echo* y conmutación de nodos de la base en 30 s y 60 s (ADR-0042); falta medirlos. Ventana con una sola copia hasta reconstruir la réplica. | Iteración 3 (diseñado) |
 | La caída de una región completa no tiene recuperación diseñada. | Riesgo aceptado: no está en el estímulo de QA-4; las particiones acotan a quiénes afecta. | Aceptado |
-| QA-1 a escala: avisos perdidos con reconciliación lenta. | Riesgo aceptado en la iteración 3; mitigación candidata para la iteración 5. | Aceptado |
+| QA-1 a escala: avisos perdidos con reconciliación lenta. | Riesgo aceptado en la iteración 3; la iteración 5 se dedicó al módulo avanzado, así que sigue como candidato para una iteración posterior. | Aceptado |
 | Escalón de carga mayor a 1,67 veces durante el arranque de instancias. | Escalado temprano y priorización; QA-2 puede incumplirse en esos minutos; escalado programado solo si la operación muestra picos regulares (CON-5). | Iteración 3 (aceptado) |
 | Región de origen y región más cercana pueden diferir. | Se atiende desde la región de origen (latencia aceptada en la iteración 3); la compartición entre regiones suma la red entre regiones (ADR-0062). | Iteraciones 3 y 4 (aceptado) |
 | Un cambio confirmado puede no publicarse si el proceso falla. | Persistencia y publicación recuperable coordinadas. | Iteraciones 2 y 3 |
@@ -286,8 +304,11 @@ Esta tabla expresa relaciones de diseño, no resultados de pruebas.
 | Un token de acceso robado sirve hasta 15 minutos. | Vida corta y revocación del token de renovación (ADR-0060). | Iteración 4 (aceptado) |
 | Una primera solicitud desde muy lejos de la región de origen puede superar los 800 ms de QA-2. | Se cumple con la conexión abierta; mitigación candidata: TLS en la entrada global cerca del usuario. | Iteración 4 (aceptado), candidata para la 5 |
 | Si falla la auditoría, se rechazan las lecturas de viajes compartidos. | QA-7 exige el 100 %; auditoría replicada en dos zonas (ADR-0061). | Iteración 4 (aceptado) |
-| Retención de hechos seudonimizados tras eliminar una cuenta o viaje, y cobertura de hechos tardíos sin clave. | Validar retención y riesgo de reidentificación; aplicar protocolo idempotente y período de commit (ADR-0064). | Iteración 4 (validación pendiente) |
+| Retención de hechos seudonimizados tras eliminar un viaje, y cobertura de hechos tardíos sin clave. Al eliminar una cuenta, los hechos del período vigente se borran y los de períodos anteriores quedan sin poder asociarse (ADR-0085). | Validar retención y riesgo de reidentificación; aplicar protocolo idempotente y período de commit (ADR-0064). | Iteración 4 (validación pendiente; la parte de cuentas, resuelta en la 5) |
 | CON-3 carece de un criterio concreto validado. | Precisar la política regional de datos y sus consecuencias. | Ambos integrantes |
+| Un proveedor con límite de consultas bajo demora las sugerencias en una disrupción masiva (QA-12 parcial). | Búsquedas agrupadas por clave y cubeta por proveedor; el resto recibe las sugerencias más tarde. | Iteración 5 (aceptado) |
+| La eliminación de la cuenta no alcanza otras regiones: permisos inertes y registros de auditoría con el identificador hasta su retención. | Riesgo aceptado en ADR-0085; propagarlo por el canal entre regiones es candidato para una iteración posterior. | Iteración 5 (aceptado) |
+| El modelo aprende solo de lo que muestra (sesgo de exposición) y con poco feedback. | Exploración epsilon-greedy, corrección por posición y pesos iniciales razonables (ADR-0083). | Iteración 5 (diseñado) |
 
 ## 13. Prototipo y evidencia
 
@@ -305,7 +326,7 @@ El prototipo debe demostrar recorridos acotados y trazables a contratos y decisi
 - Aplicar dueño por campo, marca de borrado y asignación a viajes.
 - Archivar y reactivar viajes con una fecha simulada.
 
-Estado: el prototipo implementa las iteraciones 2 a 4 y sus pruebas automáticas cubren estos objetivos en un solo
+Estado: el prototipo implementa las iteraciones 2 a 5 (la 5 con APIs de búsqueda y viajeros sintéticos) y sus pruebas automáticas cubren estos objetivos en un solo
 proceso, salvo la autorización del correo: se simula sin OAuth y la revocación se cubre en parte (detalle y
 escenarios pendientes en [prototype/README.md](../prototype/README.md)). Son pruebas de comportamiento y de
 contratos, no mediciones de los QA.
@@ -389,6 +410,21 @@ claves. Ver [procesamiento](../specs/analytics-processing.md). La auditoría cub
 del dueño; [medición de calidad](../specs/quality-measurement.md) separa tiempo de caída de tasa de éxito y declara
 telemetría faltante. Las correcciones quedaron integradas mediante PR #7. Las pruebas del prototipo cubren el perfil
 de tokens, la vista compartida sin `details` con no-store y la auditoría de rechazos; la analítica no está en su alcance.
+
+## Diseño de la iteración 5
+
+Para la segunda entrega se eligió la opción A (ADR-0080). Un proceso de recomendación por región consume
+`booking.facts.v1` con su propia cola; ante una cancelación de alojamiento o transporte informada por un proveedor o
+por correo, busca alternativas del mismo tipo en las APIs de búsqueda de los proveedores (ADR-0081). La búsqueda pasa
+por un puerto con un adaptador por proveedor, una caché de 5 minutos, búsquedas agrupadas por clave y una cubeta de
+fichas por proveedor que nunca excede su límite (ADR-0082). Las ofertas que cumplen los límites explícitos del viajero
+se ordenan con un modelo logístico regional más un ajuste por viajero, aprendidos del feedback; las versiones del
+modelo entran como canario y vuelven atrás solas si baja la aceptación (ADR-0083). Se muestran 3 sugerencias en una
+sección de la app y se avisa por push (que reemplaza al de la cancelación) y por SSE; aceptar deja una reserva
+propuesta en el viaje, que la reserva real reemplaza al llegar (ADR-0084). La recomendación viene activada (opt-out)
+y el perfil se puede borrar. `booking.changed.v1` se retira. Además se diseñó la eliminación de la cuenta, que ADR-0081
+y ADR-0064 dejaban pendiente: el núcleo borra en el momento y avisa con `account.deleted.v1` a los demás procesos,
+que borran lo suyo (ADR-0085). Ver [iteración 5](01-add/iteration-5-recommendation.md).
 
 ## Cierre de primera entrega
 

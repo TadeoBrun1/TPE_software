@@ -4,6 +4,8 @@ En la misma transacción local de la partición del usuario (ADR-0040, ADR-0042,
   1. recalcula las fechas de los viajes tocados;
   2. actualiza el panel (versión + 1) y deja `panel.changed.v1` en la outbox;
   3. deja `trip.changed.v1` y `booking.facts.v1` en la outbox.
+
+Las reservas propuestas (iteración 5, ADR-0084) no generan `booking.facts.v1` ni mueven las fechas del viaje.
 """
 from __future__ import annotations
 
@@ -28,6 +30,7 @@ class UnidadDeCambio:
         self.viajes: dict[str, str] = {}
         self.hechos: list[tuple[dict, str]] = []
         self.hubo_cambios = False
+        self.clave_colapso: str | None = None  # push de una cancelación (ADR-0084)
 
     def motivo(self, motivo: str):
         self.motivos.append(motivo)
@@ -53,18 +56,19 @@ class UnidadDeCambio:
             if tipo != "deleted":
                 recalcular_fechas(self.tx, trip_id)
         version = proyector.actualizar(self.tx, self.region, self.user_id, self.motivos, self.correlation_ids,
-                                       self.reloj)
+                                       self.reloj, self.clave_colapso)
         for trip_id, tipo in self.viajes.items():
             eventos.viaje_cambiado(self.tx, self.region, self.user_id, trip_id, tipo, version, self.ahora)
         for fila, tipo in self.hechos:
-            eventos.hechos_reserva(self.tx, self.region, fila, tipo, self.ahora)
+            if fila["estado"] != "proposed":  # una propuesta no es una reserva real (ADR-0084)
+                eventos.hechos_reserva(self.tx, self.region, fila, tipo, self.ahora)
         return version
 
 
 def recalcular_fechas(tx: Transaccion, trip_id: str):
     """Las fechas del viaje salen de los datos de sus reservas (ADR-0045)."""
     fila = tx.uno("SELECT MIN(substr(inicio, 1, 10)) AS desde, MAX(substr(COALESCE(fin, inicio), 1, 10)) AS hasta "
-                  "FROM reservas WHERE trip_id = ? AND inicio IS NOT NULL", (trip_id,))
+                  "FROM reservas WHERE trip_id = ? AND inicio IS NOT NULL AND estado <> 'proposed'", (trip_id,))
     if fila and fila["desde"]:
         tx.ejecutar("UPDATE viajes SET fecha_inicio = ?, fecha_fin = ? WHERE trip_id = ?",
                     (fila["desde"], fila["hasta"], trip_id))

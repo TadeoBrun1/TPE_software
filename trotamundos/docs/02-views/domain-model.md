@@ -1,8 +1,8 @@
 # Modelo de dominio
 
 **Tipo:** Soporte (vocabulario)
-**Actualizada en la iteración:** 4
-**Mantiene:** Ambos. **Estado:** vocabulario del diseño integrado; implementación y validación pendientes.
+**Actualizada en la iteración:** 5
+**Mantiene:** Ambos. **Estado:** vocabulario del diseño integrado y aceptado; implementado en el prototipo.
 
 ## 1. Propósito
 
@@ -38,10 +38,35 @@ classDiagram
         precio : monto y moneda ISO 4217
         detalles : esquema por tipo
         codigoDelProveedor
-        estado : confirmada | modificada | cancelada | pendiente
-        origen : correo | tercero | manual
+        estado : confirmada | modificada | cancelada | pendiente | propuesta
+        origen : correo | tercero | manual | sugerencia
+        enlaceOferta : solo en propuestas
         camposEditadosPorUsuario
         version
+    }
+    class Sugerencia {
+        id
+        oferta : normalizada del proveedor
+        posicion
+        estado : disponible | aceptada | rechazada | vencida
+        motivos : códigos
+    }
+    class PerfilDePreferencias {
+        activada
+        preferenciasExplicitas
+        metricasResumidas
+        ajusteDelModelo
+    }
+    class Feedback {
+        accion : aceptar | rechazar | ajustar
+        motivo
+        fecha
+    }
+    class VersionDelModelo {
+        id
+        pesos
+        evaluacion
+        estado : canario | activa | retirada
     }
     class PanelDeUsuario {
         usuario
@@ -136,13 +161,18 @@ classDiagram
     Viaje "1" --> "*" RegistroDeAuditoria : accesos registrados
     Viaje "1" --> "0..1" TarjetaSocial : se publica como
     Reserva "*" --> "0..1" EsquemaDeDetalles : detalles según
+    Usuario "1" --> "0..1" PerfilDePreferencias : se recomienda según
+    Reserva "1" --> "0..*" Sugerencia : alternativas si se cancela
+    Sugerencia "*" --> "1" VersionDelModelo : ordenada por
+    Sugerencia "1" --> "0..*" Feedback : recibe
+    Sugerencia "1" --> "0..1" Reserva : aceptada como reserva propuesta
 ```
 
 ## 3. Elementos
 
 | Elemento | Descripción |
 |---|---|
-| Usuario | Viajero con cuenta en la plataforma. Su región de origen decide dónde se guardan sus datos (ADR-0003). El email y las credenciales viven en el proveedor de identidad de su región (ADR-0060); el idioma y el país eligen catálogo y formato (ADR-0065) |
+| Usuario | Viajero con cuenta en la plataforma. Su región de origen decide dónde se guardan sus datos (ADR-0003). El email y las credenciales viven en el proveedor de identidad de su región (ADR-0060); el idioma y el país eligen catálogo y formato (ADR-0065). Al eliminar la cuenta se borran sus datos en todos los procesos y queda solo una marca de cuenta eliminada por 30 días (ADR-0085) |
 | Viaje | Agrupación de reservas. Está completo cuando pasó la fecha de su última reserva más 2 días; una tarea diaria lo archiva y lo elimina un año después. Se reactiva si llega una novedad con fechas futuras o si el usuario lo pide; en ese caso no se archiva antes de `reactivadoHasta` (ADR-0045) |
 | Reserva | Hotel, auto, vuelo, tren o autobús; puede venir de correo, de un tercero o de carga manual. Registra qué campos editó el usuario: las novedades cambian los del proveedor y conservan los del usuario (ADR-0044). Una reserva sin fechas, o con datos que no alcanzan para asociarla, queda en estado `pendiente` y aparece en "sin asignar" (ADR-0048). Tiene campos comunes que usa toda la lógica y un bloque `detalles` con esquema propio por tipo, que el núcleo valida pero no interpreta; `tipo` es un código abierto. Agregar un medio es agregar un esquema, un adaptador y su vista (ADR-0066, QA-9) |
 | PanelDeUsuario | Vista precalculada del panel (`panel_por_usuario`), con la versión del último cambio. No es una entidad de negocio: es una copia para leer, reconstruible desde viajes y reservas (ADR-0040) |
@@ -159,6 +189,11 @@ classDiagram
 | Suscripcion | Registro técnico de avisos, con identificador externo, vencimiento y estado. Ingesta administra su ciclo; entrada global tiene una proyección mínima de región |
 | CursorSincronizacion | Posición opaca por flujo o carpeta, confirmada junto con resultados y outbox en ingesta; no es una versión de reserva |
 | CasoPendiente | Novedad o fallo que necesita resolución; conserva motivo y evidencia mínima. Una ambigüedad de dominio pertenece al núcleo y un fallo de extracción a ingesta |
+| Sugerencia (iteración 5) | Alternativa de alojamiento o transporte a una reserva cancelada, con la oferta normalizada del proveedor, su posición, la versión del modelo que la ordenó y su estado (disponible, aceptada, rechazada, vencida). Vive en el proceso de recomendación (ADR-0081, ADR-0083) |
+| Reserva propuesta (iteración 5) | Reserva con estado `proposed` y origen `suggestion`, creada en el núcleo al aceptar una sugerencia. No es una reserva real: no genera hechos analíticos, no mueve las fechas del viaje y la reemplaza la reserva real cuando llega por la ingesta (ADR-0084) |
+| PerfilDePreferencias (iteración 5) | Métricas resumidas, preferencias explícitas, activación y ajuste del modelo por viajero, en la región de origen; sobrevive al borrado de viajes y se borra a pedido (ADR-0081) |
+| Feedback (iteración 5) | Aceptación, rechazo (con motivo) o ajuste de parámetros sobre una sugerencia; es la señal del human-in-the-loop (ADR-0083) |
+| VersionDelModelo (iteración 5) | Pesos entrenados con el feedback de la región, con su evaluación y su estado (canario, activa, retirada) (ADR-0083) |
 
 Vinculación forma parte del vocabulario funcional; suscripción, cursor y caso técnico son conceptos de soporte de
 integración, no nuevos agregados obligatorios del dominio de viajes. `eventId` identifica un mensaje y no sustituye

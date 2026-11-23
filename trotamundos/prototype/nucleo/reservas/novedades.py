@@ -13,6 +13,7 @@ from comun.infraestructura.db import Transaccion
 from nucleo.datos.ruteo import RuteoParticiones
 from nucleo.esquemas.registro import DetallesInvalidos, RegistroEsquemas
 from nucleo.panel.unidad import UnidadDeCambio
+from nucleo.reservas import propuestas
 from nucleo.reservas.modelo import CAMPOS_HORARIO
 from nucleo.viajes import asignacion
 from nucleo.viajes.ciclo_vida import reactivar
@@ -130,6 +131,7 @@ def _cancelar(tx, unidad, novedad, existente, ahora) -> str:
     _aviso(tx, existente["user_id"], "booking_cancelled", existente["booking_id"], None, ahora)
     unidad.viaje(existente["trip_id"])
     unidad.motivo("booking_cancelled")
+    unidad.clave_colapso = f"booking-cancel:{existente['booking_id']}"
     unidad.reserva(tx.uno("SELECT * FROM reservas WHERE booking_id = ?", (existente["booking_id"],)), "cancelled")
     return "aplicada:cancelada"
 
@@ -166,7 +168,10 @@ def _crear(tx, unidad, ruteo, novedad, ahora) -> str:
          json.dumps(estado["details"]) if estado["details"] else None, ahora))
     asignacion.asignar(tx, unidad, ruteo, booking_id)
     unidad.motivo("booking_added")
-    unidad.reserva(tx.uno("SELECT * FROM reservas WHERE booking_id = ?", (booking_id,)), "created")
+    creada = tx.uno("SELECT * FROM reservas WHERE booking_id = ?", (booking_id,))
+    if creada["estado"] != "cancelled":
+        propuestas.conciliar(tx, unidad, creada)  # la reserva real reemplaza a la propuesta (ADR-0084)
+    unidad.reserva(creada, "created")
     return "aplicada:creada_cancelada" if estado["status"] == "cancelled" else "aplicada:creada"
 
 

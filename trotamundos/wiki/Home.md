@@ -21,7 +21,7 @@ El sistema Trotamundos es un panel de gestión de viajes en línea para permitir
 
 ### Iteraciones ADD
 
-Todo el proceso está en una sola página: el método y los links a cada iteración (1 a 4), con su objetivo, su
+Todo el proceso está en una sola página: el método y los links a cada iteración (1 a 5), con su objetivo, su
 responsable y sus ADRs.
 
 | Página | Qué contiene |
@@ -40,8 +40,8 @@ responsable y sus ADRs.
 
 ### Código y seguimiento
 
-- [Contratos (specs)](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/specs): OpenAPI (API de itinerarios) y AsyncAPI (novedades, cambios confirmados y avisos del panel)
-- [Prototipo](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/prototype): servicios en Python de las iteraciones 2 a 4, pruebas automáticas, demo por terminal y docker compose con dos regiones
+- [Contratos (specs)](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/specs): OpenAPI (API de itinerarios y sugerencias) y AsyncAPI (novedades, hechos de reservas, avisos del panel, sugerencias y cuenta eliminada)
+- [Prototipo](https://github.com/TadeoBrun1/TPE_software/tree/main/trotamundos/prototype): servicios en Python de las iteraciones 2 a 5, pruebas automáticas, demo por terminal y docker compose con dos regiones
 - [Registro de trabajo del equipo](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/TEAM-LOG.md): qué hizo cada integrante y cuándo; ahí se sigue el avance del trabajo
 
 ### Cierre de primera entrega
@@ -49,3 +49,14 @@ responsable y sus ADRs.
 [Revisión final y riesgos pendientes](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/04-evaluation/first-delivery-review.md).
 Las cuatro iteraciones están integradas; los estados de adopción del diseño se distinguen de las pruebas del
 prototipo y las mediciones pendientes.
+
+### Segunda entrega: módulo avanzado
+
+Se eligió la **opción A, sistema de recomendación con human-in-the-loop**: ante una cancelación, el sistema sugiere
+alternativas de alojamiento o transporte, el viajero las acepta, rechaza o ajusta, y el modelo aprende de eso.
+
+| Página | Qué contiene |
+|---|---|
+| [Elección del módulo (ADR-0080)](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/03-adr/0080-eleccion-del-modulo-avanzado.md) | Ventajas, desventajas y dificultad de las opciones A y B frente a lo ya diseñado |
+| [Iteración 5: recomendación](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-5-recommendation.md) | Pasos 2 a 7, drivers RF-09 y QA-11 a QA-17, ADRs 0081 a 0085 (incluye la eliminación de la cuenta) |
+

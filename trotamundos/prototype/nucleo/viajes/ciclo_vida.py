@@ -55,7 +55,7 @@ def tarea_diaria(ruteo: RuteoParticiones, reloj: Reloj, region: str, logger) -> 
     (idempotente). Se programa en el horario de menor carga de la región.
     """
     hoy = reloj.hoy()
-    resultado = {"archivados": 0, "eliminados": 0}
+    resultado = {"archivados": 0, "eliminados": 0, "propuestas_vencidas": 0}
     for nodo in ruteo.nodos:
         for particion in ruteo.particiones_de(nodo):
             with nodo.transaccion() as tx:
@@ -64,14 +64,32 @@ def tarea_diaria(ruteo: RuteoParticiones, reloj: Reloj, region: str, logger) -> 
                                    (particion, (hoy - MARGEN_COMPLETO).isoformat()))
                 vencidos = tx.todos("SELECT trip_id, user_id FROM viajes WHERE particion = ? AND estado = 'archivado' "
                                     "AND archivado_en < ?", (particion, (hoy - RETENCION_ARCHIVADOS).isoformat()))
+                # Iteración 5 (ADR-0084): reservas propuestas cuya fecha de inicio pasó sin confirmarse.
+                con_propuestas = tx.todos("SELECT DISTINCT r.user_id FROM reservas r "
+                                          "JOIN viajes v ON v.trip_id = r.trip_id WHERE v.particion = ? "
+                                          "AND r.estado = 'proposed' AND r.inicio IS NOT NULL "
+                                          "AND substr(r.inicio, 1, 10) < ?", (particion, hoy.isoformat()))
             for fila in activos:
                 if con_reintentos(lambda: _procesar(nodo, ruteo, reloj, region, fila, "archivar")):
                     resultado["archivados"] += 1
             for fila in vencidos:
                 if con_reintentos(lambda: _procesar(nodo, ruteo, reloj, region, fila, "eliminar")):
                     resultado["eliminados"] += 1
+            for fila in con_propuestas:
+                resultado["propuestas_vencidas"] += con_reintentos(lambda: _vencer_propuestas(nodo, reloj, region,
+                                                                                                  fila["user_id"]))
     logger.info("tarea_diaria_terminada", **resultado)
     return resultado
+
+
+def _vencer_propuestas(nodo, reloj, region, user_id) -> int:
+    from nucleo.reservas import propuestas  # evita el import circular reservas → viajes
+
+    with nodo.transaccion() as tx:
+        unidad = UnidadDeCambio(tx, region, user_id, reloj)
+        cantidad = propuestas.vencer(tx, unidad, user_id, reloj.hoy())
+        unidad.confirmar()
+        return cantidad
 
 
 def _procesar(nodo, ruteo, reloj, region, fila, accion) -> bool:

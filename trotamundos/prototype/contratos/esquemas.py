@@ -19,10 +19,13 @@ RAIZ_SPECS = Path(os.environ.get("TROTAMUNDOS_SPECS", Path(__file__).resolve().p
 # Nombre lógico del evento → archivo AsyncAPI (el nombre lógico no es la routing key, ingestion-operations.md).
 ARCHIVOS_EVENTOS = {
     "booking.change.detected.v1": "booking-change-detected.v1.yaml",
-    "booking.changed.v1": "booking-confirmed.v1.yaml",
+    # booking.changed.v1 (booking-confirmed.v1.yaml) se retiró en la iteración 5 (ADR-0081): el prototipo no lo publica.
     "booking.facts.v1": "booking-facts.v1.yaml",
     "trip.changed.v1": "trip-changed.v1.yaml",
     "panel.changed.v1": "panel-changed.v1.yaml",
+    "suggestions.available.v1": "suggestions-available.v1.yaml",
+    "suggestion.accepted.v1": "suggestion-accepted.v1.yaml",
+    "account.deleted.v1": "account-deleted.v1.yaml",
 }
 
 

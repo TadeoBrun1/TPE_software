@@ -1,7 +1,8 @@
 """Ensamble local del prototipo: dos regiones completas en un solo proceso, sin Docker.
 
 Cada región tiene su base particionada (dos nodos SQLite), registro de auditoría, broker (en memoria), núcleo,
-notificador, ingesta con proveedores simulados, proveedor de identidad y puerta de entrada. Las regiones se
+notificador, ingesta con proveedores simulados, recomendación con APIs de búsqueda sintéticas (iteración 5),
+proveedor de identidad y puerta de entrada. Las regiones se
 comunican solo por el canal entre puertas. La entrada global elige la región. Lo usan las pruebas, la demo y
 `python -m sistema` (que sirve la entrada global en http://localhost:8080).
 
@@ -21,6 +22,7 @@ from comun.infraestructura.db import SQLite
 from comun.infraestructura.http import DestinoASGI
 from comun.infraestructura.reloj import Reloj
 from comun.observabilidad import Logger
+from contratos.topologia import COLA_IDENTIDAD_CUENTAS
 from entrada.app import EntradaGlobal
 from identidad.app import ProveedorIdentidad
 from ingesta.app import Ingesta, proveedores_simulados
@@ -28,6 +30,7 @@ from notificador.app import Notificador
 from nucleo.app import Nucleo
 from puerta.app import Puerta
 from puerta.autenticacion import Emisores
+from recomendacion.app import Recomendacion, adaptadores_para, apis_busqueda_simuladas
 
 REGIONES = ("sa-east", "eu-west")
 
@@ -41,6 +44,7 @@ class Region:
     ingesta: Ingesta
     identidad: ProveedorIdentidad
     fuentes: dict
+    recomendacion: Recomendacion | None = None
     puerta: Puerta | None = None
     destinos: dict = field(default_factory=dict)
 
@@ -70,14 +74,23 @@ class Sistema:
             adaptadores, fuentes = proveedores_simulados()
             ingesta = Ingesta(nombre, SQLite(ruta("ingesta")), broker, adaptadores, reloj=self.reloj,
                               logger=logger("ingesta"))
+            ingesta.preparar_mensajeria()
             identidad = ProveedorIdentidad(nombre, SQLite(ruta("identidad")), self.claves["email"],
                                            registrar_en_directorio=self._registrar_en_directorio, reloj=self.reloj,
-                                           logger=logger("identidad"))
+                                           logger=logger("identidad"), borrar_de_directorio=self._borrar_de_directorio)
+            broker.consumir(COLA_IDENTIDAD_CUENTAS, identidad.procesar_baja)  # bajas de cuentas (ADR-0085)
             self.emisores.registrar(identidad.emisor, nombre, identidad.jwks())
-            region = Region(nombre, broker, nucleo, notificador, ingesta, identidad, fuentes)
+            # Iteración 5: proceso de recomendación con cuatro APIs de búsqueda sintéticas (ADR-0081, ADR-0082).
+            fuentes["busqueda"] = apis_busqueda_simuladas(self.reloj)
+            recomendacion = Recomendacion(nombre, SQLite(ruta("recomendacion")), broker,
+                                          adaptadores_para(fuentes["busqueda"]), clave_puerta, reloj=self.reloj,
+                                          logger=logger("recomendacion"), semilla=7)
+            recomendacion.preparar_mensajeria()
+            region = Region(nombre, broker, nucleo, notificador, ingesta, identidad, fuentes, recomendacion)
             region.destinos = {"nucleo": DestinoASGI(nucleo.app, f"nucleo-{nombre}"),
                                "notificador": DestinoASGI(notificador.app, f"notificador-{nombre}"),
-                               "ingesta": DestinoASGI(ingesta.app, f"ingesta-{nombre}")}
+                               "ingesta": DestinoASGI(ingesta.app, f"ingesta-{nombre}"),
+                               "recomendacion": DestinoASGI(recomendacion.app, f"recomendacion-{nombre}")}
             region.clave_puerta = clave_puerta
             region.auditoria = auditoria
             self.regiones[nombre] = region
@@ -85,7 +98,8 @@ class Sistema:
             region.puerta = Puerta(nombre, region.destinos["nucleo"], region.destinos["notificador"],
                                    region.destinos["ingesta"], {}, self.emisores, region.auditoria,
                                    region.clave_puerta, self.claves["canal"], secrets.token_hex(16), reloj=self.reloj,
-                                   logger=Logger("puerta", nombre, salida=salida_logs))
+                                   logger=Logger("puerta", nombre, salida=salida_logs),
+                                   recomendacion=region.destinos["recomendacion"])
             destinos_puertas[nombre] = DestinoASGI(region.puerta.app, f"puerta-{nombre}")
             region.destinos["puerta"] = destinos_puertas[nombre]
         for nombre, region in self.regiones.items():
@@ -98,6 +112,9 @@ class Sistema:
     def _registrar_en_directorio(self, email: str, region: str):
         self.entrada.registrar_email(email, region)
 
+    def _borrar_de_directorio(self, email: str):
+        self.entrada.borrar_email(email)
+
     def procesar(self, rondas: int = 20) -> int:
         """Ejecuta trabajadores de forma sincrónica hasta que no queda nada pendiente (pruebas y demo)."""
         total = 0
@@ -108,6 +125,7 @@ class Sistema:
                 hecho += resumen["vinculaciones"] + resumen["publicados"]
                 hecho += region.nucleo.publicador.publicar_pendientes()
                 hecho += region.broker.bombear()
+                hecho += region.recomendacion.ciclo()
             total += hecho
             reentregas = sum(r.broker.pendientes_con_consumidor() for r in self.regiones.values())
             if hecho == 0 and reentregas == 0:

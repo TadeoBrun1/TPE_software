@@ -1,0 +1,91 @@
+asyncapi: 2.6.0
+info:
+  title: Sugerencias disponibles
+  version: 0.1.0
+  description: >
+    Contrato propuesto de la iteración 5 (opción A, ADR-0084). Lo publica el proceso de recomendación desde su outbox,
+    en la misma transacción que guarda las sugerencias de una reserva cancelada. Lo consume el notificador de la misma
+    región: la cola compartida notifier.push envía un push con relevancia importante, y las colas de instancia envían
+    el evento SSE suggestions-available a la app abierta. Transporte: RabbitMQ, exchange travel.domain, routing key
+    suggestions.available.v1 (ADR-0028). No lleva las sugerencias: la app las pide por la API autenticada
+    (GET /trips/{tripId}/suggestions). collapseKey es la misma que la del push de la cancelación (panel.changed.v1
+    0.3.0), así que el push de las alternativas reemplaza en el teléfono al de la cancelación.
+defaultContentType: application/json
+channels:
+  suggestions.available.v1:
+    publish:
+      operationId: publishSuggestionsAvailable
+      message:
+        $ref: '#/components/messages/SuggestionsAvailable'
+components:
+  messages:
+    SuggestionsAvailable:
+      name: SuggestionsAvailable
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+            description: Contexto de traza W3C (ADR-0067); lo propagan productores y consumidores.
+          tracestate:
+            type: string
+      payload:
+        type: object
+        additionalProperties: false
+        required:
+        - eventId
+        - schemaVersion
+        - homeRegion
+        - userId
+        - tripId
+        - cancelledBookingId
+        - suggestionCount
+        - collapseKey
+        - committedAt
+        properties:
+          eventId:
+            type: string
+            minLength: 1
+          schemaVersion:
+            type: string
+            enum:
+            - '1'
+          correlationId:
+            type: string
+            minLength: 1
+            description: El del hecho de la cancelación (ADR-0067), para medir QA-11 de punta a punta.
+          homeRegion:
+            type: string
+            minLength: 1
+          userId:
+            type: string
+            minLength: 1
+          tripId:
+            type: string
+            minLength: 1
+          cancelledBookingId:
+            type: string
+            minLength: 1
+          bookingType:
+            type: string
+            pattern: ^[a-z][a-z0-9_]*$
+            description: Tipo de la reserva cancelada, para elegir el texto del push en el cliente (ADR-0065).
+          suggestionCount:
+            type: integer
+            minimum: 1
+          partial:
+            type: boolean
+            description: true si algún proveedor no respondió y hay menos alternativas de las posibles (ADR-0082).
+          collapseKey:
+            type: string
+            minLength: 1
+            description: Clave de colapso del push; igual a la de la cancelación (booking-cancel:<bookingId>).
+          committedAt:
+            type: string
+            format: date-time
+          cancellationCommittedAt:
+            type: string
+            format: date-time
+            description: >
+              committedAt del hecho de la cancelación en el núcleo. El notificador mide QA-11 desde acá hasta que
+              envía el push (qa11_cancelacion_a_aviso_s).

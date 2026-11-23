@@ -50,6 +50,13 @@ flowchart TD
 - Los links son relativos para que sirvan tanto en el repo como en la Wiki.
 - Lo que no viene del enunciado y se asumió se marca como **Suposición** con su criterio.
 
+## Segunda entrega
+
+Opción A, sistema de recomendación con human-in-the-loop ([ADR-0080](03-adr/0080-eleccion-del-modulo-avanzado.md)),
+diseñada en la [iteración 5](01-add/iteration-5-recommendation.md) con los mismos pasos: RF-09 y QA-11 a QA-17 con
+`/generador-qas` y `/test-qas`, decisiones por alternativas (ADRs 0080 a 0085), vistas, contratos, prototipo y una
+auditoría independiente antes de la revisión cruzada.
+
 ## Cierre de primera entrega
 
 [Revisión final, escenarios y riesgos](04-evaluation/first-delivery-review.md). Distingue integración del diseño,

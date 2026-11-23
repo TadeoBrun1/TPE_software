@@ -57,3 +57,27 @@ def rutas_ingesta(ingesta, fuentes: dict, clave: str) -> list[Route]:
 
     return [Route("/simulacion/vinculaciones", vinculacion, methods=["POST"]),
             Route("/simulacion/{fuente}", fuente, methods=["POST"])]
+
+
+def rutas_recomendacion(recomendacion, clave: str) -> list[Route]:
+    """Iteración 5: falla inyectada en una API de búsqueda y entrenamiento a pedido (sin esperar a la hora diaria)."""
+    async def falla(request: Request):
+        if not _autorizado(request, clave):
+            return JSONResponse({"code": "unauthorized"}, status_code=401)
+        d = await request.json()
+        api = recomendacion.apis.get(request.path_params["proveedor"])
+        if api is None:
+            return JSONResponse({"code": "not_found"}, status_code=404)
+        from simuladores.proveedores import ErrorTemporal
+
+        for _ in range(int(d.get("veces", 1))):
+            api.fallar_proxima(ErrorTemporal("falla simulada"))
+        return JSONResponse({"ok": True})
+
+    async def entrenar(request: Request):
+        if not _autorizado(request, clave):
+            return JSONResponse({"code": "unauthorized"}, status_code=401)
+        return JSONResponse(recomendacion.entrenar())
+
+    return [Route("/simulacion/busqueda/{proveedor}/falla", falla, methods=["POST"]),
+            Route("/simulacion/entrenamiento", entrenar, methods=["POST"])]

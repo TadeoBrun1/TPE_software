@@ -84,7 +84,14 @@ La política de tres zonas del broker refina el mínimo zonal de ADR-0003; no ag
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4),
-merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4), junto con el resto de la iteración 2,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
+
+## Nota de la iteración 5 (2026-11-22)
+
+Colas quorum nuevas: `recommendation.facts` (enlazada a `booking.facts.v1`) y `core.suggestions` (enlazada a `suggestion.accepted.v1`). `notifier.push` y las colas por instancia del notificador suman el enlace a `suggestions.available.v1` ([`ingestion-operations.md`](../../specs/ingestion-operations.md)).
+
+Para la eliminación de la cuenta se agregan las colas quorum `identity.accounts` e `ingestion.accounts`, y enlaces de `account.deleted.v1` a `notifier.push`, a las colas por instancia del notificador, a `recommendation.facts` y a `analytics.facts` ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

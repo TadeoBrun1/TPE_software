@@ -187,7 +187,7 @@ Nombres según Bass, Clements y Kazman (4ta edición).
 | La conmutación ante una falla de zona consume el presupuesto de 5 min/mes | QA-4 | Detección por *ping/echo* y conmutación automática con tiempos medibles | 3 |
 | Una persona de otra región no puede ver un itinerario compartido sin copiar datos | QA-7, CON-3 | Leer desde la región de origen del dueño del viaje | 4 |
 | La falla de una región completa no está cubierta: no está en el estímulo de QA-4 y no se diseñó recuperación entre regiones | QA-4 | Analizar si se agrega al escenario; cualquier respaldo debe quedar en la misma jurisdicción (CON-3) | 3 |
-| CON-3 no está validada con una normativa concreta | CON-3 | Validarla antes de cerrar la primera entrega | — |
+| CON-3 no está validada con una normativa concreta | CON-3 | Suposición aceptada por el equipo al cierre de la segunda entrega | — |
 | Una notificación de un tercero no dice a qué región pertenece la reserva | QA-6, QA-10 | Ubicar la región a partir de la reserva (por ejemplo, un índice global de reservas sin datos personales) | 2 |
 
 ### Lo que se deja para otras iteraciones

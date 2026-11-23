@@ -1,9 +1,9 @@
 # Vista de componentes y conectores
 
 **Tipo:** C&C (en ejecución)
-**Actualizada en la iteración:** 4
+**Actualizada en la iteración:** 5
 **Mantiene:** Ambos
-**Estado:** Refinada en las iteraciones 2, 3 y 4.
+**Estado:** Refinada en las iteraciones 2, 3, 4 y 5 (proceso de recomendación).
 
 ## 1. Propósito
 
@@ -34,6 +34,10 @@ flowchart LR
         IDP["Proveedor de identidad<br/>(OpenID Connect)"]
         AU[("Registro de auditoría<br/>(solo agregado)")]
         OT["Colector de observabilidad<br/>(trazas, métricas, logs)"]
+        R["Recomendación<br/>(perfiles, búsqueda, ranking)"]
+        RS2[("Base de recomendación<br/>(perfiles, feedback,<br/>sugerencias, versiones)")]
+        RC[("Caché compartida<br/>(búsquedas, en curso,<br/>fichas por proveedor)")]
+        RE["Entrenamiento diario<br/>(trabajo programado)"]
     end
 
     OR["Puerta de entrada<br/>de otra región"]
@@ -72,6 +76,16 @@ flowchart LR
     G -. "SSE" .-> NT
     NT -- "push" --> PS["Push del sistema operativo<br/>(APNs / FCM)"]
     MB -- "ping/echo y promoción de réplicas" --> DB
+    B -- "booking.facts.v1 (recommendation.facts)" --> R
+    R -- "perfiles, sugerencias y feedback" --> RS2
+    R -- "caché, búsquedas en curso y fichas (atómico)" --> RC
+    R -- "búsqueda de ofertas (API estándar, caché 5 min)" --> ET
+    R -- "suggestions.available.v1 y suggestion.accepted.v1" --> B
+    B -- "suggestion.accepted.v1 (core.suggestions)" --> N
+    B -- "suggestions.available.v1" --> NT
+    G -- "REST: sugerencias, feedback, preferencias" --> R
+    RE -- "lee feedback y publica versiones" --> RS2
+    B -- "account.deleted.v1 (una cola por consumidor)" --> IDP
 ```
 
 Leyenda: rectángulo = proceso; cilindro = almacenamiento; hexágono = intermediario de mensajes; flecha = conector
@@ -97,6 +111,10 @@ sola para no recargar el diagrama.
 | Colector de observabilidad | Recibe trazas, métricas y logs de la región y dispara alertas (ADR-0067) | 4 |
 | Notificador | Consume `panel.changed.v1`; avisa a las apps abiertas por SSE y a las cerradas por push; no lleva datos de reservas (ADR-0046) | 3 |
 | Monitor de base | Tres instancias (zonas A, B y C); detecta primarias caídas en 30 s y promueve la réplica con acuerdo de dos de tres (ADR-0042) | 3 |
+| Recomendación | Consume `booking.facts.v1`, mantiene perfiles, busca alternativas en los proveedores con caché y límites, las ordena con el modelo de la región, sirve la API de sugerencias y publica sus avisos y aceptaciones (ADR-0081 a ADR-0084) | 5 |
+| Base de recomendación | Perfiles resumidos, preferencias, feedback, sugerencias, búsquedas pendientes, versiones del modelo y outbox; en la región de origen (ADR-0081) | 5 |
+| Caché compartida de la recomendación | Caché de búsquedas de 5 minutos, búsquedas en curso por clave y cubetas de fichas por proveedor, compartidas por todas las instancias de la región (ADR-0082) | 5 |
+| Entrenamiento diario | Trabajo programado por región que entrena una versión nueva con el feedback y la deja como canario (ADR-0083) | 5 |
 
 ## 4. Conectores
 
@@ -115,7 +133,15 @@ sola para no recargar el diagrama.
 | Notificador | Servicios de push del sistema operativo | Asíncrono, externo | Externo |
 | Ingesta | Intermediario (tema novedades) | Asíncrono, publicación | `asyncapi/booking-change-detected.v1.yaml` |
 | Intermediario (tema novedades) | Núcleo | Asíncrono, suscripción | `asyncapi/booking-change-detected.v1.yaml` |
-| Núcleo | Intermediario (exchange `travel.domain`) | Asíncrono, publicación desde la outbox | [booking-confirmed.v1.yaml](../../specs/asyncapi/booking-confirmed.v1.yaml), [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml), [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml), [booking-facts.v1.yaml](../../specs/asyncapi/booking-facts.v1.yaml) |
+| Núcleo | Intermediario (exchange `travel.domain`) | Asíncrono, publicación desde la outbox | [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml), [panel-changed.v1.yaml](../../specs/asyncapi/panel-changed.v1.yaml), [booking-facts.v1.yaml](../../specs/asyncapi/booking-facts.v1.yaml) (`booking.changed.v1` se retiró en la iteración 5) |
+| Intermediario (`booking.facts.v1`) | Recomendación | Asíncrono, cola quorum propia `recommendation.facts` (ADR-0081) | [booking-facts.v1.yaml](../../specs/asyncapi/booking-facts.v1.yaml) |
+| Recomendación | Intermediario (exchange `travel.domain`) | Asíncrono, publicación desde su outbox | [suggestions-available.v1.yaml](../../specs/asyncapi/suggestions-available.v1.yaml), [suggestion-accepted.v1.yaml](../../specs/asyncapi/suggestion-accepted.v1.yaml) |
+| Intermediario (`suggestion.accepted.v1`) | Núcleo | Asíncrono, cola quorum `core.suggestions` (ADR-0084) | [suggestion-accepted.v1.yaml](../../specs/asyncapi/suggestion-accepted.v1.yaml) |
+| Intermediario (`suggestions.available.v1`) | Notificador | Asíncrono, las mismas colas que `panel.changed.v1` (ADR-0084) | [suggestions-available.v1.yaml](../../specs/asyncapi/suggestions-available.v1.yaml) |
+| Puerta de entrada | Recomendación | Síncrono, REST; prioridad baja ante sobrecarga (ADR-0047, ADR-0084) | [itinerary-api.v1.yaml](../../specs/openapi/itinerary-api.v1.yaml) |
+| Intermediario (`account.deleted.v1`) | Proveedor de identidad, ingesta, notificador, recomendación y analítica | Asíncrono, cola propia o enlace nuevo por consumidor (ADR-0085); en el diagrama se dibuja solo la flecha a identidad | [account-deleted.v1.yaml](../../specs/asyncapi/account-deleted.v1.yaml) |
+| Recomendación | Caché compartida de la recomendación | Síncrono, en memoria por red, operaciones atómicas para las fichas (ADR-0082) | — |
+| Recomendación | Sistemas de terceros (búsqueda) | Síncrono, APIs estándar de búsqueda, con caché y límite por proveedor (ADR-0082) | [offer-search.md](../../specs/offer-search.md) |
 | Intermediario (eventos de dominio) | Analítica | Asíncrono, suscripción con cola propia | [booking-facts.v1.yaml](../../specs/asyncapi/booking-facts.v1.yaml), [trip-changed.v1.yaml](../../specs/asyncapi/trip-changed.v1.yaml) |
 | Ingesta | Proveedores de correo y terceros | Síncrono, API del proveedor (sondeo y consulta) | Externo (CON-1, CON-2) |
 | Terceros | Puerta de entrada → Ingesta | Síncrono, notificaciones por API estándar | Externo; se detalla en la iteración 2 |

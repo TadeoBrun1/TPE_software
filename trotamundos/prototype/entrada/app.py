@@ -44,9 +44,10 @@ class EntradaGlobal:
         self.limite = LimitePorCliente(capacidad=10, por_segundo=1)
         base.crear_esquema(["CREATE TABLE IF NOT EXISTS directorio (email_hmac TEXT PRIMARY KEY, region TEXT NOT NULL)"])
         self.app = Starlette(routes=[Route("/login/region", self.region_login, methods=["POST"]),
-                                     Route("/internal/directory", self.registrar, methods=["POST"]),
+                                     Route("/internal/directory", self.registrar, methods=["POST", "DELETE"]),
                                      Route("/id/{region}/{camino:path}", self.identidad, methods=["GET", "POST"]),
-                                     Route("/{camino:path}", self.enrutar, methods=["GET", "POST", "PATCH", "DELETE"])])
+                                     Route("/{camino:path}", self.enrutar,
+                                           methods=["GET", "POST", "PUT", "PATCH", "DELETE"])])
 
     def _hmac(self, email: str) -> str:
         return hmac.new(self.clave_directorio, email.strip().lower().encode(), hashlib.sha256).hexdigest()
@@ -56,11 +57,19 @@ class EntradaGlobal:
             tx.ejecutar("INSERT INTO directorio (email_hmac, region) VALUES (?, ?) "
                         "ON CONFLICT (email_hmac) DO UPDATE SET region = excluded.region", (self._hmac(email), region))
 
+    def borrar_email(self, email: str):
+        """Cuenta eliminada (ADR-0085): sin la entrada, el login responde como para un email desconocido."""
+        with self.base.transaccion() as tx:
+            tx.ejecutar("DELETE FROM directorio WHERE email_hmac = ?", (self._hmac(email),))
+
     async def registrar(self, request: Request):
         if not hmac.compare_digest(request.headers.get("x-internal-key", ""), self.clave_interna):
             return JSONResponse({"code": "unauthorized", "message": "No autorizado"}, status_code=401)
         datos = await request.json()
-        self.registrar_email(datos["email"], datos["region"])
+        if request.method == "DELETE":
+            self.borrar_email(datos["email"])
+        else:
+            self.registrar_email(datos["email"], datos["region"])
         return Response(status_code=204)
 
     async def region_login(self, request: Request):

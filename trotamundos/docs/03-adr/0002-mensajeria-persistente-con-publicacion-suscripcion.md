@@ -128,7 +128,12 @@ QA-8 seguridad de correos). Queda registrado en el [registro de impactos](../01-
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #3](https://github.com/TadeoBrun1/TPE_software/pull/3),
-merge `05a8fd7` del 2026-10-27. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-27
+con el [PR #3](https://github.com/TadeoBrun1/TPE_software/pull/3), junto con el resto de la iteración 1,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
+
+## Nota de la iteración 5 (2026-11-22)
+
+Dos eventos nuevos en `travel.domain`: `suggestions.available.v1` (recomendación → notificador) y `suggestion.accepted.v1` (recomendación → núcleo), cada uno desde la outbox de su productor ([ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).

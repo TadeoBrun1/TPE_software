@@ -1,11 +1,11 @@
 # Vista de módulos
 
 **Tipo:** Módulos (estática)
-**Actualizada en la iteración:** 4
+**Actualizada en la iteración:** 5
 **Mantiene:** Ambos
 **Estado:** refinada en las iteraciones 2 (ingesta y asistencia), 3 (panel, ruteo de particiones y notificador) y 4
 (compartición, auditoría, esquemas por tipo, analítica y observabilidad). Ajustada con el prototipo (biblioteca
-técnica común y directorios implementados).
+técnica común y directorios implementados) y en la iteración 5 (proceso de recomendación y reserva propuesta).
 
 ## 1. Propósito
 
@@ -53,6 +53,15 @@ flowchart TD
         ACO["consumidor-hechos"]
         AAN["seudonimizador<br/>(clave anual)"]
         AAL["almacen-analitico"]
+    end
+
+    subgraph Recomendacion["Recomendación (iteración 5)"]
+        RHE["hechos<br/>(recepción idempotente y disparador)"]
+        RPE["perfiles<br/>(perfil resumido, preferencias, opt-out)"]
+        RBU["busqueda<br/>(puerto, adaptadores, caché, límites)"]
+        RMO["modelo<br/>(características, ranking,<br/>entrenamiento, versiones)"]
+        RSU["sugerencias<br/>(feedback y outbox)"]
+        RAP["api"]
     end
 
     RRG["resolución regional en entrada global"]
@@ -106,6 +115,18 @@ flowchart TD
     SUS --> CON
     PUB --> CON
     PNV --> CON
+
+    RHE --> RPE
+    RHE --> RSU
+    RSU --> RBU
+    RSU --> RMO
+    RMO --> RPE
+    RAP --> RSU
+    RAP --> RPE
+    RHE --> CON
+    RSU --> CON
+    SPR["suscriptor-sugerencias"] --> RES
+    SPR --> CON
 ```
 
 Leyenda: la flecha significa "puede usar".
@@ -116,10 +137,10 @@ Leyenda: la flecha significa "puede usar".
 |---|---|---|
 | núcleo/api | Expone la API de itinerarios definida en `specs/openapi/` | `nucleo/api` |
 | núcleo/viajes | Agrupa reservas por viaje y asigna las que llegan sin viaje por fechas, o las deja sin asignar si no tienen fechas (ADR-0048); tarea diaria de archivado y eliminación; reactivación (ADR-0045) | `nucleo/viajes` |
-| núcleo/reservas | Alta, cambio y baja de reservas con campos comunes y `details` validado (ADR-0066); aplica novedades con dueño por campo y registra campos editados por el usuario (ADR-0044); marcas de borrado; reservas pendientes de resolución | `nucleo/reservas` |
+| núcleo/reservas | Alta, cambio y baja de reservas con campos comunes y `details` validado (ADR-0066); aplica novedades con dueño por campo y registra campos editados por el usuario (ADR-0044); marcas de borrado; reservas pendientes de resolución; reservas propuestas y su conciliación con la reserva real (ADR-0084) | `nucleo/reservas` |
 | núcleo/panel | Proyector: único escritor de `panel_por_usuario`; lo actualiza en la transacción del cambio y lo regenera desde las tablas (ADR-0040) | `nucleo/panel` |
 | núcleo/ruteo-particiones | Calcula la partición de cada usuario y conoce el nodo primario; lo usan la API, el consumidor de novedades y la tarea diaria (ADR-0042) | `nucleo/datos` |
-| núcleo/usuarios | Región de origen, idioma y país (ADR-0065), cuentas de correo vinculadas, remitentes permitidos y referencias a viajes compartidos conmigo (ADR-0062). Las credenciales viven en el proveedor de identidad, no acá (ADR-0060) | `nucleo/usuarios` |
+| núcleo/usuarios | Región de origen, idioma y país (ADR-0065), cuentas de correo vinculadas, remitentes permitidos y referencias a viajes compartidos conmigo (ADR-0062). Las credenciales viven en el proveedor de identidad, no acá (ADR-0060). Eliminación de la cuenta: borra los datos del usuario, deja la marca de cuenta eliminada y publica `account.deleted.v1` (ADR-0085) | `nucleo/usuarios` |
 | núcleo/comparticion | Invitaciones, aceptación, permisos por viaje y persona, revocación, vista compartida sin notas ni códigos, tarjeta para redes (ADR-0061, ADR-0063); acepta solo con el email invitado (`emailHmac`); intercepta todo pedido sobre un viaje ajeno | `nucleo/comparticion` |
 | núcleo/auditoria | Puerto de escritura de solo agregado al registro de auditoría; si falla, la operación se rechaza (ADR-0061) | `nucleo/auditoria` |
 | núcleo/esquemas-detalles | Carga al arrancar los esquemas de `details` registrados en la configuración (no se compilan) y valida cada bloque (ADR-0066) | `nucleo/esquemas` |
@@ -129,6 +150,13 @@ Leyenda: la flecha significa "puede usar".
 | observabilidad | Biblioteca común: propaga `correlationId` y `traceparent` (también en los mensajes), métricas por etapa y logs estructurados sin datos personales (ADR-0067) | `comun/observabilidad` |
 | infraestructura | Biblioteca técnica común: puertos y adaptadores de base de datos, broker, outbox, HTTP interno, reloj y límite por cliente. Sin lógica de dominio (hallazgo del prototipo) | `comun/infraestructura` |
 | núcleo/suscriptor-novedades | Recibe novedades del broker y las pasa a reservas | `nucleo/mensajeria` |
+| núcleo/suscriptor-sugerencias | Recibe `suggestion.accepted.v1` y le pide a reservas la reserva propuesta, deduplicando por sugerencia (ADR-0084) | `nucleo/mensajeria` |
+| recomendación/hechos | Consume `booking.facts.v1` con su cola, deduplica, actualiza el perfil y guarda la búsqueda pendiente si es una cancelación (ADR-0081); por la misma cola recibe `account.deleted.v1` y borra todo lo del viajero (ADR-0085) | `recomendacion/hechos` |
+| recomendación/perfiles | Perfil resumido, preferencias explícitas, activación (opt-out) y borrado (ADR-0081) | `recomendacion/perfiles` |
+| recomendación/busqueda | Puerto de búsqueda de ofertas, adaptador por proveedor, caché de 5 minutos, búsquedas agrupadas, límite por proveedor y búsquedas pendientes (ADR-0082) | `recomendacion/busqueda` |
+| recomendación/modelo | Características, puntaje, exploración, ajuste por viajero, entrenamiento por lotes y registro de versiones con canario (ADR-0083) | `recomendacion/modelo` |
+| recomendación/sugerencias | Sugerencias por viaje, feedback, outbox de `suggestions.available.v1` y `suggestion.accepted.v1` (ADR-0084) | `recomendacion/sugerencias` |
+| recomendación/api | Rutas de sugerencias, feedback, preferencias y perfil, detrás de la puerta de entrada (ADR-0084) | `recomendacion/api` |
 | núcleo/publicador-eventos | Publica los eventos de dominio de cada cambio confirmado, incluido `booking.facts.v1` (ADR-0064) | `nucleo/mensajeria` |
 | núcleo/asistencia | Autoriza asistencia, conserva seguimiento y limita trabajadores salientes | `nucleo/asistencia` |
 | núcleo/adaptador-agencia | Implementa el puerto de agencia, con resultado incierto e idempotencia | `nucleo/asistencia/adaptadores` |
@@ -140,10 +168,11 @@ Leyenda: la flecha significa "puede usar".
 | ingesta/procesador | Selección, extracción, modelo canónico y validación | `ingesta/procesamiento` |
 | ingesta/registro-sincronizacion | Cursores, resultados, casos pendientes y outbox | `ingesta/persistencia` |
 | ingesta/publicador-novedades | Publica novedades con identidad estable y confirma envío | `ingesta/mensajeria` |
+| ingesta/bajas-cuentas | Consume `account.deleted.v1` y borra vinculaciones, cursores, trabajo y novedades del usuario (ADR-0085) | `ingesta/cuentas` |
 | entrada/resolucion-regional | Directorio mínimo que resuelve suscripción y región antes del Gateway | `entrada/enrutamiento` |
 | notificador/conexiones-sse | Mantiene las conexiones SSE de los usuarios conectados a la instancia (ADR-0046) | `notificador/sse` |
 | notificador/consumidor-avisos | Lee `panel.changed.v1` de la cola de la instancia y avisa solo a los usuarios conectados | `notificador/avisos` |
-| notificador/envio-push | Lee la cola compartida `notifier.push` y envía el push del sistema operativo | `notificador/push` |
+| notificador/envio-push | Lee la cola compartida `notifier.push` y envía el push del sistema operativo; con `account.deleted.v1` borra los dispositivos del usuario (ADR-0085) | `notificador/push` |
 | contratos | Validadores y tipos generados a partir de `specs/`; único código compartido que conoce los mensajes y la API (además de las bibliotecas técnicas) | `contratos/` |
 
 ## 4. Reglas de dependencia
@@ -157,6 +186,10 @@ Leyenda: la flecha significa "puede usar".
 * Todo pedido sobre un viaje ajeno, por cualquier endpoint, pasa por `comparticion`, que siempre escribe en
   `auditoria` antes de responder (ADR-0061).
 * La analítica no importa código del núcleo ni accede a su base: solo `contratos` y las bibliotecas comunes (ADR-0064).
+* La recomendación no importa código del núcleo, la ingesta, la analítica ni el notificador, ni accede a sus bases:
+  se entera por `booking.facts.v1` y le habla al núcleo solo con `suggestion.accepted.v1` (ADR-0081, ADR-0084).
+* Dentro de la recomendación, `modelo` no conoce a los proveedores ni al broker, y `busqueda` no conoce el modelo:
+  cambiar de modelo o sumar un proveedor no toca el otro módulo (QA-15).
 * Las únicas bibliotecas comunes además de `contratos` son `observabilidad` e `infraestructura`; ninguna contiene
   lógica de dominio ni conoce tablas o reglas de un proceso. La regla se amplió con el prototipo: los puertos de
   base, broker y outbox se repetían igual en los tres procesos.
@@ -171,7 +204,7 @@ Leyenda: la flecha significa "puede usar".
 * Solo `panel` escribe `panel_por_usuario`; `reservas` y `viajes` le piden la actualización dentro de su transacción (ADR-0040).
 * Ningún módulo abre una transacción que abarque más de una partición (ADR-0042).
 * Los directorios de la tabla son los del [prototipo](../../prototype/README.md). Están implementados los del
-  núcleo (salvo `asistencia`), la ingesta, el notificador, la entrada global y las bibliotecas comunes; `analitica`
+  núcleo (salvo `asistencia`), la ingesta, el notificador, la recomendación, la entrada global y las bibliotecas comunes; `analitica`
   y `nucleo/asistencia` siguen como organización propuesta. La puerta de entrada y el proveedor de identidad son
   productos en la arquitectura; el prototipo los simula en `puerta/` e `identidad/`.
 

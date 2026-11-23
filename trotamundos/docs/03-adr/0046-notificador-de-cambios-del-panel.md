@@ -193,7 +193,14 @@ Medir el tiempo entre el commit y la recepción del aviso contra los 30 s de la 
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #6](https://github.com/TadeoBrun1/TPE_software/pull/6),
-merge `54122ee` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #6](https://github.com/TadeoBrun1/TPE_software/pull/6), junto con el resto de la iteración 3,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
+
+## Nota de la iteración 5 (2026-11-22)
+
+`panel.changed.v1` pasa a 0.3.0 con `collapseKey` opcional. El notificador también consume `suggestions.available.v1`: push con la misma clave de colapso que la cancelación (el segundo reemplaza al primero) y evento SSE `suggestions-available` ([ADR-0084](0084-entrega-y-aceptacion-de-sugerencias.md)).
+
+Con `account.deleted.v1`, `notifier.push` borra los dispositivos del usuario y la instancia que tiene su conexión SSE le envía `account-deleted` y la cierra ([ADR-0085](0085-eliminacion-de-la-cuenta.md)).

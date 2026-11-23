@@ -1,5 +1,6 @@
 """Módulo `conexiones-sse` del notificador (ADR-0046): conexiones abiertas de los usuarios en esta instancia y
-flujo de eventos `ready` y `panel-changed`."""
+flujo de eventos `ready`, `panel-changed` y, desde la iteración 5, `suggestions-available` y `account-deleted`
+(último evento: después se cierra la conexión)."""
 from __future__ import annotations
 
 import asyncio
@@ -50,6 +51,10 @@ async def flujo_eventos(conexiones: ConexionesSSE, usuario: str):
             except asyncio.TimeoutError:
                 yield b": latido\n\n"
                 continue
-            yield f"event: panel-changed\ndata: {json.dumps(evento)}\n\n".encode()
+            evento = dict(evento)
+            nombre = evento.pop("_evento", "panel-changed")
+            yield f"event: {nombre}\ndata: {json.dumps(evento)}\n\n".encode()
+            if nombre == "account-deleted":
+                return  # la cuenta se eliminó: se cierra la conexión (ADR-0085)
     finally:
         conexiones.cerrar(usuario, entrada)

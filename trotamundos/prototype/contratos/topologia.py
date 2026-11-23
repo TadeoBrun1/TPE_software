@@ -15,10 +15,18 @@ RK_NOVEDAD = "booking.change.detected.v1.s{shard}"
 RK_PANEL = "panel.changed.v1"
 RK_VIAJE = "trip.changed.v1"
 RK_HECHOS = "booking.facts.v1"
-RK_RESERVA = "booking.changed.v1"
+RK_SUGERENCIAS = "suggestions.available.v1"     # iteración 5 (ADR-0084)
+RK_ACEPTADA = "suggestion.accepted.v1"          # iteración 5 (ADR-0084)
+RK_CUENTA = "account.deleted.v1"                # iteración 5 (ADR-0085)
+# booking.changed.v1 se retiró en la iteración 5 (ADR-0081): nunca tuvo consumidor.
 
 COLA_NUCLEO = "core.bookings.s{shard}"
 COLA_ANALITICA = "analytics.facts"
+COLA_RECOMENDACION = "recommendation.facts"     # iteración 5 (ADR-0081)
+COLA_NUCLEO_SUGERENCIAS = "core.suggestions"    # iteración 5 (ADR-0084)
+COLA_INGESTA_CUENTAS = "ingestion.accounts"     # iteración 5 (ADR-0085)
+COLA_IDENTIDAD_CUENTAS = "identity.accounts"    # iteración 5 (ADR-0085)
+COLA_NUCLEO_CUENTAS = "core.accounts"           # iteración 5 (ADR-0085): pasos del núcleo posteriores al borrado
 COLA_PUSH = "notifier.push"
 COLA_INSTANCIA_NOTIFICADOR = "notifier.instance.{instancia}"
 
@@ -43,8 +51,18 @@ def topologia_region() -> Topologia:
     ]
     # La analítica (fuera del alcance del prototipo) tiene su cola declarada para que los eventos tengan ruta.
     colas.append(Cola(COLA_ANALITICA, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_HECHOS),
-                                                              (EXCHANGE_DOMINIO, RK_VIAJE)]))
-    colas.append(Cola(COLA_PUSH, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_PANEL)]))
+                                                              (EXCHANGE_DOMINIO, RK_VIAJE),
+                                                              (EXCHANGE_DOMINIO, RK_CUENTA)]))
+    # La recomendación recibe hechos y bajas de cuentas por la misma cola (ADR-0085).
+    colas.append(Cola(COLA_RECOMENDACION, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_HECHOS),
+                                                                  (EXCHANGE_DOMINIO, RK_CUENTA)]))
+    colas.append(Cola(COLA_NUCLEO_SUGERENCIAS, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_ACEPTADA)]))
+    colas.append(Cola(COLA_PUSH, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_PANEL),
+                                                         (EXCHANGE_DOMINIO, RK_SUGERENCIAS),
+                                                         (EXCHANGE_DOMINIO, RK_CUENTA)]))
+    colas.append(Cola(COLA_INGESTA_CUENTAS, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_CUENTA)]))
+    colas.append(Cola(COLA_IDENTIDAD_CUENTAS, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_CUENTA)]))
+    colas.append(Cola(COLA_NUCLEO_CUENTAS, tipo="quorum", enlaces=[(EXCHANGE_DOMINIO, RK_CUENTA)]))
     return Topologia(exchanges=[EXCHANGE_INGESTA, EXCHANGE_DOMINIO], colas=colas)
 
 
@@ -52,4 +70,5 @@ def cola_instancia_notificador(instancia: str) -> Cola:
     """Cola classic, exclusiva y temporal: única excepción a las colas quorum (ADR-0046)."""
     return Cola(COLA_INSTANCIA_NOTIFICADOR.format(instancia=instancia), tipo="classic", durable=False,
                 exclusiva=True, auto_borrar=True, argumentos={"x-message-ttl": 60_000, "x-max-length": 10_000},
-                enlaces=[(EXCHANGE_DOMINIO, RK_PANEL)])
+                enlaces=[(EXCHANGE_DOMINIO, RK_PANEL), (EXCHANGE_DOMINIO, RK_SUGERENCIAS),
+                         (EXCHANGE_DOMINIO, RK_CUENTA)])

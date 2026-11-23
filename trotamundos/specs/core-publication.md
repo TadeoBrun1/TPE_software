@@ -25,7 +25,19 @@ Las rutas de lectura/escritura pueden seguir dentro del mismo desplegable; no se
 Validación futura: fallo antes de confirmar la transacción no genera cambio/evento parcial; fallo tras commit
 permite publicar al recuperar; reentregar una novedad no duplica el cambio; cambios manuales también se publican.
 
+## Cuenta eliminada (iteración 5)
+
+`DELETE /account` borra en una transacción los datos del usuario en su partición, deja una marca de cuenta
+eliminada (30 días) y escribe `account.deleted.v1` en la misma outbox
+([account-deleted.v1.yaml](asyncapi/account-deleted.v1.yaml), ADR-0085). Los eventos de ese usuario que estaban en la
+outbox se borran en la misma transacción. Con la marca, el núcleo descarta las novedades y las aceptaciones de
+sugerencias atrasadas de ese usuario.
+
 ## Transporte fijado
+
+> **Iteración 5 (ADR-0081):** `booking.changed.v1` se retiró. Nunca tuvo consumidor y su papel lo cubre
+> `booking.facts.v1`, que consumen la analítica y la recomendación de la región. Este apartado queda como registro
+> del diseño original.
 
 RabbitMQ, exchange `travel.domain`, routing key `booking.changed.v1`, cola independiente por consumidor; TLS,
 roles y confirm/mandatory/ACK según [políticas](ingestion-operations.md). Esquema mínimo en

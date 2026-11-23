@@ -16,6 +16,7 @@
   - [Iteración 2: ingesta](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-2-ingestion.md)
   - [Iteración 3: consulta y escala](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-3-query-scale.md)
   - [Iteración 4: seguridad y evolución](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-4-security-evolvability.md)
+  - [Iteración 5: recomendación (2da entrega)](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-5-recommendation.md)
 - [Plan de iteraciones](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/iteration-plan.md)
 - [Registro de impactos](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/01-add/impact-log.md)
 
@@ -31,3 +32,8 @@
 **Cierre de primera entrega**
 
 - [Revisión final y riesgos](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/04-evaluation/first-delivery-review.md)
+
+**Segunda entrega**
+
+- [Elección del módulo avanzado](https://github.com/TadeoBrun1/TPE_software/blob/main/trotamundos/docs/03-adr/0080-eleccion-del-modulo-avanzado.md)
+

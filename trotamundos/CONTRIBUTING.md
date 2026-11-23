@@ -6,7 +6,7 @@ muestre el trabajo de cada integrante.
 ## 1. Ramas y Pull Requests
 
 - `main` siempre refleja lo que ya revisamos entre los dos.
-- Una rama por tema: `iter-1/contexto`, `iter-2/ingesta`, `iter-3/consulta`, `adr/0021-cola-de-mensajes`, `proto/ingesta`.
+- Una rama por iteración (`iteracion1` a `iteracion5`), que conserva el proceso de cada una; para cambios sueltos, una rama por tema (por ejemplo `prototipo-chequeo-final`).
 - Todo cambio entra por Pull Request y lo revisa **la otra persona** (alcanza con 1 aprobación).
 - Commits con el formato `tipo(alcance): descripción`, por ejemplo `docs(iter-2): agrega ADR-0021` o `feat(proto): consumer de correos`.
 - Cada integrante hace sus commits con su propio usuario: es la evidencia de autoría que pide el enunciado.
@@ -20,6 +20,7 @@ muestre el trabajo de cada integrante.
 | `docs/01-add/iteration-2-*` | Integrante A | Solo A edita |
 | `docs/01-add/iteration-3-*` | Integrante B | Solo B edita |
 | `docs/01-add/iteration-4-*` | Ambos | Se hace en conjunto |
+| `docs/01-add/iteration-5-*` | Ambos | Se hace en conjunto (2da entrega); la revisión cruzada la hace Tomas Lateana en el PR |
 | `docs/02-views/*` y `docs/architecture.md` | **Compartido** | Ver la regla de elementos compartidos |
 | `docs/03-adr/` | Quien crea la ADR | Respetar su bloque de numeración |
 | `specs/` | Quien es dueño del servicio | Cambiar un contrato usado por el otro exige aviso (ver §4) |
@@ -34,7 +35,8 @@ Para que dos ramas paralelas no creen la misma ADR número 0007, cada iteración
 | 2 | 0020 – 0039 |
 | 3 | 0040 – 0059 |
 | 4 | 0060 – 0079 |
-| Extra | 0080 en adelante |
+| 5 (2da entrega, módulo avanzado) | 0080 – 0099 |
+| Extra | 0100 en adelante |
 
 Las ADRs se numeran en orden dentro de su bloque y **nunca se borran**: si una decisión cambia, la ADR vieja pasa a
 `superseded by ADR-XXXX` y se crea una nueva.

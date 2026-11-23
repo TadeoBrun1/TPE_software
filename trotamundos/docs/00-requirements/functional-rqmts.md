@@ -21,7 +21,18 @@ la estructura del sistema.
 
 | Opción | Descripción | Estado |
 |---|---|---|
-| A | Sistema de recomendación con optimización human-in-the-loop | **Decisión pendiente** |
-| B | Asistente virtual (chatbot) de primer nivel, derivando casos complejos a la agencia | **Decisión pendiente** |
+| A | Sistema de recomendación con optimización human-in-the-loop | **Elegida** (2026-11-22, [ADR-0080](../03-adr/0080-eleccion-del-modulo-avanzado.md)) → RF-09 |
+| B | Asistente virtual (chatbot) de primer nivel, derivando casos complejos a la agencia | Descartada; la comparación queda en ADR-0080 |
 
-> Cuando se elija una opción, registrar la decisión en una ADR (bloque de la iteración que la incorpore) y agregar el RF.
+| ID | Requerimiento | Origen | Prioridad (supuesta) | Primario |
+|---|---|---|---|---|
+| RF-09 | Sugerir proactivamente alternativas de alojamiento y transporte cuando una reserva del viajero se cancela, a partir de su historial y preferencias, y refinar las sugerencias con su interacción (human-in-the-loop) | Requerimientos avanzados, opción A | Alta | Sí (2da entrega) |
+
+Alcance de RF-09 acordado por el equipo (las rutas de varios tramos quedan fuera):
+
+| ID | Detalle |
+|---|---|
+| RF-09.1 | Ante la cancelación de una reserva de alojamiento o transporte (por el proveedor o por una disrupción), el sistema busca alternativas del mismo tipo, las ordena según el perfil del viajero y le avisa |
+| RF-09.2 | El viajero acepta una sugerencia: queda en el viaje como **reserva propuesta** (no confirmada) con el enlace a la oferta del proveedor. Trotamundos no compra ni emite reservas; si el viajero reserva, la reserva real llega por la ingesta y reemplaza a la propuesta |
+| RF-09.3 | El viajero rechaza una sugerencia o ajusta parámetros (precio máximo, máximo de escalas, franja horaria, cadena o aerolínea preferida); las sugerencias se reordenan y el feedback refina el modelo |
+| RF-09.4 | La recomendación está activada por defecto; el viajero puede desactivarla y borrar su perfil de preferencias |

@@ -80,3 +80,17 @@ datos son suficientes. RabbitMQ y políticas definidos en ADR-0028; el prototipo
 * [Medición de calidad](quality-measurement.md): tiempo de caída, cobertura y reportes de cliente.
 * API de itinerarios pasa a borrador 0.3.0: SharedBooking omite details, respuestas compartidas no-store,
   DELETE de referencias local, perfil completo de bearerAuth y recepción durable de telemetría.
+
+## Contratos de la iteración 5 (opción A, recomendación)
+
+* [API de itinerarios](openapi/itinerary-api.v1.yaml), 0.4.0: sugerencias por viaje, feedback (aceptar, rechazar,
+  ajustar), preferencias y borrado del perfil; reserva con estado `proposed`, origen `suggestion` y `offerUrl`.
+* [Sugerencias disponibles](asyncapi/suggestions-available.v1.yaml): recomendación → notificador (ADR-0084).
+* [Sugerencia aceptada](asyncapi/suggestion-accepted.v1.yaml): recomendación → núcleo (ADR-0084).
+* [Avisos del panel](asyncapi/panel-changed.v1.yaml), 0.3.0: `collapseKey` para que el push de las alternativas
+  reemplace al de la cancelación.
+* [Hechos de reservas](asyncapi/booking-facts.v1.yaml), 0.2.0: segundo consumidor, la recomendación (ADR-0081).
+* [Cambios confirmados](asyncapi/booking-confirmed.v1.yaml): **retirado** (sin consumidor; lo cubre `booking.facts.v1`).
+* [Búsqueda de ofertas](offer-search.md) (ADR-0082) y [reglas de la recomendación](recommendation.md) (ADR-0081, 0083).
+* [Cuenta eliminada](asyncapi/account-deleted.v1.yaml): núcleo → identidad, ingesta, notificador, recomendación y
+  analítica, con `DELETE /account` en la API (ADR-0085).

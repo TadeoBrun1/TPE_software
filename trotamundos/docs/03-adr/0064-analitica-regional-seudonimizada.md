@@ -20,7 +20,7 @@ entre regiones y qué pasa con los datos de viajes que se eliminan al año (ADR-
 
 * RF-07: consultas pesadas del equipo de datos.
 * QA-4 y QA-5: las consultas pesadas no deben afectar a los viajeros.
-* CON-3 (suposición): persistencia analítica regional y criterios de divulgación y retención aún por validar.
+* CON-3 (suposición): persistencia analítica regional y criterios de divulgación y retención aceptados por el equipo al cierre de la segunda entrega.
 * ADR-0045: los viajes se eliminan al año.
 
 ## Considered Options
@@ -159,7 +159,14 @@ hipótesis de divulgación, no una prueba. Mantener controles de acceso y retenc
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7),
-merge `00f21b9` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7), junto con el resto de la iteración 4,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
+
+## Nota de la iteración 5 (2026-11-22)
+
+`booking.facts.v1` tiene un segundo consumidor, la recomendación, que usa el `userId` real porque necesita un perfil por usuario; la seudonimización es del consumidor analítico. Los campos `startsAt` y `endsAt` (0.2.0) se guardan en la analítica a nivel día. Resuelve el impacto para la segunda entrega ([ADR-0081](0081-proceso-de-recomendacion-con-perfiles-regionales.md)).
+
+Eliminación de la cuenta ([ADR-0085](0085-eliminacion-de-la-cuenta.md)): la analítica consume `account.deleted.v1` en `analytics.facts`, calcula el código del usuario con la clave del período vigente y borra esos hechos y su control de recepción. Los hechos de períodos cuya clave ya se destruyó no se pueden ubicar y quedan como están; esto resuelve la decisión de retención que esta ADR dejaba para validar, con ese límite.
