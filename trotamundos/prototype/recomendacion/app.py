@@ -73,8 +73,8 @@ class Recomendacion:
 
     def entrenar(self) -> dict:
         """Trabajo diario: decide sobre el canario y entrena una versión nueva. Si el canario todavía no juntó la
-        muestra, la versión nueva lo reemplaza (incluye el mismo feedback y el del último día): el feedback entra en
-        una versión del modelo en 24 h, y a toda la región cuando un canario junta la muestra (trade-off QA-13/QA-15).
+        muestra, se conserva y se posterga el entrenamiento. El feedback queda almacenado para el siguiente lote;
+        no se garantiza publicar una nueva versión regional dentro de 24 h.
         """
         self.perfiles.purgar_marcas()  # marcas de cuentas eliminadas vencidas (ADR-0085)
         canario = self.registro.evaluar_canario()

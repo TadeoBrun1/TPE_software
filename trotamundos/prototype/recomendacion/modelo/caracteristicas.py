@@ -82,8 +82,8 @@ def _hora_local(oferta: dict) -> str | None:
 def cumple_limites(oferta: dict, preferencias: dict) -> bool:
     """Filtro previo al ranking: ninguna sugerencia viola un límite explícito del viajero (QA-13)."""
     maximo = preferencias.get("maxPrice")
-    if maximo and maximo.get("currency") == oferta["price"]["currency"] and \
-            oferta["price"]["amount"] > maximo["amount"]:
+    if maximo and (maximo.get("currency") != oferta["price"]["currency"] or
+                   oferta["price"]["amount"] > maximo["amount"]):
         return False
     if preferencias.get("maxStops") is not None and oferta.get("stops", 0) > preferencias["maxStops"]:
         return False

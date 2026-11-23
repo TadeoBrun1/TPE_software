@@ -68,7 +68,9 @@ Reglas:
   atrasan las sugerencias (QA-17).
 * **Varios proveedores:** se consulta a todos los adaptadores del tipo de reserva; si uno falla (o no tiene fichas) y
   otro responde, se sugieren las ofertas disponibles y se anota que la búsqueda fue parcial. Un resultado parcial
-  no se guarda en la caché, para que la próxima búsqueda de esa clave vuelva a consultar al que faltó.
+  no se guarda en la caché. La búsqueda sigue pendiente y se reintenta hasta completarse o hasta que el viajero
+  acepte una alternativa. Se conservan IDs y feedback de las ofertas existentes; se agregan las nuevas y se reordena.
+  Solo se avisa nuevamente si cambia la lista visible o se completa la búsqueda, con la misma clave de colapso.
 
 Patrones y tácticas que aplica:
 

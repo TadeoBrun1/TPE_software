@@ -100,6 +100,13 @@ class Sugerencias:
                 tx.ejecutar("UPDATE busquedas SET estado = 'descartada', terminada = ? WHERE busqueda_id = ?",
                             (ahora, busqueda["busqueda_id"]))
                 return
+            anteriores = [_fila_sugerencia(f) for f in tx.todos(
+                "SELECT * FROM sugerencias WHERE busqueda_id = ?", (busqueda["busqueda_id"],))]
+            if any(f["estado"] == "accepted" for f in anteriores):
+                tx.ejecutar("UPDATE busquedas SET estado = 'lista', parcial = 0 WHERE busqueda_id = ?",
+                            (busqueda["busqueda_id"],))
+                return
+            por_oferta = {(f["oferta"]["provider"], f["oferta"]["offerId"]): f for f in anteriores}
             version = app.registro.version_para(busqueda["user_id"], tx)
             ordenadas = self._ordenar(perfil, ofertas, busqueda["cancelada"], version["pesos"])[:MAX_CANDIDATAS]
             elegidos = ranking.elegir(ordenadas, self.azar)
@@ -107,6 +114,8 @@ class Sugerencias:
             resto = iter(range(len(elegidos) + 1, len(ordenadas) + 1))
             for indice, (oferta, x, _) in enumerate(ordenadas):
                 posicion, explora = mostrados[indice] if indice in mostrados else (next(resto), False)
+                if (oferta["provider"], oferta["offerId"]) in por_oferta:
+                    continue  # conserva ID, aceptación/rechazo y feedback de lo ya mostrado
                 tx.ejecutar(
                     "INSERT INTO sugerencias (suggestion_id, busqueda_id, user_id, trip_id, cancelled_booking_id, "
                     "posicion, oferta, caracteristicas, version_modelo, exploracion, motivos, estado, mostrada, "
@@ -117,11 +126,19 @@ class Sugerencias:
                      version["version_id"], 1 if explora else 0,
                      json.dumps(caracteristicas.motivos(oferta, x, perfil)),
                      "available" if indice in mostrados else "candidate", 1 if indice in mostrados else 0, ahora))
-            estado = "lista" if elegidos else "sin_resultados"
-            tx.ejecutar("UPDATE busquedas SET estado = ?, parcial = ?, terminada = ? WHERE busqueda_id = ?",
-                        (estado, 1 if parcial else 0, ahora, busqueda["busqueda_id"]))
-            if elegidos:
-                eventos.sugerencias_disponibles(tx, busqueda, len(elegidos), parcial, ahora)
+            if anteriores:
+                self._reordenar(tx, perfil, busqueda["busqueda_id"])
+            visibles = tx.todos("SELECT suggestion_id FROM sugerencias WHERE busqueda_id = ? AND estado = 'available'",
+                               (busqueda["busqueda_id"],))
+            estado = "pendiente" if parcial else ("lista" if visibles else "sin_resultados")
+            tx.ejecutar("UPDATE busquedas SET estado = ?, parcial = ?, terminada = ?, reintentar_desde = ? "
+                        "WHERE busqueda_id = ?",
+                        (estado, int(parcial), ahora,
+                         iso(app.reloj.ahora() + ESPERA_MAXIMA) if parcial else None, busqueda["busqueda_id"]))
+            antes = {f["suggestion_id"] for f in anteriores if f["estado"] == "available"}
+            despues = {f["suggestion_id"] for f in visibles}
+            if visibles and (antes != despues or bool(busqueda["parcial"]) != parcial):
+                eventos.sugerencias_disponibles(tx, busqueda, len(visibles), parcial, ahora)
         # QA-11 se mide desde la cancelación confirmada en el núcleo; el tramo hasta el push lo mide el notificador.
         desde = busqueda.get("cancelacion_confirmada") or busqueda["creada"]
         demora = (app.reloj.ahora() - parsear(desde)).total_seconds()
@@ -141,10 +158,10 @@ class Sugerencias:
             filas = tx.todos("SELECT * FROM sugerencias WHERE user_id = ? AND trip_id = ? AND estado <> 'candidate' "
                              "ORDER BY cancelled_booking_id, posicion", (user_id, trip_id))
         estados = {b["estado"] for b in busquedas}
-        if "pendiente" in estados:
-            estado = "pending"
-        elif any(b["parcial"] for b in busquedas if b["estado"] == "lista"):
+        if any(b["parcial"] for b in busquedas):
             estado = "partial"
+        elif "pendiente" in estados:
+            estado = "pending"
         elif "lista" in estados:
             estado = "ready"
         else:
@@ -202,6 +219,8 @@ class Sugerencias:
                 perfil["ajuste"] = entrenamiento.paso_viajero(perfil["ajuste"], fila["caracteristicas"], etiqueta,
                                                               pesos)
             if accion == "accept":
+                tx.ejecutar("UPDATE busquedas SET estado = 'lista', parcial = 0 WHERE busqueda_id = ?",
+                            (fila["busqueda_id"],))
                 tx.ejecutar("UPDATE sugerencias SET estado = 'accepted' WHERE suggestion_id = ?", (suggestion_id,))
                 tx.ejecutar("UPDATE sugerencias SET estado = 'expired' WHERE busqueda_id = ? AND suggestion_id <> ? "
                             "AND estado IN ('available', 'candidate')", (fila["busqueda_id"], suggestion_id))
@@ -267,6 +286,8 @@ class Sugerencias:
     def entrenar(self) -> dict:
         """Trabajo diario por región (ADR-0083): entrena con el feedback de la región y publica un canario."""
         app = self.app
+        if app.registro.canario() is not None:
+            return {"resultado": "esperando_canario"}  # no reiniciar la muestra cada noche
         with app.base.transaccion() as tx:
             tx.ejecutar("DELETE FROM sugerencias WHERE estado IN ('expired', 'candidate') AND creada < ?",
                         (iso(app.reloj.ahora() - RETENCION_SUGERENCIAS),))

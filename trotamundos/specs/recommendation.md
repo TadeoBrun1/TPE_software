@@ -24,8 +24,7 @@ en la [OpenAPI](openapi/itinerary-api.v1.yaml) (0.4.0) y los mensajes en
 | Activación (`enabled`, por defecto `true`) | Opt-out (RF-09.4, QA-14) | Preferencias del viajero |
 | Preferencias explícitas (precio máximo, escalas, franja horaria, proveedores preferidos y excluidos) | Filtro antes de ordenar (QA-13) | Preferencias y ajustes del feedback |
 | Afinidad por proveedor y por tipo | Característica del ranking | Contadores de `booking.facts.v1` y aceptaciones |
-| Banda de precios | Precio relativo | Precios de las últimas 20 ofertas aceptadas (suposición) |
-| Duración típica de estadías y anticipación típica | Características | Fechas de `booking.facts.v1` |
+| Precios de aceptaciones | Dato recopilado; todavía no usado en el ranking | Últimas 20 ofertas aceptadas (suposición) |
 | Ajuste de pesos por viajero | Personalización (ADR-0083) | Feedback |
 
 No guarda códigos de reserva, nombres, notas ni textos. Sobrevive al borrado de viajes; se borra a pedido
@@ -36,9 +35,10 @@ no crea un perfil.
 ## 3. Ranking
 
 1. **Candidatos:** ofertas de la búsqueda ([offer-search.md](offer-search.md)) que no violan ningún límite explícito.
-2. **Características** de cada oferta para ese viajero: precio relativo a su banda, duración, escalas, diferencia de
-   horario con la reserva cancelada, demora de llegada, mismo proveedor, afinidad con el proveedor, coincidencia de
-   noches.
+2. **Características implementadas:** sesgo, precio relativo a la mediana del conjunto de ofertas, duración
+   relativa a la mediana del conjunto, escalas, diferencia de horario con la reserva cancelada, mismo proveedor,
+   afinidad histórica con el proveedor y proveedor preferido. La banda histórica de precios, anticipación,
+   duración típica de estadías y demora de llegada quedan como evolución; no se afirman implementadas.
 3. **Puntaje:** probabilidad de aceptación de un modelo logístico, `σ(w_región · x + u_viajero · x)`.
 4. **Se muestran 3** (suposición). Con probabilidad 0,1, una de las tres sale de fuera de las mejores (exploración).
    Cada sugerencia guarda su posición, la versión del modelo y sus características, para entrenar.
@@ -68,9 +68,12 @@ La respuesta de `reject` y `adjust` trae las sugerencias reordenadas (QA-13, 2 s
   activa en el registro (QA-15).
 * El canario se evalúa cada 5 minutos (suposición), no solo en el trabajo diario: la medida de QA-15 (vuelta atrás en
   5 minutos) se cuenta desde que junta la muestra mínima.
-* A lo sumo un canario a la vez. Si el canario no juntó la muestra cuando corre el entrenamiento, la versión nueva
-  lo reemplaza: el feedback del día entra en una versión del modelo en 24 h, y llega a toda la región cuando un
-  canario junta la muestra (trade-off entre QA-13 y QA-15, más lento en regiones con poco tráfico).
+* A lo sumo un canario a la vez. Mientras no reúna la muestra se conserva, y el trabajo diario posterga el
+  entrenamiento. El feedback se guarda en la solicitud y queda disponible para el próximo lote. Con menos de 30
+  ejemplos no se entrena; una versión que empeora se descarta. Por eso no se garantiza publicar un modelo regional
+  nuevo en 24 h. El ajuste por viajero es inmediato. Esta precisión modifica la suposición de QA-13 en este PR.
+* Cada promoción registra explícitamente la versión activa anterior. La vuelta atrás usa ese historial; nunca
+  selecciona un canario descartado. Para versiones antiguas sin historial no se adivina una versión anterior.
 * Sugerencias vencidas o nunca mostradas se borran a los 30 días (suposición, ADR-0081); el feedback conserva su copia
   de las características.
 
@@ -89,3 +92,12 @@ versión del modelo (QA-15), tiempo de respuesta del feedback (QA-13). Los logs 
 Datos sintéticos: viajeros con preferencias ocultas, cancelaciones y feedback simulado según esas preferencias. El
 modelo entrenado debe superar al orden fijo por precio en tasa de aceptación; ninguna sugerencia viola un límite
 explícito; un canario que empeora se retira solo.
+
+## Reglas aclaradas en la revisión del PR #12
+
+* Sin conversión monetaria definida, una oferta en moneda distinta de `maxPrice.currency` se excluye. El prototipo
+  consulta en EUR; presupuestos en otra moneda pueden dar una lista vacía. No se comparan importes de monedas diferentes.
+* Las búsquedas parciales siguen pendientes con reintento. Al recibir más ofertas se conservan los identificadores
+  y el feedback de las existentes, se agregan ofertas nuevas por `(provider, offerId)` y se reordena el conjunto.
+  Una aceptación termina la búsqueda. Un reintento sin cambios no repite el aviso; completar o cambiar la lista
+  produce una actualización con la misma clave de colapso.

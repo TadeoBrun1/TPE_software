@@ -37,7 +37,7 @@ cuesta más mantenerla (pruebas no deterministas, escala en picos, seguridad y c
 | RF-09 | Sugerir alternativas de alojamiento y transporte ante una cancelación y refinarlas con el feedback | Alta | Todo el módulo |
 | QA-12 | 15.000 afectados en 10 minutos: QA-11 para el 95 % y el 100 % de los límites de los proveedores respetado | H, H | Búsqueda agrupada con caché y límite por proveedor |
 | QA-11 | El 95 % de las sugerencias disponible y avisada en 2 minutos | H, M | Disparador por evento, búsqueda y aviso |
-| QA-13 | Reordenar en 2 s respetando límites explícitos; feedback en el modelo en 24 h | H, M | Ranking aprendido, ajuste por viajero y entrenamiento diario |
+| QA-13 | Reordenar en 2 s respetando límites explícitos; feedback guardado en la solicitud y trabajo regional diario condicionado por muestra y canario | H, M | Ranking aprendido, ajuste por viajero y entrenamiento diario |
 | QA-14 | 0 sugerencias tras desactivar; perfil y feedback borrados en 24 h | H, M | Almacén propio, opt-out y borrado |
 | QA-16 | Una falla de la recomendación no afecta QA-2 ni QA-4; pendientes en 10 minutos | H, M | Proceso aparte; los hechos esperan en su cola |
 | QA-17 | Un proveedor caído no pierde búsquedas; pendientes en 10 minutos | M, M | Búsquedas pendientes con reintento, circuit breaker y resultados parciales |
@@ -240,8 +240,8 @@ que se registra como riesgo. El panel no comparte procesos ni base con la recome
 **QA-13, rechazo y ajuste.** El rechazo actualiza el ajuste del viajero y reordena las sugerencias pendientes del
 viaje en la misma solicitud (sin consultar proveedores): entra holgado en 2 s. El ajuste de parámetros filtra antes
 de ordenar, así que ninguna sugerencia mostrada viola un límite explícito, y las mostradas que excluye cuentan como
-rechazos débiles para el modelo. El feedback entra en una versión del modelo regional en el entrenamiento diario;
-esa versión llega a toda la región cuando el canario junta la muestra (trade-off con QA-15).
+rechazos débiles para el modelo. El feedback se guarda inmediatamente; el entrenamiento regional requiere al menos 30 ejemplos y no tener
+un canario pendiente. Una nueva versión se publica solo si pasa la evaluación; no hay garantía de publicación en 24 h.
 
 **QA-14, desactivar y borrar.** Desactivar cambia una marca en el perfil que el disparador lee en la misma
 transacción que el hecho: no se generan sugerencias nuevas. El borrado elimina perfil, preferencias, feedback y

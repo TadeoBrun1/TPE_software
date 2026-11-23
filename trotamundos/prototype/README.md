@@ -4,7 +4,7 @@
 (ingesta idempotente), 3 (panel, SSE y cambios), 4 (compartición, autenticación y auditoría) y, para la segunda
 entrega, la 5 (recomendación de alternativas con human-in-the-loop, opción A). La analítica, la tarjeta para redes,
 la asistencia de agencia y el medio nuevo (ferry) quedan fuera del alcance. La iteración 5 suma también la
-eliminación de la cuenta (ADR-0085). Las 78 pruebas automáticas pasan en un solo proceso, con SQLite y un broker en
+eliminación de la cuenta (ADR-0085). Las 83 pruebas automáticas pasan en un solo proceso, con SQLite y un broker en
 memoria. Los adaptadores de PostgreSQL y RabbitMQ y el `docker-compose.yml`
 están escritos, pero no se ejecutaron en el entorno donde se armó el prototipo (no había Docker). Sí se probó a
 mano una región con cada proceso por separado, comunicados por HTTP (con SQLite y un broker en memoria por proceso).
@@ -20,7 +20,7 @@ Requisitos: Python 3.12 o superior (se probó con 3.13). Desde `trotamundos/prot
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q          # 78 pruebas, unos 40 segundos
+python -m pytest -q          # 83 pruebas, unos 40 segundos
 python demo.py               # recorrido por la API con dos regiones; --logs muestra los logs JSON
 python sistema.py            # entrada global en http://localhost:8080, dos regiones en un proceso
 ```
@@ -248,3 +248,15 @@ Correcciones de la auditoría independiente de la iteración 5 (detalle en el do
 
 El hallazgo 3 necesita una decisión del equipo (el 1 se resolvió en la iteración 5); el resto está registrado en el
 [registro de impactos](../docs/01-add/impact-log.md).
+
+## Revisión del PR #12
+
+Cinco regresiones en `tests/test_revision_iteracion5.py`: presupuesto en otra moneda, recuperación de búsqueda
+parcial sin duplicar y conservando rechazos, aceptación que termina la búsqueda, rollback que omite canarios
+descartados y entrenamiento diario que conserva un canario sin muestra.
+
+El precio relativo usa la mediana de las ofertas. La banda histórica de precios, anticipación y estadía típica
+no están implementadas como características. El prototipo consulta en EUR y excluye ofertas en otra moneda
+que el presupuesto explícito. El feedback se guarda inmediatamente; la publicación regional no tiene un plazo
+garantizado de 24 horas. Las promociones nuevas guardan su predecesora en `historial_modelos_activos`; versiones
+antiguas sin historial no permiten deducir una vuelta atrás segura.

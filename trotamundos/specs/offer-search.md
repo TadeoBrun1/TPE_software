@@ -63,9 +63,11 @@ de ese proveedor (configuración del adaptador). Una oferta con otro enlace se d
 | Datos | Oferta sin precio o sin enlace | Se descarta esa oferta y se cuenta en métricas |
 
 Tras 3 fallas temporales seguidas de un proveedor, no se lo consulta durante 1 minuto (*Circuit Breaker*,
-suposición). Si un proveedor falla y otro responde, la búsqueda se completa como **parcial**.
+suposición). Si un proveedor falla y otro responde, se muestran resultados **parciales** y la búsqueda sigue pendiente para reintentar. Los reintentos conservan IDs y feedback; una aceptación cierra la búsqueda.
 
 ## Validación en el prototipo
 
 Muchas cancelaciones con la misma clave generan una sola consulta; un proveedor caído deja la búsqueda pendiente y al
 volver se completa; la cubeta no se excede; un proveedor que falla y otro que responde dan una búsqueda parcial.
+
+Sin conversión monetaria definida, se excluyen ofertas en otra moneda que el presupuesto explícito. El prototipo consulta en EUR.

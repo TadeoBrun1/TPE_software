@@ -21,7 +21,7 @@ Las prioridades de esta tabla son **propuestas a validar** (ningún stakeholder 
 | QA-10 | Usabilidad / i18n | Multirregión e idiomas | Idioma y formato del usuario; QA-2 y QA-3 también fuera de su región | (M, H) |
 | QA-12 | Escalabilidad | Disrupción masiva (2da entrega) | 15.000 afectados en 10 min, QA-11 para el 95 % y límites de proveedores respetados | (H, H) |
 | QA-11 | Performance | Oportunidad de las sugerencias (2da entrega) | 95 % de sugerencias avisadas en 2 min | (H, M) |
-| QA-13 | Usabilidad | Adaptación al usuario (2da entrega) | Reordenar en 2 s respetando límites; feedback en el modelo en 24 h | (H, M) |
+| QA-13 | Usabilidad | Adaptación al usuario (2da entrega) | Reordenar en 2 s respetando límites; feedback inmediato y trabajo regional diario condicionado | (H, M) |
 | QA-14 | Seguridad | Control del perfil (2da entrega) | 0 sugerencias tras desactivar; perfil borrado en 24 h | (H, M) |
 | QA-16 | Disponibilidad | Falla de la recomendación (2da entrega) | Panel sin impacto; pendientes en 10 min tras recuperar | (H, M) |
 | QA-17 | Disponibilidad | Proveedor de búsqueda caído (2da entrega) | Ninguna búsqueda perdida; pendientes en 10 min tras recuperar | (M, M) |
@@ -64,7 +64,7 @@ flowchart TD
     P --> P4["Oportunidad de las sugerencias (2da entrega)"]
     P4 --> QA11["QA-11 2 min (H, M)"]
     X --> X2["Adaptación al usuario (2da entrega)"]
-    X2 --> QA13["QA-13 2 s y 24 h (H, M)"]
+    X2 --> QA13["QA-13 2 s y feedback inmediato (H, M)"]
     G --> G3["Control del perfil (2da entrega)"]
     G3 --> QA14["QA-14 Borrado en 24 h (H, M)"]
     D --> D2["Falla de la recomendación (2da entrega)"]

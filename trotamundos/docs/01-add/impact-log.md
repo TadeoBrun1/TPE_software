@@ -171,3 +171,16 @@ Hallazgos del prototipo de la iteración 5 (detalle en el [README del prototipo]
 | Una cubeta de fichas llena del tamaño del límite permite casi el doble en un minuto | Capacidad de la mitad del límite y recarga de la otra mitad por minuto | Integrado en ADR-0082 y `offer-search.md` |
 | Reserva cancelada sin viaje asignado | No genera sugerencias: la propuesta necesita un viaje | Suposición del prototipo |
 
+
+## Correcciones de revisión del PR #12
+
+* QA-13: se precisa la suposición de 24 horas. El feedback y ajuste del viajero se guardan en la solicitud;
+  un trabajo diario evalúa entrenar con al menos 30 ejemplos y sin canario pendiente. No se garantiza publicar
+  una versión regional cada 24 horas. Se actualizan escenario, árbol, iteración, ADR-0083 y contrato.
+* QA-13: sin conversión monetaria definida se excluyen ofertas en otra moneda que el presupuesto; el prototipo
+  consulta en EUR. Banda histórica de precios, anticipación y estadía típica quedan como evolución.
+* QA-17: resultados parciales conservan la búsqueda pendiente; completar mantiene IDs y feedback, sin duplicar
+  ofertas por proveedor e identificador. Aceptar termina la búsqueda.
+* QA-15: se conserva el canario hasta evaluarlo y cada promoción guarda su predecesora activa. El rollback
+  no selecciona canarios descartados. Versiones anteriores sin historial no se migran por conjetura.
+* Cinco pruebas de regresión documentan estos casos.

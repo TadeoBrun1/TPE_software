@@ -33,6 +33,9 @@ class RegistroModelos:
         self.logger = logger
         self.muestra_minima = muestra_minima
         with base.transaccion() as tx:
+            tx.ejecutar("CREATE TABLE IF NOT EXISTS historial_modelos_activos ("
+                        "version_id TEXT PRIMARY KEY, anterior TEXT)")
+        with base.transaccion() as tx:
             if not tx.uno("SELECT 1 AS x FROM versiones_modelo WHERE estado = 'activa'"):
                 self._insertar(tx, "v0-inicial", PESOS_INICIALES, "activa", 0, {"origen": "pesos iniciales"})
 
@@ -101,6 +104,8 @@ class RegistroModelos:
                             (ahora, canario["version_id"]))
                 resultado = "retirado"
             else:
+                tx.ejecutar("INSERT INTO historial_modelos_activos (version_id, anterior) VALUES (?, ?) "
+                            "ON CONFLICT (version_id) DO NOTHING", (canario["version_id"], activa["version_id"]))
                 tx.ejecutar("UPDATE versiones_modelo SET estado = 'retirada', cambio_estado = ? "
                             "WHERE estado = 'activa'",
                             (ahora,))
@@ -121,8 +126,8 @@ class RegistroModelos:
                             (ahora, canario["version_id"]))
                 return canario["version_id"]
             activa = self._por_estado(tx, "activa")
-            anterior = tx.uno("SELECT version_id FROM versiones_modelo WHERE estado = 'retirada' AND creada < ? "
-                              "ORDER BY creada DESC LIMIT 1", (activa["creada"],))
+            anterior = tx.uno("SELECT anterior AS version_id FROM historial_modelos_activos WHERE version_id = ?",
+                              (activa["version_id"],))
             if not anterior:
                 return None
             tx.ejecutar("UPDATE versiones_modelo SET estado = 'retirada', cambio_estado = ? WHERE version_id = ?",

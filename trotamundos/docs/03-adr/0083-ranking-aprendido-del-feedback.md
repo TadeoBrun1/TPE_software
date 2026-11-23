@@ -18,7 +18,7 @@ oferta.
 
 ## Decision Drivers
 
-* RF-09.3 y QA-13: reordenar en 2 s respetando los límites explícitos; el feedback entra al modelo en 24 h.
+* RF-09.3 y QA-13: reordenar en 2 s respetando los límites explícitos; el feedback se guarda inmediatamente; el trabajo regional se evalúa diariamente.
 * QA-15: versiones nuevas del modelo con despliegue para el 5 % y vuelta atrás en 5 minutos.
 * QA-11: el ranking no puede atrasar las sugerencias.
 * CON-3 (suposición): los datos de entrenamiento no salen de la región. CON-5 (suposición): sin cómputo ocioso.
@@ -42,10 +42,9 @@ Reglas:
 * **Dos etapas:** primero se filtran las ofertas que violan un límite explícito del viajero (precio máximo, máximo
   de escalas, franja horaria, proveedores excluidos); después se ordenan las restantes. Ningún orden puede saltear
   un límite explícito (QA-13).
-* **Características de cada oferta**, relativas a la reserva cancelada y al perfil: precio relativo a la banda del
-  perfil, duración, escalas, diferencia de horario con la reserva original, demora de llegada, si es el mismo
-  proveedor, afinidad del perfil con ese proveedor o cadena, y coincidencia de noches para alojamiento. No incluyen
-  datos personales: el vector describe la oferta para ese viajero.
+* **Características implementadas:** sesgo, precio y duración relativos a las medianas del conjunto de ofertas,
+  escalas, diferencia de horario con la reserva original, mismo proveedor, afinidad histórica y proveedor preferido.
+  La banda histórica de precios, anticipación, estadía típica y demora de llegada quedan como evolución.
 * **Puntaje:** probabilidad estimada de aceptación con un modelo lineal logístico: pesos del modelo regional más un
   ajuste por viajero que se guarda en su perfil. Un viajero sin historial usa solo los pesos regionales.
 * **Se muestran 3 sugerencias** (suposición). Con probabilidad 0,1 (suposición), una de las tres sale de fuera de las
@@ -61,16 +60,16 @@ Reglas:
   con el feedback de la región (aceptadas como positivas, rechazadas como negativas y excluidas por un ajuste como
   negativas con la mitad del peso, todas ponderadas por posición). Usa
   cómputo solo mientras corre (CON-5) y los datos no salen de la región (CON-3). Es un único trabajo programado por
-  región, no un proceso de cada instancia. El feedback de un día entra en la versión del modelo de esa noche (QA-13,
-  24 h).
+  región, no un proceso de cada instancia. El feedback se guarda en la solicitud; el trabajo diario comprueba
+  si puede entrenar. Se requieren 30 ejemplos y que no haya un canario pendiente. No garantiza una publicación en 24 h.
 * **Registro de versiones del modelo:** cada versión entrenada guarda sus pesos, la fecha, los datos usados y su
   evaluación con el feedback reservado para prueba. Solo se activa si no empeora la tasa de aceptación estimada de la
   versión actual. Una versión nueva arranca como *canario* para el 5 % de los viajeros, asignados por un hash estable
   del `userId`; si su tasa de aceptación cae más de un 10 % relativo con una muestra mínima, se vuelve atrás
   automáticamente. Volver atrás es cambiar qué versión está activa: no hay que desplegar código (QA-15). El canario
   se evalúa cada 5 minutos (suposición), así que la vuelta atrás ocurre dentro de los 5 minutos de juntar la
-  muestra. Hay a lo sumo un canario: si no juntó la muestra cuando corre el entrenamiento, la versión nueva lo
-  reemplaza.
+  muestra. Hay a lo sumo un canario: se conserva hasta evaluarlo; el entrenamiento se posterga mientras tanto.
+  Cada promoción registra la versión activa anterior para que el rollback no elija un canario descartado.
 * **Modelos regionales independientes:** cada región aprende de sus viajeros; no se combinan datos entre regiones.
 
 Patrones y tácticas que aplica:
@@ -94,9 +93,8 @@ Patrones y tácticas que aplica:
 * Bad, because no aprovecha lo que eligen viajeros parecidos: queda como evolución (opción C) si el feedback acumulado
   lo justifica.
 * Bad, because la tasa de aceptación depende también de qué ofertas hay en cada disrupción: comparar versiones exige
-  una muestra mínima, y un canario puede tardar en decidir. Trade-off entre QA-13 y QA-15: el feedback entra en una
-  versión del modelo en 24 h, pero llega a toda la región recién cuando un canario junta la muestra; en regiones con
-  poco tráfico eso puede tardar varios días.
+  una muestra mínima, y un canario puede tardar en decidir. El ajuste por viajero es inmediato; el entrenamiento
+  y la publicación regional dependen de datos suficientes y evaluación favorable, sin plazo de publicación fijo.
 
 ### Confirmation
 

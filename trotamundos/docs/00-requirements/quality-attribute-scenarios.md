@@ -171,7 +171,7 @@ medida de QA-14 mezclaba la residencia de datos y QA-15 tenía valores vagos).
 | Artefacto | Módulo de recomendación |
 | Ambiente | Operación normal |
 | Respuesta | El sistema reordena las sugerencias de ese viaje según el ajuste, guarda el feedback (un ajuste cuenta como rechazo débil de las sugerencias que excluye) y lo incorpora al modelo |
-| Medida de respuesta | Las sugerencias reordenadas se muestran en 2 s o menos, el 100 % respeta los límites explícitos del usuario y el feedback entra en el modelo regional dentro de las 24 h |
+| Medida de respuesta | Las sugerencias reordenadas se muestran en 2 s o menos, el 100 % respeta los límites explícitos del usuario y el feedback se guarda en la misma solicitud; un trabajo diario verifica si puede entrenar el modelo regional (mínimo 30 ejemplos y sin canario pendiente), sin garantizar publicar una versión en 24 h |
 
 ### QA-14 Seguridad y privacidad: control del perfil
 
@@ -224,7 +224,7 @@ medida de QA-14 mezclaba la residencia de datos y QA-15 tenía valores vagos).
 | 2 minutos desde la cancelación en el panel | QA-11 | Analogía con alertas de reprogramación de aerolíneas; se cuenta desde el panel para no mezclarlo con el presupuesto de QA-1 |
 | 50 vuelos y 15.000 viajeros en 10 minutos | QA-12 | Analogía con un cierre de aeropuerto por tormenta (vuelos de unos 300 pasajeros) |
 | 2 s para reordenar | QA-13 | Interacción en la app, con la misma referencia que QA-2 |
-| 24 h para incorporar el feedback | QA-13 | Reentrenamiento diario por lotes (CON-5) |
+| Trabajo diario para evaluar el entrenamiento | QA-13 | El guardado y ajuste por viajero son inmediatos; el entrenamiento y publicación regional dependen de muestra y evaluación (precisión de la suposición en la revisión del PR #12) |
 | 24 h para borrar el perfil | QA-14 | Plazo operativo; la normativa concreta no está validada (CON-3) |
 | 5 % de usuarios, 10 % relativo, 5 minutos | QA-15 | Práctica habitual de despliegue canario con vuelta atrás automatizada |
 | 10 minutos tras la recuperación | QA-16, QA-17 | Reintento con espera creciente, como la ingesta |
