@@ -2,7 +2,7 @@
 status: "accepted"
 date: 2026-10-28
 decision-makers: "Tomas Lateana"
-consulted: "Revisión de Tadeo Brun y asistencia de IA"
+consulted: "Revisión de Tadeo Brun"
 ---
 
 # Resolver la región de los avisos mediante un directorio mínimo

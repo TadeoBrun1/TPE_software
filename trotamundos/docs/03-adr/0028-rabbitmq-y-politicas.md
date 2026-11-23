@@ -2,7 +2,7 @@
 status: "accepted"
 date: 2026-10-27
 decision-makers: "Tomas Lateana"
-consulted: "Asistencia de IA y documentación primaria enlazada"
+consulted: "Documentación primaria enlazada"
 ---
 
 # RabbitMQ con colas quorum para los flujos de ingesta
