@@ -1,7 +1,7 @@
 # Cierre documental de primera entrega — Trotamundos
 
-**Fecha:** 2026-10-28. **Base revisada:** main, commit `00f21b9`.
-**Preparación:** revisión analítica de ambos integrantes.
+**Fecha:** 2026-10-28. **Base revisada:** `main` con las cuatro iteraciones integradas (hasta el PR #7).
+**Preparación:** revisión analítica de ambos integrantes, con asistencia de IA (ver [uso de IA](../../ai/prompts.md)).
 La revisión de este cierre por el equipo se registra mediante el PR que lo integra. No se afirma una reunión grupal de
 Risk Storming.
 

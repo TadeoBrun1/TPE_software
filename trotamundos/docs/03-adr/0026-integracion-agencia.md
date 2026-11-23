@@ -2,7 +2,7 @@
 status: "accepted"
 date: 2026-10-28
 decision-makers: "Tomas Lateana"
-consulted: "Revisión de Tadeo Brun"
+consulted: "Revisión de Tadeo Brun y asistencia de IA"
 ---
 
 # Integrar asistencia mediante un módulo saliente del núcleo
@@ -80,7 +80,8 @@ que el conjunto acotado de trabajadores no degrada la consulta bajo la carga aco
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4),
-merge `0801315` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #4](https://github.com/TadeoBrun1/TPE_software/pull/4), junto con el resto de la iteración 2,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.

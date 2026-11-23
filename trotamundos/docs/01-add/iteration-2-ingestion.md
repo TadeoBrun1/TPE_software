@@ -1,15 +1,14 @@
 # Iteración 2 — Ingesta de reservas
 
 **Responsable de la iteración:** Tomas Lateana (integrante A).
-**Preparación documental:** 2026-10-27.
+**Preparación documental:** 2026-10-27, con asistencia de IA.
 **Estado:** diseño integrado en `main` mediante PR #4; ADRs aceptadas documentalmente.
 Validación de implementación y riesgos pendientes según [cierre de primera entrega](../04-evaluation/first-delivery-review.md).
 **ADRs:** 0020 a 0028, dentro del bloque 0020–0039.
 
 ## Base y alcance
 
-Base de integración: primera iteración revisada e incorporada a `main` en
-`05a8fd737847cecc89722ccde9cd0824e5ffbd0f`. Se preservan el núcleo modular como único dueño del estado,
+Base de integración: la iteración 1, ya revisada e integrada a `main` con el PR #3. Se preservan el núcleo modular como único dueño del estado,
 la publicación/suscripción y las regiones de origen. ADR-0003 es despliegue; ADR-0004 es clientes y API Gateway.
 La separación lectura/escritura y el almacenamiento analítico no se presuponen: corresponden a 3 y 4.
 

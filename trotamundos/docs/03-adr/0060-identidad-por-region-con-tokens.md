@@ -195,10 +195,11 @@ distintas con el mismo identificador local no comparten permisos.
 
 ## Estado de integración documental
 
-Esta decisión forma parte del diseño integrado mediante [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7),
-merge `00f21b9` del 2026-10-28. Los refinamientos posteriores incorporados en `main` también forman parte de
-la base de cierre `00f21b9`. `accepted` registra adopción del diseño por integración, no ejecución del prototipo
-ni cumplimiento medido de los QA. Las confirmaciones de implementación y los riesgos conservan su estado.
+Esta decisión se integró a `main` el 2026-10-28
+con el [PR #7](https://github.com/TadeoBrun1/TPE_software/pull/7), junto con el resto de la iteración 4,
+y se ajustó en las revisiones posteriores hasta el cierre de la primera entrega. Que esté `accepted`
+significa que el equipo adoptó el diseño, no que el prototipo lo haya ejecutado ni que los QA estén medidos: lo
+que falta confirmar en la implementación y los riesgos abiertos siguen como estaban.
 
 ## Nota de la iteración 5 (2026-11-22)
 
