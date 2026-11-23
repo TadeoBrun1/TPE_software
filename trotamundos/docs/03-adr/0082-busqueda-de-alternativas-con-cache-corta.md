@@ -80,6 +80,7 @@ Patrones y tácticas que aplica:
 | Táctica *administrar las solicitudes de trabajo* (performance) | Cubeta de fichas por proveedor y región | QA-12, CON-2 |
 | Tácticas *reintentar* y *manejo de excepciones* (disponibilidad), patrón *Circuit Breaker* | Búsquedas pendientes con reintento; se deja de consultar a un proveedor que falla | QA-17 |
 | Tácticas *adaptar la interfaz* y *adherir a estándares* (integrabilidad) | Contrato de oferta normalizado con ISO 4217 y zonas IANA | CON-1, QA-10 |
+| Táctica *validar la entrada* (seguridad) | El adaptador descarta una oferta cuyo `offerUrl` no es https o no es de un dominio permitido del proveedor | QA-7 |
 
 ### Consequences
 

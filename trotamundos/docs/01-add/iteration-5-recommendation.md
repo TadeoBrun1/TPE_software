@@ -89,13 +89,14 @@ regionales (ADR-0003). El módulo se suma como un proceso más de la celda, alim
 |---|---|---|---|---|
 | *Publish-Subscribe* y *Competing Consumers* | Arquitectónico / de integración | La recomendación consume `booking.facts.v1` con su cola; sus instancias compiten | QA-12, QA-16 | 0081 |
 | *Idempotent Receiver* y *Transactional Outbox* | De integración | Hechos deduplicados; sugerencias y aceptaciones publicadas desde una outbox | QA-11, QA-6 | 0081, 0084 |
-| *Ports and Adapters* | Arquitectónico | Puerto de búsqueda de ofertas con un adaptador por proveedor | CON-1, QA-15 | 0082 |
+| *Ports and Adapters* | Arquitectónico | Puerto de búsqueda de ofertas con un adaptador por proveedor | CON-1, CON-2 | 0082 |
 | *Cache-Aside* y *request collapsing* | De diseño | Una consulta por clave de búsqueda, reutilizada 5 minutos | QA-12 | 0082 |
 | *Circuit Breaker* | De diseño | Se deja de consultar un proveedor que falla seguido | QA-17 | 0082 |
 | Recomendación en dos etapas (candidatos y ranking) | De diseño (sistemas de recomendación) | Filtro por límites explícitos y orden por puntaje aprendido | QA-13 | 0083 |
 | Exploración *epsilon-greedy* (bandit) | De diseño (sistemas de recomendación) | Una de cada diez listas incluye una oferta fuera de las mejores | RF-09.3 | 0083 |
 | *Canary Release* | De despliegue | Versión nueva del modelo para el 5 % de los viajeros | QA-15 | 0083 |
 | *API Gateway* | Arquitectónico | La puerta enruta las rutas de sugerencias al proceso nuevo | QA-7 | 0084 |
+| *Publish-Subscribe*, *Transactional Outbox* e *Idempotent Receiver* | De integración | `account.deleted.v1` desde la outbox del núcleo, con una cola por consumidor y borrado idempotente | QA-14 | 0085 |
 
 ### 4.2 Tácticas
 
@@ -112,6 +113,10 @@ regionales (ADR-0003). El módulo se suma como un proceso más de la celda, alim
 | Seguridad | Separar entidades | Perfiles en un proceso y una base propios | QA-14 | 0081 |
 | Seguridad | Limitar la exposición | Perfil resumido; la consulta al proveedor no identifica al viajero | QA-14 | 0081, 0082 |
 | Seguridad | Autorizar actores | Sugerencias solo para el dueño del viaje | QA-7 | 0084 |
+| Seguridad | Validar la entrada | `offerUrl` de un proveedor solo se acepta con https y un dominio permitido | QA-7 | 0082 |
+| Seguridad | Autenticar actores | Eliminar la cuenta exige un inicio de sesión reciente (`auth_time`) | QA-7 | 0085 |
+| Seguridad | Revocar el acceso | Marca de cuenta eliminada: los tokens vigentes reciben `401` en el núcleo y en la recomendación | QA-7 | 0085 |
+| Seguridad | Limitar la exposición y auditar | Eliminación de la cuenta en todos los procesos; la auditoría se conserva con el actor seudonimizado | QA-14, CON-3 | 0085 |
 | Modificabilidad | Diferir el enlace | La versión activa del modelo se elige en tiempo de ejecución | QA-15 | 0083 |
 | Desplegabilidad | Escalonar los despliegues y volver atrás | La versión del modelo es un artefacto que se despliega como dato: canario al 5 % y vuelta atrás automática | QA-15 | 0083 |
 | Integrabilidad | Adaptar la interfaz y adherir a estándares | Oferta normalizada con ISO 4217 y zonas IANA | CON-1 | 0082 |

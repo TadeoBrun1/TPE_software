@@ -123,8 +123,11 @@ Patrones y tácticas que aplica:
 | Patrón *Publish-Subscribe* (ADR-0002) | Un evento y una cola por consumidor; el núcleo no conoce a los consumidores | QA-14 |
 | Patrón *Transactional Outbox* (ADR-0027) | El borrado del núcleo y el evento se confirman juntos | QA-14 |
 | Patrón *Idempotent Receiver* | Cada consumidor borra sin fallar si ya no hay nada; el evento reentregado no cambia el resultado | QA-14 |
+| Táctica *autenticar actores* (seguridad) | Eliminar la cuenta exige un inicio de sesión de hace 5 minutos o menos (`auth_time`) | QA-7 |
 | Táctica *revocar el acceso* (seguridad) | Marca de cuenta eliminada: los tokens vigentes reciben `401` | QA-7 |
 | Táctica *limitar la exposición* (seguridad) | Se borra todo lo que se puede asociar al usuario y la auditoría queda con un seudónimo | CON-3 |
+| Táctica *auditar* (seguridad) | El registro de auditoría se conserva como evidencia, con el actor seudonimizado | QA-7 |
+| Tácticas *reintentar* y *manejo de excepciones* (disponibilidad) | Los pasos del núcleo fuera de la partición se reintentan por reentrega; el barrido periódico corrige lo que dejó un hecho procesado en paralelo | QA-14 |
 
 ### Consequences
 
